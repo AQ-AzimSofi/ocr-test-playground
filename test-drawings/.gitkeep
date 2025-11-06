@@ -1,0 +1,11 @@
+# Test Drawings Directory
+
+Add your test construction drawing images here (.png, .jpg, .pdf).
+
+For each drawing, create a corresponding metadata file with ground truth data.
+
+Example:
+- drawing-001.png
+- drawing-001-metadata.json
+
+See README.md for metadata format.

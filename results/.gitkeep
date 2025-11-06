@@ -1,0 +1,7 @@
+# Results Directory
+
+Test reports will be generated here automatically.
+
+Files:
+- test-run-{id}.html - Visual comparison report
+- test-run-{id}.json - Raw data

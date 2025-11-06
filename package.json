@@ -1,0 +1,46 @@
+{
+  "name": "ocr-test-playground",
+  "version": "1.0.0",
+  "description": "R&D testing playground for OCR/AI extraction from construction layout drawings (配置図)",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "test": "tsx src/test-runner.ts",
+    "test:all": "tsx src/test-runner.ts --workflow all --drawing all",
+    "test:cloud-vision": "tsx src/test-runner.ts --workflow cloud-vision",
+    "test:gemini": "tsx src/test-runner.ts --workflow gemini",
+    "test:hybrid": "tsx src/test-runner.ts --workflow hybrid",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "keywords": [
+    "ocr",
+    "construction",
+    "drawings",
+    "mastra",
+    "gemini",
+    "google-cloud-vision"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@mastra/core": "^0.23.1",
+    "@google-cloud/vision": "^4.3.2",
+    "@google/generative-ai": "^0.21.0",
+    "drizzle-orm": "^0.36.4",
+    "postgres": "^3.4.5",
+    "zod": "^3.23.8",
+    "dotenv": "^16.4.5",
+    "pdf-parse": "^1.1.1",
+    "jimp": "^0.22.12",
+    "string-similarity": "^4.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/string-similarity": "^4.0.2",
+    "drizzle-kit": "^0.28.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

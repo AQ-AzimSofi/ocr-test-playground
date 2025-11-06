@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.development
+.env.local
+
+# Database
+*.db
+*.db-*
+
+# Test results
+results/*.json
+results/*.html
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Temporary files
+temp/
+tmp/
+
+# Test drawings (if you want to keep them out of git)
+# test-drawings/*.pdf
+# test-drawings/*.png
+# test-drawings/*.jpg
