@@ -10,6 +10,7 @@
     "test:cloud-vision": "tsx src/test-runner.ts --workflow cloud-vision",
     "test:gemini": "tsx src/test-runner.ts --workflow gemini",
     "test:hybrid": "tsx src/test-runner.ts --workflow hybrid",
+    "test:azure": "tsx src/test-runner.ts --workflow azure-document",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
@@ -20,7 +21,8 @@
     "drawings",
     "mastra",
     "gemini",
-    "google-cloud-vision"
+    "google-cloud-vision",
+    "azure-document-intelligence"
   ],
   "author": "",
   "license": "MIT",
@@ -28,6 +30,7 @@
     "@mastra/core": "^0.23.1",
     "@google-cloud/vision": "^4.3.2",
     "@google/generative-ai": "^0.21.0",
+    "@azure/ai-form-recognizer": "^5.0.0",
     "drizzle-orm": "^0.36.4",
     "postgres": "^3.4.5",
     "zod": "^3.23.8",
