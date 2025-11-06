@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 
-import { mastra } from './mastra/index.js';
 import { db, testDrawings, extractionResults, accuracyMetrics, testRuns } from './db/index.js';
+import { processWithCloudVision } from './processors/cloud-vision-processor.js';
+import { processWithGemini } from './processors/gemini-processor.js';
+import { processWithHybrid } from './processors/hybrid-processor.js';
+import { processWithAzureDocument } from './processors/azure-document-processor.js';
 import { accuracyCalculatorTool } from './mastra/tools/accuracy-calculator.js';
 import { reportGeneratorTool } from './mastra/tools/report-generator.js';
 import * as fs from 'fs';
@@ -47,69 +50,81 @@ async function loadTestDrawings() {
     return [];
   }
 
-  const files = fs.readdirSync(drawingsDir);
-  const imageFiles = files.filter((f) =>
-    ['.png', '.jpg', '.jpeg', '.pdf'].some((ext) => f.endsWith(ext))
-  );
-
+  const files = fs.readdirSync(drawingsDir, { withFileTypes: true });
   const drawings = [];
 
-  for (const file of imageFiles) {
-    const filePath = path.join(drawingsDir, file);
-    const metadataPath = filePath.replace(/\.(png|jpg|jpeg|pdf)$/, '-metadata.json');
+  for (const file of files) {
+    if (file.isDirectory()) {
+      // Check subdirectory for images
+      const subDir = path.join(drawingsDir, file.name);
+      const subFiles = fs.readdirSync(subDir);
+      const imageFiles = subFiles.filter((f) =>
+        ['.png', '.jpg', '.jpeg', '.pdf'].some((ext) => f.endsWith(ext))
+      );
 
-    let metadata = null;
-    if (fs.existsSync(metadataPath)) {
-      metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
+      for (const imageFile of imageFiles) {
+        const filePath = path.join(subDir, imageFile);
+        const baseName = imageFile.replace(/\.(png|jpg|jpeg|pdf)$/, '');
+        const metadataPath = path.join(subDir, `${baseName}-metadata.json`);
+
+        let metadata = null;
+        if (fs.existsSync(metadataPath)) {
+          metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
+        }
+
+        drawings.push({
+          fileName: imageFile,
+          filePath,
+          metadata,
+        });
+      }
+    } else if (['.png', '.jpg', '.jpeg', '.pdf'].some((ext) => file.name.endsWith(ext))) {
+      // Image in root test-drawings directory
+      const filePath = path.join(drawingsDir, file.name);
+      const baseName = file.name.replace(/\.(png|jpg|jpeg|pdf)$/, '');
+      const metadataPath = path.join(drawingsDir, `${baseName}-metadata.json`);
+
+      let metadata = null;
+      if (fs.existsSync(metadataPath)) {
+        metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
+      }
+
+      drawings.push({
+        fileName: file.name,
+        filePath,
+        metadata,
+      });
     }
-
-    drawings.push({
-      fileName: file,
-      filePath,
-      metadata,
-    });
   }
 
   return drawings;
 }
 
-async function runWorkflow(
-  workflowName: string,
+async function runProcessor(
+  processor: string,
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`\n▶️  Running ${workflowName} on ${drawingId}...`);
+  console.log(`\n▶️  Running ${processor} on ${drawingId}...`);
 
   try {
-    const startTime = Date.now();
-
     let result;
-    if (workflowName === 'cloud-vision' || workflowName === 'all') {
-      // Run cloud vision workflow
-      result = await mastra.workflows.cloudVisionWorkflow.execute({
-        imagePath,
-        drawingId,
-      });
-    } else if (workflowName === 'gemini' || workflowName === 'all') {
-      // Run gemini workflow
-      result = await mastra.workflows.geminiWorkflow.execute({
-        imagePath,
-        drawingId,
-      });
-    } else if (workflowName === 'hybrid' || workflowName === 'all') {
-      // Run hybrid workflow
-      result = await mastra.workflows.hybridWorkflow.execute({
-        imagePath,
-        drawingId,
-      });
-    }
 
-    const duration = Date.now() - startTime;
-    console.log(`✅ Completed in ${(duration / 1000).toFixed(2)}s`);
+    if (processor === 'cloud-vision') {
+      result = await processWithCloudVision(imagePath, drawingId);
+    } else if (processor === 'gemini') {
+      result = await processWithGemini(imagePath, drawingId);
+    } else if (processor === 'hybrid') {
+      result = await processWithHybrid(imagePath, drawingId);
+    } else if (processor === 'azure-document') {
+      result = await processWithAzureDocument(imagePath, drawingId);
+    } else {
+      throw new Error(`Unknown processor: ${processor}`);
+    }
 
     return result;
   } catch (error) {
-    console.error(`❌ Error running ${workflowName}:`, error);
+    console.error(`❌ Error running ${processor}:`, error);
     throw error;
   }
 }
@@ -214,6 +229,40 @@ async function main() {
 
   console.log(`✅ Found ${drawings.length} test drawing(s)\n`);
 
+  // Register drawings in database before processing
+  console.log('📝 Registering drawings in database...');
+  for (const drawing of drawings) {
+    const drawingId = drawing.metadata?.id || drawing.fileName;
+
+    try {
+      await db
+        .insert(testDrawings)
+        .values({
+          drawingId,
+          fileName: drawing.fileName,
+          filePath: drawing.filePath,
+          type: drawing.metadata?.type || 'unknown',
+          quality: drawing.metadata?.quality || 'medium',
+          source: drawing.metadata?.source || 'uploaded',
+          groundTruth: drawing.metadata?.groundTruth || {},
+          metadata: drawing.metadata || {},
+        })
+        .onConflictDoUpdate({
+          target: testDrawings.drawingId,
+          set: {
+            fileName: drawing.fileName,
+            filePath: drawing.filePath,
+            groundTruth: drawing.metadata?.groundTruth || {},
+            metadata: drawing.metadata || {},
+          },
+        });
+      console.log(`  ✅ Registered: ${drawingId}`);
+    } catch (error) {
+      console.error(`  ⚠️  Warning: Could not register ${drawingId}:`, error);
+    }
+  }
+  console.log('');
+
   // Create test run
   const [testRun] = await db
     .insert(testRuns)
@@ -221,7 +270,7 @@ async function main() {
       runName: `Test Run ${new Date().toISOString()}`,
       description: `Testing workflow: ${workflow}`,
       drawingIds: drawings.map((d) => d.metadata?.id || d.fileName),
-      tools: workflow === 'all' ? ['cloud-vision', 'gemini-2.0-flash', 'hybrid'] : [workflow],
+      tools: workflow === 'all' ? ['cloud-vision', 'gemini-2.0-flash', 'hybrid', 'azure-document-intelligence'] : [workflow],
       summary: {
         totalDrawings: drawings.length,
         totalExtractions: 0,
@@ -245,24 +294,24 @@ async function main() {
     console.log(`📄 Processing: ${drawing.fileName}`);
     console.log(`${'='.repeat(60)}`);
 
-    const workflowsToRun =
-      workflow === 'all' ? ['cloud-vision', 'gemini', 'hybrid'] : [workflow];
+    const processorsToRun =
+      workflow === 'all' ? ['cloud-vision', 'gemini', 'hybrid', 'azure-document'] : [workflow];
 
-    for (const wf of workflowsToRun) {
+    for (const processor of processorsToRun) {
       try {
-        // Run workflow
-        const result = await runWorkflow(wf, drawing.filePath, drawingId);
+        // Run processor
+        const result = await runProcessor(processor, drawing.filePath, drawingId);
 
         // Calculate accuracy if ground truth is available
         if (groundTruth && result.extractionResultId) {
-          console.log('📊 Calculating accuracy...');
+          console.log('  📊 Calculating accuracy...');
           const accuracy = await calculateAccuracy(result.extractionResultId, groundTruth);
 
           if (accuracy) {
-            console.log(`\n📈 Accuracy Metrics for ${wf}:`);
-            console.log(`  Dimension F1: ${(accuracy.dimensionMetrics.f1Score * 100).toFixed(1)}%`);
-            console.log(`  Equipment F1: ${(accuracy.equipmentMetrics.f1Score * 100).toFixed(1)}%`);
-            console.log(`  Confidence: ${(accuracy.avgConfidenceScore * 100).toFixed(1)}%`);
+            console.log(`\n  📈 Accuracy Metrics for ${processor}:`);
+            console.log(`     Dimension F1: ${(accuracy.dimensionMetrics.f1Score * 100).toFixed(1)}%`);
+            console.log(`     Equipment F1: ${(accuracy.equipmentMetrics.f1Score * 100).toFixed(1)}%`);
+            console.log(`     Confidence: ${(accuracy.avgConfidenceScore * 100).toFixed(1)}%`);
 
             // Fetch processing time and cost from extraction result
             const [extraction] = await db
@@ -272,7 +321,7 @@ async function main() {
 
             testResults.push({
               drawingId,
-              tool: wf,
+              tool: processor,
               metrics: {
                 dimensionMetrics: accuracy.dimensionMetrics,
                 equipmentMetrics: accuracy.equipmentMetrics,
@@ -283,7 +332,7 @@ async function main() {
           }
         }
       } catch (error) {
-        console.error(`❌ Failed to process ${drawingId} with ${wf}:`, error);
+        console.error(`❌ Failed to process ${drawingId} with ${processor}:`, error);
       }
     }
   }
