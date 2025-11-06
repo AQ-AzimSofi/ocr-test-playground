@@ -2,7 +2,7 @@
 
 R&D testing system for evaluating OCR and AI tools on construction layout drawings (配置図).
 
-This project compares **Google Cloud Vision API** and **Google Gemini 2.0 Flash** for extracting structured data from construction drawings, helping determine the best approach for automated data extraction.
+This project compares **Google Cloud Vision API**, **Google Gemini 2.0 Flash**, and **Azure AI Document Intelligence** for extracting structured data from construction drawings, helping determine the best approach for automated data extraction.
 
 ## 🎯 Purpose
 
@@ -18,6 +18,7 @@ Evaluate and compare OCR/AI tools for extracting:
 - **Mastra** - Workflow orchestration
 - **Google Cloud Vision API** - OCR specialist
 - **Google Gemini 2.0 Flash** - Multimodal AI
+- **Azure AI Document Intelligence** - Layout analysis specialist
 - **Drizzle ORM** - Database access
 - **PostgreSQL** - Results storage
 - **TypeScript** - Type safety
@@ -30,6 +31,7 @@ Evaluate and compare OCR/AI tools for extracting:
 - Docker (for PostgreSQL)
 - Google Cloud account with Vision API enabled
 - Google Gemini API key
+- Azure account with Document Intelligence enabled (optional)
 
 ### 2. Installation
 
@@ -46,6 +48,8 @@ cp .env.development.example .env.development
 # Edit .env.development with your credentials
 # - GOOGLE_APPLICATION_CREDENTIALS (path to service account JSON)
 # - GOOGLE_GEMINI_API_KEY
+# - AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT (optional)
+# - AZURE_DOCUMENT_INTELLIGENCE_KEY (optional)
 # - DATABASE_URL (default is fine for Docker)
 ```
 
@@ -68,6 +72,16 @@ cp .env.development.example .env.development
 3. Add to `.env.development`:
    ```
    GOOGLE_GEMINI_API_KEY=your-key-here
+   ```
+
+**For Azure AI Document Intelligence (Optional):**
+1. Go to [Azure Portal](https://portal.azure.com/)
+2. Create a "Document Intelligence" resource
+3. Get endpoint and API key from "Keys and Endpoint" section
+4. Add to `.env.development`:
+   ```
+   AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=https://your-resource.cognitiveservices.azure.com/
+   AZURE_DOCUMENT_INTELLIGENCE_KEY=your-key-here
    ```
 
 ### 4. Start Database
@@ -145,9 +159,11 @@ npm run test:all
 npm run test:cloud-vision
 npm run test:gemini
 npm run test:hybrid
+npm run test:azure
 
 # Custom options
 npm run test -- --workflow cloud-vision --drawing drawing-001
+npm run test -- --workflow azure-document --drawing drawing-001
 ```
 
 ### 8. View Results
@@ -163,11 +179,12 @@ Open the HTML file in a browser to see the comparison.
 ```
 ocr-test-playground/
 ├── src/
+│   ├── processors/           # OCR processors
+│   │   ├── cloud-vision-processor.ts
+│   │   ├── gemini-processor.ts
+│   │   ├── azure-document-processor.ts
+│   │   └── hybrid-processor.ts
 │   ├── mastra/
-│   │   ├── workflows/        # OCR workflows
-│   │   │   ├── cloud-vision-workflow.ts
-│   │   │   ├── gemini-workflow.ts
-│   │   │   └── hybrid-workflow.ts
 │   │   └── tools/            # Processing tools
 │   │       ├── dimension-extractor.ts
 │   │       ├── accuracy-calculator.ts
@@ -175,6 +192,7 @@ ocr-test-playground/
 │   ├── lib/                  # Helper libraries
 │   │   ├── cloud-vision-client.ts
 │   │   ├── gemini-client.ts
+│   │   ├── azure-document-client.ts
 │   │   └── utils.ts
 │   ├── db/                   # Database
 │   │   ├── schema.ts
@@ -208,10 +226,20 @@ Uses Gemini 2.0 Flash with vision capabilities:
 
 **Best for:** Complex layouts requiring understanding
 
-### 3. Hybrid Workflow
+### 3. Azure Document Intelligence Workflow
 
-Combines both approaches:
-- Runs Cloud Vision + Gemini in parallel
+Uses Azure's prebuilt-layout model:
+- Specialized for technical document layouts
+- Preserves spatial relationships
+- Extracts tables and key-value pairs
+- Excellent for structured drawings
+
+**Best for:** Technical drawings with tables and structured layouts
+
+### 4. Hybrid Workflow
+
+Combines Cloud Vision + Gemini:
+- Runs both in parallel
 - Merges results with deduplication
 - Boosts confidence for items found by both
 - Calculates agreement metrics
@@ -359,6 +387,12 @@ docker compose up -d
 - Verify API key is correct
 - Check API quota limits
 - Ensure model name is correct
+
+**Azure Document Intelligence errors:**
+- Check endpoint URL format
+- Verify API key is valid
+- Ensure resource is in correct region
+- Check API quota limits
 
 **No test drawings found:**
 - Create `test-drawings/` directory
