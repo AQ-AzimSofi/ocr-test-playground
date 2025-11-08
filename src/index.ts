@@ -16,7 +16,7 @@ dotenv.config({ path: '.env.development' });
  * See README.md for setup instructions.
  */
 
-console.log('🚀 OCR Test Playground');
+console.log('OCR Test Playground');
 console.log('');
 console.log('Available commands:');
 console.log('  npm run test:all          - Test all processors');

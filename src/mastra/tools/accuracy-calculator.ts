@@ -1,247 +1,182 @@
 import { createTool } from '@mastra/core';
 import { z } from 'zod';
-import { calculateMetrics, calculateSimilarity } from '../../lib/utils.js';
+import {
+  calculateCER,
+  calculateCharacterAccuracy,
+  calculateCharacterSetCoverage,
+  calculateExactCharacterCount,
+  calculateLevenshteinDistance,
+  normalizeText,
+} from '../../lib/utils.js';
 
 /**
- * Tool to calculate accuracy metrics by comparing extracted data with ground truth
+ * Tool to calculate character-level OCR accuracy metrics by comparing extracted text with ground truth
  */
 export const accuracyCalculatorTool = createTool({
   id: 'accuracy-calculator',
-  description: 'Calculate accuracy metrics by comparing extraction results with ground truth',
+  description: 'Calculate character-level OCR accuracy metrics by comparing extracted text with ground truth',
   inputSchema: z.object({
-    extractedData: z.object({
-      dimensions: z
-        .array(
-          z.object({
-            value: z.string(),
-            location: z.string().optional(),
-            element: z.string().optional(),
-            type: z.string().optional(),
-            confidence: z.number().optional(),
-          })
-        )
-        .optional(),
-      equipment: z
-        .array(
-          z.object({
-            name: z.string(),
-            spec: z.string().optional(),
-            position: z.object({ x: z.number(), y: z.number() }).optional(),
-            confidence: z.number().optional(),
-          })
-        )
-        .optional(),
-      areas: z
-        .array(
-          z.object({
-            name: z.string(),
-            size: z.string().optional(),
-            confidence: z.number().optional(),
-          })
-        )
-        .optional(),
-    }),
-    groundTruth: z.object({
-      dimensions: z.array(
-        z.object({
-          value: z.string(),
-          x: z.number().optional(),
-          y: z.number().optional(),
-          element: z.string().optional(),
-          type: z.string().optional(),
-        })
-      ),
-      equipment: z.array(
-        z.object({
-          name: z.string(),
-          spec: z.string().optional(),
-          x: z.number().optional(),
-          y: z.number().optional(),
-        })
-      ),
-      areas: z.array(
-        z.object({
-          name: z.string(),
-          width: z.string().optional(),
-          depth: z.string().optional(),
-          size: z.string().optional(),
-        })
-      ),
-    }),
+    extractedText: z.string(),
+    groundTruthText: z.string(),
+    confidenceScore: z.number().optional(),
+    boundingBoxes: z.array(z.object({
+      text: z.string(),
+      bounds: z.array(z.object({ x: z.number(), y: z.number() })),
+      confidence: z.number().optional(),
+      bboxSource: z.enum(['ocr', 'gemini-percentage', 'estimated', 'synthesized']).optional(),
+    })).optional(),
   }),
   outputSchema: z.object({
-    dimensionMetrics: z.object({
-      found: z.number(),
-      correct: z.number(),
-      total: z.number(),
-      recall: z.number(),
-      precision: z.number(),
-      f1Score: z.number(),
-    }),
-    equipmentMetrics: z.object({
-      found: z.number(),
-      correct: z.number(),
-      total: z.number(),
-      recall: z.number(),
-      precision: z.number(),
-      f1Score: z.number(),
-    }),
-    areaMetrics: z.object({
-      found: z.number(),
-      correct: z.number(),
-      total: z.number(),
-      recall: z.number(),
-      precision: z.number(),
-    }),
-    avgConfidenceScore: z.number(),
+    // Character Error Rate (industry standard)
+    characterErrorRate: z.number(),
+
+    // Character-level metrics
+    characterAccuracy: z.number(),
+    characterSetCoverage: z.number(),
+
+    // Character count metrics
+    extractedCharCount: z.number(),
+    groundTruthCharCount: z.number(),
+    exactCharCountMatch: z.boolean(),
+    charCountDifference: z.number(),
+
+    // Edit distance
+    editDistance: z.number(),
+
+    // Confidence score (if provided by API)
+    avgConfidenceScore: z.number().optional(),
+
+    // Bbox source statistics
+    bboxSourceStats: z.object({
+      ocr: z.number().optional(),
+      geminiPercentage: z.number().optional(),
+      estimated: z.number().optional(),
+      synthesized: z.number().optional(),
+    }).optional(),
+
+    // Detailed breakdown
     breakdown: z.object({
-      dimensionErrors: z.array(z.string()),
-      equipmentErrors: z.array(z.string()),
-      areaErrors: z.array(z.string()),
-      falsePositives: z.array(z.string()),
-      falseNegatives: z.array(z.string()),
+      extractedText: z.string(),
+      groundTruthText: z.string(),
+      characterDifferences: z.array(
+        z.object({
+          position: z.number(),
+          expected: z.string(),
+          actual: z.string(),
+        })
+      ),
+      summary: z.string(),
     }),
   }),
   execute: async ({ context }) => {
-    const { extractedData, groundTruth } = context;
+    const { extractedText, groundTruthText, confidenceScore, boundingBoxes } = context;
 
-    // Calculate dimension metrics
-    const extractedDimensions = extractedData.dimensions || [];
-    const groundTruthDimensions = groundTruth.dimensions || [];
+    // Normalize both texts
+    const normalizedExtracted = normalizeText(extractedText);
+    const normalizedGroundTruth = normalizeText(groundTruthText);
 
-    let correctDimensions = 0;
-    const dimensionErrors: string[] = [];
-    const falseNegatives: string[] = [];
+    // Calculate bbox source statistics if bboxes provided
+    let bboxSourceStats = undefined;
+    if (boundingBoxes && boundingBoxes.length > 0) {
+      const stats = {
+        ocr: 0,
+        geminiPercentage: 0,
+        estimated: 0,
+        synthesized: 0,
+      };
 
-    for (const gtDim of groundTruthDimensions) {
-      const found = extractedDimensions.find(
-        (exDim) => calculateSimilarity(exDim.value, gtDim.value) >= 0.8
-      );
-
-      if (found) {
-        correctDimensions++;
-      } else {
-        falseNegatives.push(`Missing dimension: ${gtDim.value}`);
-        dimensionErrors.push(`Failed to extract: ${gtDim.value}`);
+      for (const bbox of boundingBoxes) {
+        if (bbox.bboxSource === 'ocr') {
+          stats.ocr++;
+        } else if (bbox.bboxSource === 'gemini-percentage') {
+          stats.geminiPercentage++;
+        } else if (bbox.bboxSource === 'estimated') {
+          stats.estimated++;
+        } else if (bbox.bboxSource === 'synthesized') {
+          stats.synthesized++;
+        }
       }
+
+      bboxSourceStats = {
+        ocr: stats.ocr || undefined,
+        geminiPercentage: stats.geminiPercentage || undefined,
+        estimated: stats.estimated || undefined,
+        synthesized: stats.synthesized || undefined,
+      };
     }
 
-    const falsePositiveDimensions = extractedDimensions.filter(
-      (exDim) =>
-        !groundTruthDimensions.some(
-          (gtDim) => calculateSimilarity(exDim.value, gtDim.value) >= 0.8
-        )
+    // Calculate Character Error Rate (CER)
+    const characterErrorRate = calculateCER(normalizedExtracted, normalizedGroundTruth);
+
+    // Calculate character-by-character accuracy
+    const characterAccuracy = calculateCharacterAccuracy(normalizedExtracted, normalizedGroundTruth);
+
+    // Calculate character set coverage
+    const characterSetCoverage = calculateCharacterSetCoverage(
+      normalizedExtracted,
+      normalizedGroundTruth
     );
 
-    const dimensionMetrics = calculateMetrics({
-      found: extractedDimensions.length,
-      correct: correctDimensions,
-      total: groundTruthDimensions.length,
-    });
+    // Calculate exact character count
+    const charCount = calculateExactCharacterCount(normalizedExtracted, normalizedGroundTruth);
 
-    // Calculate equipment metrics
-    const extractedEquipment = extractedData.equipment || [];
-    const groundTruthEquipment = groundTruth.equipment || [];
+    // Calculate Levenshtein edit distance
+    const editDistance = calculateLevenshteinDistance(normalizedExtracted, normalizedGroundTruth);
 
-    let correctEquipment = 0;
-    const equipmentErrors: string[] = [];
+    // Generate character-level differences (up to 100 for performance)
+    const characterDifferences: Array<{
+      position: number;
+      expected: string;
+      actual: string;
+    }> = [];
 
-    for (const gtEq of groundTruthEquipment) {
-      const found = extractedEquipment.find(
-        (exEq) => calculateSimilarity(exEq.name, gtEq.name) >= 0.7
-      );
+    const maxLength = Math.max(normalizedExtracted.length, normalizedGroundTruth.length);
+    let diffCount = 0;
 
-      if (found) {
-        correctEquipment++;
-      } else {
-        falseNegatives.push(`Missing equipment: ${gtEq.name}`);
-        equipmentErrors.push(`Failed to extract: ${gtEq.name}`);
+    for (let i = 0; i < maxLength && diffCount < 100; i++) {
+      const expected = normalizedGroundTruth[i] || '(end)';
+      const actual = normalizedExtracted[i] || '(end)';
+
+      if (expected !== actual) {
+        characterDifferences.push({
+          position: i,
+          expected,
+          actual,
+        });
+        diffCount++;
       }
     }
 
-    const falsePositiveEquipment = extractedEquipment.filter(
-      (exEq) =>
-        !groundTruthEquipment.some(
-          (gtEq) => calculateSimilarity(exEq.name, gtEq.name) >= 0.7
-        )
-    );
-
-    const equipmentMetrics = calculateMetrics({
-      found: extractedEquipment.length,
-      correct: correctEquipment,
-      total: groundTruthEquipment.length,
-    });
-
-    // Calculate area metrics
-    const extractedAreas = extractedData.areas || [];
-    const groundTruthAreas = groundTruth.areas || [];
-
-    let correctAreas = 0;
-    const areaErrors: string[] = [];
-
-    for (const gtArea of groundTruthAreas) {
-      const found = extractedAreas.find(
-        (exArea) => calculateSimilarity(exArea.name, gtArea.name) >= 0.7
-      );
-
-      if (found) {
-        correctAreas++;
-      } else {
-        falseNegatives.push(`Missing area: ${gtArea.name}`);
-        areaErrors.push(`Failed to extract: ${gtArea.name}`);
-      }
-    }
-
-    const areaMetrics = calculateMetrics({
-      found: extractedAreas.length,
-      correct: correctAreas,
-      total: groundTruthAreas.length,
-    });
-
-    // Calculate average confidence score
-    const allConfidences = [
-      ...(extractedDimensions.map((d) => d.confidence).filter(Boolean) as number[]),
-      ...(extractedEquipment.map((e) => e.confidence).filter(Boolean) as number[]),
-      ...(extractedAreas.map((a) => a.confidence).filter(Boolean) as number[]),
-    ];
-
-    const avgConfidenceScore =
-      allConfidences.length > 0
-        ? allConfidences.reduce((sum, c) => sum + c, 0) / allConfidences.length
-        : 0;
-
-    const falsePositives = [
-      ...falsePositiveDimensions.map((d) => `Extra dimension: ${d.value}`),
-      ...falsePositiveEquipment.map((e) => `Extra equipment: ${e.name}`),
-    ];
+    // Generate summary
+    const summary = [
+      `Character Error Rate: ${(characterErrorRate * 100).toFixed(2)}%`,
+      `Character Accuracy: ${characterAccuracy.toFixed(2)}%`,
+      `Character Set Coverage: ${characterSetCoverage.toFixed(2)}%`,
+      `Edit Distance: ${editDistance}`,
+      `Character Count: ${charCount.extractedCount}/${charCount.groundTruthCount} ${
+        charCount.matches ? '✓' : '✗'
+      }`,
+      characterDifferences.length > 0
+        ? `Found ${characterDifferences.length}${diffCount >= 100 ? '+' : ''} character differences`
+        : 'Perfect match!',
+    ].join('\n');
 
     return {
-      dimensionMetrics: {
-        found: extractedDimensions.length,
-        correct: correctDimensions,
-        total: groundTruthDimensions.length,
-        ...dimensionMetrics,
-      },
-      equipmentMetrics: {
-        found: extractedEquipment.length,
-        correct: correctEquipment,
-        total: groundTruthEquipment.length,
-        ...equipmentMetrics,
-      },
-      areaMetrics: {
-        found: extractedAreas.length,
-        correct: correctAreas,
-        total: groundTruthAreas.length,
-        recall: areaMetrics.recall,
-        precision: areaMetrics.precision,
-      },
-      avgConfidenceScore: Math.round(avgConfidenceScore * 100) / 100,
+      characterErrorRate: Math.round(characterErrorRate * 10000) / 10000, // 4 decimal places
+      characterAccuracy: Math.round(characterAccuracy * 100) / 100, // 2 decimal places
+      characterSetCoverage: Math.round(characterSetCoverage * 100) / 100, // 2 decimal places
+      extractedCharCount: charCount.extractedCount,
+      groundTruthCharCount: charCount.groundTruthCount,
+      exactCharCountMatch: charCount.matches,
+      charCountDifference: charCount.difference,
+      editDistance,
+      avgConfidenceScore: confidenceScore,
+      bboxSourceStats,
       breakdown: {
-        dimensionErrors,
-        equipmentErrors,
-        areaErrors,
-        falsePositives,
-        falseNegatives,
+        extractedText: normalizedExtracted,
+        groundTruthText: normalizedGroundTruth,
+        characterDifferences,
+        summary,
       },
     };
   },

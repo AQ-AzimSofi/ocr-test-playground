@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as fs from 'fs';
 import * as dotenv from 'dotenv';
+import { cleanAICommentary } from './utils.js';
 
 dotenv.config({ path: '.env.development' });
 
@@ -12,7 +13,7 @@ export class GeminiClient {
   private genAI: GoogleGenerativeAI;
   private model: string;
 
-  constructor(model: string = 'gemini-2.0-flash-exp') {
+  constructor(model: string = 'gemini-2.5-flash') {
     const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
     if (!apiKey) {
       throw new Error('GOOGLE_GEMINI_API_KEY environment variable not set');
@@ -20,6 +21,160 @@ export class GeminiClient {
 
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.model = model;
+  }
+
+  /**
+   * Extract all visible text from an image using OCR
+   * Includes post-processing to remove AI commentary/preambles
+   */
+  async extractText(imagePath: string): Promise<{ text: string; confidence: number }> {
+    const model = this.genAI.getGenerativeModel({ model: this.model });
+
+    const prompt = `You are a pure OCR system. Extract ALL visible text from this image.
+
+CRITICAL RULES:
+- Return ONLY the raw text characters exactly as they appear
+- NO explanations, NO comments, NO markdown formatting
+- NO preambles like "Here is...", "I found...", "Based on..."
+- Just the text itself, nothing else
+- Maintain reading order and use newlines to separate text sections
+
+Include:
+- All numbers and digits
+- All characters (Japanese, English, symbols)
+- All special characters (×, ㎡, m², etc.)
+
+WRONG (DO NOT DO THIS):
+"Here is the extracted text:
+10,920
+浴室"
+
+CORRECT (DO THIS):
+"10,920
+浴室"`;
+
+    const imageData = fs.readFileSync(imagePath);
+    const base64Image = imageData.toString('base64');
+
+    const mimeType = imagePath.endsWith('.png') ? 'image/png' : 'image/jpeg';
+
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: base64Image,
+          mimeType,
+        },
+      },
+    ]);
+
+    const response = result.response;
+    const rawText = response.text();
+
+    // Clean the response to remove any AI-generated commentary
+    const { cleaned, hadCommentary, removedPatterns } = cleanAICommentary(rawText);
+
+    // Log warning if commentary was detected and removed
+    if (hadCommentary) {
+      console.warn(
+        `  Gemini added commentary (removed: ${removedPatterns.join(', ')})`
+      );
+    }
+
+    // Gemini doesn't provide confidence scores for raw text extraction
+    // We'll use a default high confidence since it's a vision model
+    return {
+      text: cleaned,
+      confidence: 0.95,
+    };
+  }
+
+  /**
+   * Extract text from a specific region (cropped image)
+   * Optimized for small text regions in hybrid OCR workflows
+   */
+  async extractTextFromRegion(
+    base64Image: string,
+    context?: {
+      originalText?: string;
+      surroundingText?: string;
+    }
+  ): Promise<{ text: string; confidence: number }> {
+    const model = this.genAI.getGenerativeModel({ model: this.model });
+
+    let prompt = `You are a pure OCR system. This is a SMALL REGION cropped from a larger image.
+Extract ONLY the visible text in this cropped region.
+
+CRITICAL RULES:
+- Return ONLY the raw text characters exactly as they appear
+- NO explanations, NO comments, NO formatting
+- NO preambles like "Here is...", "I found...", "The text is..."
+- Just the text itself, nothing else
+- This is a small region, output should be short`;
+
+    if (context?.originalText) {
+      prompt += `\n\nOriginal OCR detected: "${context.originalText}"
+Please verify or correct this text based on what you see in the image.`;
+    }
+
+    if (context?.surroundingText) {
+      prompt += `\n\nSurrounding context: "${context.surroundingText}"
+This may help you understand the text in this region.`;
+    }
+
+    const result = await model.generateContent([
+      prompt,
+      {
+        inlineData: {
+          data: base64Image,
+          mimeType: 'image/png',
+        },
+      },
+    ]);
+
+    const response = result.response;
+    const rawText = response.text();
+
+    // Clean the response
+    const { cleaned, hadCommentary } = cleanAICommentary(rawText);
+
+    if (hadCommentary) {
+      console.warn(`  Gemini added commentary in region extraction`);
+    }
+
+    return {
+      text: cleaned.trim(),
+      confidence: 0.95, // Gemini doesn't provide confidence
+    };
+  }
+
+  /**
+   * Batch extract text from multiple regions
+   * More efficient than calling extractTextFromRegion multiple times
+   */
+  async batchExtractTextFromRegions(
+    regions: Array<{
+      base64: string;
+      originalText?: string;
+    }>
+  ): Promise<Array<{ text: string; confidence: number }>> {
+    // Process regions in parallel with concurrency limit
+    const concurrency = 3; // Gemini rate limits
+    const results: Array<{ text: string; confidence: number }> = [];
+
+    for (let i = 0; i < regions.length; i += concurrency) {
+      const batch = regions.slice(i, i + concurrency);
+      const batchResults = await Promise.all(
+        batch.map(region =>
+          this.extractTextFromRegion(region.base64, {
+            originalText: region.originalText,
+          })
+        )
+      );
+      results.push(...batchResults);
+    }
+
+    return results;
   }
 
   /**
@@ -145,10 +300,11 @@ JSONフォーマット（このフォーマット以外は返さないでくだ�
    * Estimate API cost based on tokens
    * Gemini 2.0 Flash pricing: Very cheap, often free tier covers it
    */
-  estimateCost(imageCount: number = 1): number {
+  estimateCost(imageCount: number = 1, isRegion: boolean = false): number {
     // Gemini 2.0 Flash is very cheap
-    // Estimate: ~0.05 yen per image (rough estimate)
-    const costPerImage = 0.05;
+    // Full image: ~0.05 yen per image
+    // Small region: ~0.02 yen per region (smaller input)
+    const costPerImage = isRegion ? 0.02 : 0.05;
     return imageCount * costPerImage;
   }
 }

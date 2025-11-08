@@ -1,149 +1,214 @@
-import stringSimilarity from 'string-similarity';
-
 /**
- * Utility functions for text processing and comparison
+ * Utility functions for character-level OCR evaluation
  */
 
 /**
- * Calculate string similarity (0-1)
+ * Normalize text for consistent comparison
+ * - Normalizes Unicode characters (NFKC)
+ * - Preserves all whitespace and newlines
  */
-export function calculateSimilarity(str1: string, str2: string): number {
-  return stringSimilarity.compareTwoStrings(str1, str2);
+export function normalizeText(text: string): string {
+  return text.normalize('NFKC');
 }
 
 /**
- * Extract dimensions from text using regex
- * Matches patterns like: "3500mm", "1255×960", "R=450", "3.5m"
+ * Calculate Levenshtein distance (edit distance) between two strings
+ * Returns the minimum number of single-character edits (insertions, deletions, substitutions)
+ * needed to change one string into the other
+ *
+ * source: https://www.sciencedirect.com/topics/computer-science/levenshtein-distance
+ * Levenshtein distance is defined as the minimum number of insertions, deletions, or substitutions
+ *  required to transform one string into another. It serves as a measure of proximity between two strings.
  */
-export function extractDimensions(text: string): Array<{
-  value: string;
-  numbers: string[];
-  unit?: string;
-}> {
-  const dimensions: Array<{
-    value: string;
-    numbers: string[];
-    unit?: string;
-  }> = [];
+export function calculateLevenshteinDistance(str1: string, str2: string): number {
+  const len1 = str1.length;
+  const len2 = str2.length;
 
-  // Pattern for dimensions: number + optional unit + optional × + optional number + optional unit
-  const dimensionPattern = /(\d+(?:\.\d+)?)\s*(mm|cm|m|t|トン)?(?:\s*[×xX]\s*(\d+(?:\.\d+)?)\s*(mm|cm|m)?)?/gi;
+  // Create a 2D array for dynamic programming
+  const matrix: number[][] = Array(len1 + 1)
+    .fill(null)
+    .map(() => Array(len2 + 1).fill(0));
 
-  let match;
-  while ((match = dimensionPattern.exec(text)) !== null) {
-    const numbers = [match[1], match[3]].filter(Boolean);
-    const unit = match[2] || match[4];
-
-    dimensions.push({
-      value: match[0].trim(),
-      numbers,
-      unit,
-    });
+  // Initialize first column and row
+  for (let i = 0; i <= len1; i++) {
+    matrix[i][0] = i;
+  }
+  for (let j = 0; j <= len2; j++) {
+    matrix[0][j] = j;
   }
 
-  // Pattern for radius: "R=450", "r = 3.5m"
-  const radiusPattern = /[Rr]\s*=\s*(\d+(?:\.\d+)?)\s*(mm|cm|m)?/gi;
-
-  while ((match = radiusPattern.exec(text)) !== null) {
-    dimensions.push({
-      value: match[0].trim(),
-      numbers: [match[1]],
-      unit: match[2],
-    });
-  }
-
-  return dimensions;
-}
-
-/**
- * Extract Japanese construction equipment labels from text
- */
-export function extractEquipmentLabels(text: string): Array<{
-  term: string;
-  spec?: string;
-}> {
-  const constructionTerms = [
-    'タワークレーン',
-    'クレーン',
-    'ラフタークレーン',
-    'クローラクレーン',
-    '仮囲い',
-    '資材置場',
-    '事務所棟',
-    '作業場',
-    '駐車場',
-    'ゲート',
-    '安全柵',
-    '足場',
-    'ダンプ',
-    'トラック',
-    'バックホー',
-    'ショベル',
-    'ポンプ車',
-  ];
-
-  const found: Array<{ term: string; spec?: string }> = [];
-
-  for (const term of constructionTerms) {
-    if (text.includes(term)) {
-      // Try to find spec (like "13t", "25t") near the term
-      const specPattern = new RegExp(`${term}.*?(\\d+(?:\\.\\d+)?\\s*[tトン])`, 'i');
-      const match = text.match(specPattern);
-
-      found.push({
-        term,
-        spec: match ? match[1] : undefined,
-      });
+  // Fill the matrix
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1, // deletion
+        matrix[i][j - 1] + 1, // insertion
+        matrix[i - 1][j - 1] + cost // substitution
+      );
     }
   }
 
-  return found;
+  return matrix[len1][len2];
 }
 
 /**
- * Deduplicate array of objects based on similarity threshold
+ * Calculate Character Error Rate (CER)
+ * CER = (insertions + deletions + substitutions) / total_characters_in_reference
+ * Industry standard metric for OCR accuracy
+ * @returns CER as a decimal (0.0 = perfect, 1.0 = completely wrong)
  */
-export function deduplicateByValue<T extends { value: string }>(
-  items: T[],
-  threshold: number = 0.9
-): T[] {
-  const unique: T[] = [];
+export function calculateCER(extracted: string, groundTruth: string): number {
+  const normalizedExtracted = normalizeText(extracted);
+  const normalizedGroundTruth = normalizeText(groundTruth);
 
-  for (const item of items) {
-    const isDuplicate = unique.some(
-      (uniqueItem) => calculateSimilarity(uniqueItem.value, item.value) >= threshold
-    );
+  const editDistance = calculateLevenshteinDistance(normalizedExtracted, normalizedGroundTruth);
+  const totalChars = normalizedGroundTruth.length;
 
-    if (!isDuplicate) {
-      unique.push(item);
+  if (totalChars === 0) {
+    return normalizedExtracted.length === 0 ? 0 : 1;
+  }
+
+  return editDistance / totalChars;
+}
+
+/**
+ * Calculate character-by-character accuracy (position-based)
+ * Compares characters at each position and calculates percentage of matches
+ * @returns Accuracy as a percentage (0-100)
+ */
+export function calculateCharacterAccuracy(extracted: string, groundTruth: string): number {
+  const normalizedExtracted = normalizeText(extracted);
+  const normalizedGroundTruth = normalizeText(groundTruth);
+
+  if (normalizedGroundTruth.length === 0) {
+    return normalizedExtracted.length === 0 ? 100 : 0;
+  }
+
+  const maxLength = Math.max(normalizedExtracted.length, normalizedGroundTruth.length);
+  let correctChars = 0;
+
+  for (let i = 0; i < maxLength; i++) {
+    if (normalizedExtracted[i] === normalizedGroundTruth[i]) {
+      correctChars++;
     }
   }
 
-  return unique;
+  return (correctChars / normalizedGroundTruth.length) * 100;
 }
 
 /**
- * Calculate precision, recall, and F1 score
+ * Calculate character set coverage
+ * Measures what percentage of unique characters in ground truth were found in extracted text
+ * @returns Coverage as a percentage (0-100)
  */
-export function calculateMetrics(params: {
-  found: number;
-  correct: number;
-  total: number;
-}): {
-  precision: number;
-  recall: number;
-  f1Score: number;
+export function calculateCharacterSetCoverage(extracted: string, groundTruth: string): number {
+  const normalizedExtracted = normalizeText(extracted);
+  const normalizedGroundTruth = normalizeText(groundTruth);
+
+  const groundTruthChars = new Set(normalizedGroundTruth);
+  const extractedChars = new Set(normalizedExtracted);
+
+  if (groundTruthChars.size === 0) {
+    return extractedChars.size === 0 ? 100 : 0;
+  }
+
+  let foundChars = 0;
+  for (const char of groundTruthChars) {
+    if (extractedChars.has(char)) {
+      foundChars++;
+    }
+  }
+
+  return (foundChars / groundTruthChars.size) * 100;
+}
+
+/**
+ * Check if exact character count matches
+ * @returns Object with match status and counts
+ */
+export function calculateExactCharacterCount(extracted: string, groundTruth: string): {
+  matches: boolean;
+  extractedCount: number;
+  groundTruthCount: number;
+  difference: number;
 } {
-  const { found, correct, total } = params;
+  const normalizedExtracted = normalizeText(extracted);
+  const normalizedGroundTruth = normalizeText(groundTruth);
 
-  const precision = found > 0 ? correct / found : 0;
-  const recall = total > 0 ? correct / total : 0;
-  const f1Score = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0;
+  const extractedCount = normalizedExtracted.length;
+  const groundTruthCount = normalizedGroundTruth.length;
 
   return {
-    precision: Math.round(precision * 100) / 100,
-    recall: Math.round(recall * 100) / 100,
-    f1Score: Math.round(f1Score * 100) / 100,
+    matches: extractedCount === groundTruthCount,
+    extractedCount,
+    groundTruthCount,
+    difference: extractedCount - groundTruthCount,
+  };
+}
+
+/**
+ * Clean AI-generated text by removing common commentary patterns
+ * Used to extract pure OCR text from LLM responses that may include preambles/explanations
+ *
+ * @param text - Raw text from AI model
+ * @returns Cleaned text and whether commentary was detected
+ */
+export function cleanAICommentary(text: string): {
+  cleaned: string;
+  hadCommentary: boolean;
+  removedPatterns: string[];
+} {
+  let cleaned = text.trim();
+  const removedPatterns: string[] = [];
+
+  // Step 1: Remove markdown code blocks
+  const codeBlockPattern = /```(?:text|plaintext)?\n?([\s\S]*?)\n?```/g;
+  if (codeBlockPattern.test(cleaned)) {
+    cleaned = cleaned.replace(codeBlockPattern, '$1');
+    removedPatterns.push('markdown code block');
+  }
+
+  // Step 2: Remove common AI preambles (case-insensitive)
+  const preambles = [
+    { pattern: /^Here is the extracted text:?\s*/i, name: 'Here is...' },
+    { pattern: /^Here is what I extracted:?\s*/i, name: 'Here is what...' },
+    { pattern: /^I found the following text:?\s*/i, name: 'I found...' },
+    { pattern: /^Based on the image[,:]\s*/i, name: 'Based on...' },
+    { pattern: /^The extracted text is:?\s*/i, name: 'The extracted...' },
+    { pattern: /^Extracted text:?\s*/i, name: 'Extracted text:' },
+    { pattern: /^Text from (?:the )?image:?\s*/i, name: 'Text from image:' },
+    { pattern: /^(?:The )?OCR results?:?\s*/i, name: 'OCR result:' },
+  ];
+
+  for (const { pattern, name } of preambles) {
+    if (pattern.test(cleaned)) {
+      cleaned = cleaned.replace(pattern, '');
+      removedPatterns.push(name);
+    }
+  }
+
+  // Step 3: Remove trailing commentary/notes
+  const trailingPatterns = [
+    { pattern: /\n+Note:.*$/is, name: 'trailing Note:' },
+    { pattern: /\n+Please note:.*$/is, name: 'trailing Please note:' },
+    { pattern: /\n+\*\*Note:.*$/is, name: 'trailing **Note:' },
+  ];
+
+  for (const { pattern, name } of trailingPatterns) {
+    if (pattern.test(cleaned)) {
+      cleaned = cleaned.replace(pattern, '');
+      removedPatterns.push(name);
+    }
+  }
+
+  // Step 4: Final trim
+  cleaned = cleaned.trim();
+
+  return {
+    cleaned,
+    hadCommentary: removedPatterns.length > 0,
+    removedPatterns,
   };
 }
 
