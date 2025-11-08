@@ -1,0 +1,211 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { formatDistanceToNow, format } from 'date-fns';
+import type { TestRun } from '../types/api';
+import { CheckmarkIcon } from './icons';
+
+interface TestRunCardProps {
+  testRun: TestRun;
+  isLatest?: boolean;
+}
+
+const TOOL_COLORS: Record<string, string> = {
+  'cloud-vision': 'bg-blue-100 text-blue-800 border-blue-300',
+  'gemini-2.0-flash': 'bg-purple-100 text-purple-800 border-purple-300',
+  gemini: 'bg-purple-100 text-purple-800 border-purple-300',
+  hybrid: 'bg-gradient-to-r from-blue-100 to-purple-100 text-purple-800 border-purple-300',
+  'azure-layout': 'bg-cyan-100 text-cyan-800 border-cyan-300',
+  'azure-read': 'bg-teal-100 text-teal-800 border-teal-300',
+  'cloud-vision-gemini-hybrid': 'bg-gradient-to-r from-blue-100 to-purple-100 text-indigo-800 border-indigo-300',
+  'azure-read-gemini-hybrid': 'bg-gradient-to-r from-teal-100 to-purple-100 text-purple-800 border-purple-300',
+};
+
+export function TestRunCard({ testRun, isLatest = false }: TestRunCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const startedAt = new Date(testRun.startedAt);
+  const relativeTime = formatDistanceToNow(startedAt, { addSuffix: true });
+  const fullTimestamp = format(startedAt, 'PPpp');
+  const dateOnly = format(startedAt, 'PPp'); // Shorter format
+
+  const isComplete = testRun.completed;
+  const hasDrawings = (testRun.drawings?.length || 0) > 0;
+  const drawingName = testRun.drawings?.[0]?.fileName || 'Unknown drawing';
+
+  return (
+    <Link to={`/test-run/${testRun.id}`}>
+      <div
+        className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-200 p-6 cursor-pointer border border-gray-200 hover:border-blue-400"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              {/* Latest Badge */}
+              {isLatest && (
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500 text-white">
+                  Latest
+                </span>
+              )}
+
+              {/* Status Badge */}
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${
+                  isComplete
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}
+              >
+                {isComplete && <CheckmarkIcon size={12} />}
+                {isComplete ? 'Completed' : 'In Progress'}
+              </span>
+            </div>
+
+            {/* Full Timestamp - Prominently Displayed */}
+            <div className="text-sm text-gray-700 font-medium mb-2">
+              {dateOnly}
+            </div>
+            <div className="text-xs text-gray-500 mb-3">
+              ({relativeTime})
+            </div>
+
+            <h3 className="text-lg font-semibold text-gray-900">
+              {drawingName}
+            </h3>
+
+            {hasDrawings && (
+              <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                <span>Type: {testRun.drawings![0].type}</span>
+                <span>•</span>
+                <span>Quality: {testRun.drawings![0].quality}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Tools Section */}
+        <div className="mb-4">
+          <div className="text-xs font-medium text-gray-500 mb-2">
+            OCR Tools ({testRun.tools.length})
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {testRun.tools.map((tool) => (
+              <span
+                key={tool}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${
+                  TOOL_COLORS[tool] || 'bg-gray-100 text-gray-800 border-gray-300'
+                }`}
+              >
+                {tool}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Hover Expansion Panel */}
+        {isHovered && isComplete && testRun.summary && (
+          <div className="mt-4 pt-4 border-t border-gray-200 animate-fadeIn">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              {/* Quick Stats */}
+              <div>
+                <div className="text-xs font-medium text-gray-500 mb-2">
+                  Processing Time
+                </div>
+                <div className="space-y-1">
+                  {testRun.tools.slice(0, 2).map((tool) => {
+                    const avgTime = testRun.summary.avgProcessingTimeByTool[tool];
+                    return avgTime ? (
+                      <div key={tool} className="flex justify-between text-xs">
+                        <span className="text-gray-600 truncate max-w-[120px]" title={tool}>
+                          {tool}
+                        </span>
+                        <span className="font-medium">{avgTime.toFixed(0)}ms</span>
+                      </div>
+                    ) : null;
+                  })}
+                  {testRun.tools.length > 2 && (
+                    <div className="text-xs text-gray-400 italic">
+                      +{testRun.tools.length - 2} more...
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-medium text-gray-500 mb-2">
+                  API Cost
+                </div>
+                <div className="space-y-1">
+                  {testRun.tools.slice(0, 2).map((tool) => {
+                    const cost = testRun.summary.totalCostByTool[tool];
+                    return cost !== undefined ? (
+                      <div key={tool} className="flex justify-between text-xs">
+                        <span className="text-gray-600 truncate max-w-[120px]" title={tool}>
+                          {tool}
+                        </span>
+                        <span className="font-medium">¥{cost.toFixed(2)}</span>
+                      </div>
+                    ) : null;
+                  })}
+                  {testRun.tools.length > 2 && (
+                    <div className="text-xs text-gray-400 italic">
+                      +{testRun.tools.length - 2} more...
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Recommended Tool */}
+            {testRun.summary.recommendedTool && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Best Overall:</span>
+                  <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                    TOOL_COLORS[testRun.summary.recommendedTool] || 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {testRun.summary.recommendedTool}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Test Run ID - For Debugging */}
+            {isLatest && (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="text-xs text-gray-500">
+                  <span className="font-medium">Latest Test Run</span>
+                  <div className="mt-1 text-gray-400 font-mono text-[10px] truncate" title={testRun.id}>
+                    ID: {testRun.id.substring(0, 8)}...
+                  </div>
+                  <div className="mt-1 text-blue-600 font-medium flex items-center gap-1">
+                    <CheckmarkIcon size={12} />
+                    This run has bounding box data
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* View Details Button */}
+            <div className="mt-4">
+              <button className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                View Detailed Results →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Incomplete Test Run Message */}
+        {isHovered && !isComplete && (
+          <div className="mt-4 pt-4 border-t border-gray-200 animate-fadeIn">
+            <div className="text-center text-sm text-gray-500 italic">
+              Test run in progress...
+            </div>
+          </div>
+        )}
+      </div>
+    </Link>
+  );
+}
