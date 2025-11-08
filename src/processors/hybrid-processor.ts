@@ -1,129 +1,48 @@
 import { cloudVisionClient } from '../lib/cloud-vision-client.js';
 import { geminiClient } from '../lib/gemini-client.js';
-import { extractDimensions, extractEquipmentLabels, deduplicateByValue, calculateSimilarity } from '../lib/utils.js';
+import { calculateLevenshteinDistance } from '../lib/utils.js';
 import { db, extractionResults } from '../db/index.js';
 
 /**
- * Process drawing with both Cloud Vision and Gemini, then merge results
+ * Process drawing with both Cloud Vision and Gemini, select best result for character-level OCR
  */
 export async function processWithHybrid(imagePath: string, drawingId: string) {
   console.log(`  Processing with Hybrid (Cloud Vision + Gemini)...`);
   const startTime = Date.now();
 
   try {
-    // Run both extractions in parallel
-    const [cloudVisionResult, geminiResult] = await Promise.all([
+    // Run both extractions in parallel (including bounding boxes for Cloud Vision)
+    const [cloudVisionResult, geminiResult, cloudVisionBBoxes] = await Promise.all([
       cloudVisionClient.extractText(imagePath),
-      geminiClient.extractDrawingData(imagePath),
+      geminiClient.extractText(imagePath),
+      cloudVisionClient.extractTextWithBoundingBoxes(imagePath),
     ]);
 
-    // Extract from Cloud Vision text
-    const cvDimensions = extractDimensions(cloudVisionResult.text);
-    const cvEquipment = extractEquipmentLabels(cloudVisionResult.text);
+    // Compare both results and select the longer one
+    // (typically more text extracted = better OCR)
+    const cvLength = cloudVisionResult.text.length;
+    const geminiLength = geminiResult.text.length;
 
-    // Merge dimensions from both sources
-    const allDimensions = [
-      ...cvDimensions.map((d) => ({
-        value: d.value,
-        source: 'cloud-vision',
-        confidence: 0.8,
-      })),
-      ...(geminiResult.dimensions || []).map((d: any) => ({
-        value: d.value,
-        source: 'gemini',
-        location: d.location,
-        element: d.element,
-        type: d.type,
-        confidence: 0.9,
-      })),
-    ];
-
-    // Deduplicate dimensions
-    const uniqueDimensions = deduplicateByValue(allDimensions, 0.85);
-
-    // Add confidence boost for dimensions found by both tools
-    const boostedDimensions = uniqueDimensions.map((dim) => {
-      const foundInBoth =
-        cvDimensions.some((cv) => calculateSimilarity(cv.value, dim.value) > 0.85) &&
-        geminiResult.dimensions?.some(
-          (g: any) => calculateSimilarity(g.value, dim.value) > 0.85
-        );
-
-      return {
-        ...dim,
-        confidence: foundInBoth ? 0.95 : dim.confidence,
-        agreementLevel: foundInBoth ? 'high' : 'single-source',
-      };
-    });
-
-    // Merge equipment from both sources
-    const allEquipment = [
-      ...cvEquipment.map((e) => ({
-        name: e.term,
-        spec: e.spec,
-        source: 'cloud-vision',
-        confidence: 0.7,
-      })),
-      ...(geminiResult.equipment || []).map((e: any) => ({
-        name: e.name,
-        spec: e.spec,
-        position: e.position,
-        source: 'gemini',
-        confidence: 0.9,
-      })),
-    ];
-
-    // Deduplicate equipment by name
-    const uniqueEquipment: any[] = [];
-    for (const eq of allEquipment) {
-      const isDuplicate = uniqueEquipment.some(
-        (existing) => calculateSimilarity(existing.name, eq.name) >= 0.7
-      );
-
-      if (!isDuplicate) {
-        uniqueEquipment.push(eq);
-      } else {
-        // If duplicate, boost confidence and merge data
-        const existingIndex = uniqueEquipment.findIndex(
-          (existing) => calculateSimilarity(existing.name, eq.name) >= 0.7
-        );
-        if (existingIndex !== -1) {
-          uniqueEquipment[existingIndex].confidence = 0.95;
-          uniqueEquipment[existingIndex].agreementLevel = 'high';
-          // Prefer Gemini's position data if available
-          if (eq.position && !uniqueEquipment[existingIndex].position) {
-            uniqueEquipment[existingIndex].position = eq.position;
-          }
-        }
-      }
-    }
-
-    const mergedData = {
-      dimensions: boostedDimensions,
-      equipment: uniqueEquipment,
-      areas: geminiResult.areas || [],
-      distances: geminiResult.distances || [],
-    };
-
-    // Calculate agreement
-    const dimensionsWithHighAgreement = boostedDimensions.filter(
-      (d: any) => d.agreementLevel === 'high'
+    // Calculate similarity between the two results
+    const similarity = calculateLevenshteinDistance(
+      cloudVisionResult.text,
+      geminiResult.text
     );
 
-    const equipmentWithHighAgreement = uniqueEquipment.filter(
-      (e: any) => e.agreementLevel === 'high'
-    );
+    const maxLength = Math.max(cvLength, geminiLength);
+    const similarityRate = maxLength > 0 ? 1 - (similarity / maxLength) : 0;
 
-    const totalDimensions = boostedDimensions.length;
-    const totalEquipment = uniqueEquipment.length;
+    // Select the result with more text extracted
+    // If lengths are similar (within 10%), prefer Cloud Vision for better accuracy
+    const useCloudVision = cvLength >= geminiLength * 0.9;
 
-    const dimensionAgreementRate =
-      totalDimensions > 0 ? dimensionsWithHighAgreement.length / totalDimensions : 0;
+    const selectedText = useCloudVision ? cloudVisionResult.text : geminiResult.text;
+    const selectedSource = useCloudVision ? 'cloud-vision' : 'gemini';
+    const avgConfidence = useCloudVision ? cloudVisionResult.confidence : geminiResult.confidence;
 
-    const equipmentAgreementRate =
-      totalEquipment > 0 ? equipmentWithHighAgreement.length / totalEquipment : 0;
-
-    const overallAgreement = (dimensionAgreementRate + equipmentAgreementRate) / 2;
+    // Use Cloud Vision bounding boxes when available, empty array for Gemini
+    // (Gemini doesn't provide bounding box data)
+    const boundingBoxes = useCloudVision ? cloudVisionBBoxes : [];
 
     const processingTime = Date.now() - startTime;
     const totalCost = cloudVisionClient.estimateCost(1) + geminiClient.estimateCost(1);
@@ -134,29 +53,41 @@ export async function processWithHybrid(imagePath: string, drawingId: string) {
       .values({
         drawingId,
         tool: 'hybrid',
-        extractedData: mergedData,
+        rawText: selectedText,
+        boundingBoxes,
         processingTimeMs: processingTime,
         apiCost: totalCost,
+        metadata: {
+          selectedSource,
+          cloudVisionChars: cvLength,
+          geminiChars: geminiLength,
+          agreementRate: Math.round(similarityRate * 100),
+        },
       })
       .returning();
 
-    console.log(`  ✅ Hybrid completed in ${(processingTime / 1000).toFixed(2)}s`);
-    console.log(`     Agreement: ${Math.round(overallAgreement * 100)}% (${dimensionsWithHighAgreement.length}/${totalDimensions} dimensions, ${equipmentWithHighAgreement.length}/${totalEquipment} equipment)`);
+    console.log(`  Hybrid completed in ${(processingTime / 1000).toFixed(2)}s`);
+    console.log(`     Selected: ${selectedSource} (${selectedText.length} chars, ${boundingBoxes.length} bboxes)`);
+    console.log(`     Cloud Vision: ${cvLength} chars, Gemini: ${geminiLength} chars`);
+    console.log(`     Agreement: ${(similarityRate * 100).toFixed(1)}%`);
 
     return {
       success: true,
       extractionResultId: dbResult.id,
       tool: 'hybrid',
+      rawText: selectedText,
+      confidence: avgConfidence,
       processingTime,
       cost: totalCost,
-      agreement: {
-        dimensionsAgreed: dimensionsWithHighAgreement.length,
-        equipmentAgreed: equipmentWithHighAgreement.length,
-        totalAgreement: Math.round(overallAgreement * 100),
+      metadata: {
+        selectedSource,
+        cloudVisionChars: cvLength,
+        geminiChars: geminiLength,
+        agreementRate: Math.round(similarityRate * 100),
       },
     };
   } catch (error) {
-    console.error(`  ❌ Hybrid processing failed:`, error);
+    console.error(`  Hybrid processing failed:`, error);
     throw error;
   }
 }
