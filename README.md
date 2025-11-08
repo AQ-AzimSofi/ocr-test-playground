@@ -1,19 +1,58 @@
 # OCR Test Playground
 
-R&D testing system for evaluating OCR and AI tools on construction layout drawings (配置図).
+R&D testing system for evaluating OCR and AI tools on construction and architectural drawings using character-level accuracy metrics.
 
-This project compares **Google Cloud Vision API**, **Google Gemini 2.0 Flash**, and **Azure AI Document Intelligence** for extracting structured data from construction drawings, helping determine the best approach for automated data extraction.
+This project compares **Google Cloud Vision API**, **Google Gemini 2.0 Flash**, and **Azure AI Document Intelligence** for text extraction accuracy from construction/architectural drawings, helping determine the best approach for automated OCR.
 
-## 🎯 Purpose
+## System Architecture
 
-Evaluate and compare OCR/AI tools for extracting:
-- **Dimensions** (3500mm, 1255×960, R=450)
-- **Equipment labels** (タワークレーン, 仮囲い, 資材置場)
-- **Specifications** (13t, 25t)
-- **Area information** (資材置場 3500mm × 4200mm)
-- **Distance measurements**
+The OCR Test Playground consists of four main components:
 
-## 📦 Tech Stack
+```
+┌─────────────────────┐
+│  Frontend Viewer    │  React + Vite (Port 5173)
+│  (Results UI)       │  - Test run timeline
+└──────────┬──────────┘  - Side-by-side comparison
+           │             - Statistics dashboard
+           │             - Bounding box visualization
+           ↓
+┌─────────────────────┐
+│  Backend API        │  Fastify (Port 3001)
+│  (REST API)         │  - Test run endpoints
+└──────────┬──────────┘  - Results data API
+           │             - Static file serving
+           ↓
+┌─────────────────────┐
+│  Test Runner        │  CLI (npm run test)
+│  (OCR Processing)   │  - Runs OCR processors
+└──────────┬──────────┘  - Calculates accuracy
+           │             - Generates reports
+           ↓
+┌─────────────────────┐
+│  PostgreSQL DB      │  Docker (Port 5434)
+│  (Results Storage)  │  - Test runs
+└─────────────────────┘  - Extraction results
+                         - Accuracy metrics
+```
+
+**Access Points:**
+- Frontend UI: http://localhost:5173/
+- Backend API: http://localhost:3001/
+- Database Studio: https://local.drizzle.studio/
+- PgAdmin: http://localhost:5051/
+- Database: postgresql://localhost:5434/ocr_test_db
+
+## Purpose
+
+Evaluate and compare OCR/AI tools for extracting all text and characters from drawings:
+- **Numbers and dimensions** (10,920, 1,820, 910, 3500mm, 1255×960)
+- **Japanese text** (浴室, 洗面室, 押入, タワークレーン, 仮囲い)
+- **Special characters** (×, ㎡)
+- **All visible text** - character-by-character accuracy evaluation
+
+Uses industry-standard **Character Error Rate (CER)** and other character-level metrics to measure OCR quality.
+
+## Tech Stack
 
 - **Mastra** - Workflow orchestration
 - **Google Cloud Vision API** - OCR specialist
@@ -22,8 +61,10 @@ Evaluate and compare OCR/AI tools for extracting:
 - **Drizzle ORM** - Database access
 - **PostgreSQL** - Results storage
 - **TypeScript** - Type safety
+- **React** - Frontend UI
+- **Vite** - Build tooling
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Prerequisites
 
@@ -94,10 +135,12 @@ docker compose up -d
 docker compose ps
 
 # Access PgAdmin (optional)
-# http://localhost:5050
+# http://localhost:5051
 # Email: admin@ocr-test.local
 # Password: admin
 ```
+
+**Note:** PostgreSQL runs on port **5434** externally (not 5432) and PgAdmin on **5051** (not 5050).
 
 ### 5. Run Database Migrations
 
@@ -110,6 +153,7 @@ npm run db:migrate
 
 # Optional: Open Drizzle Studio to explore database
 npm run db:studio
+# Opens at https://local.drizzle.studio/
 ```
 
 ### 6. Add Test Drawings
@@ -118,44 +162,61 @@ Create sample drawings in `test-drawings/` directory:
 
 ```bash
 # Create a test drawing directory
-mkdir -p test-drawings
+mkdir -p test-drawings/sample01
 
 # Add your drawings (PNG, JPG, PDF)
 # Example: drawing-001.png
 
 # Create metadata file: drawing-001-metadata.json
+# Create ground truth file: drawing-001-ground-truth.txt
 ```
 
 **Example metadata file:**
 ```json
 {
   "id": "drawing-001",
-  "type": "site-layout",
+  "type": "floor-plan",
   "quality": "high",
-  "source": "synthetic",
+  "source": "architectural-drawing",
+  "description": "Japanese architectural floor plan with room labels",
   "groundTruth": {
-    "dimensions": [
-      { "value": "3500mm", "element": "storage-area" },
-      { "value": "1255", "element": "crane-width" }
-    ],
-    "equipment": [
-      { "name": "タワークレーン", "spec": "13t" },
-      { "name": "仮囲い", "length": "50m" }
-    ],
-    "areas": [
-      { "name": "資材置場", "size": "3500mm × 4200mm" }
-    ]
+    "fullTextFile": "./drawing-001-ground-truth.txt"
   }
 }
 ```
 
+**Example ground truth file (`drawing-001-ground-truth.txt`):**
+```
+10,920
+1,820
+910
+浴室
+洗面室
+押入
+床の間
+トイレ
+キッチン
+玄関
+和室
+13.24㎡
+リビング
+33.95㎡
+```
+
+**Benefits of using external `.txt` files:**
+- Much easier to read and edit
+- No need to escape line breaks with `\n`
+- Can use any text editor
+- Better for version control
+- Easier to verify accuracy
+
 ### 7. Run Tests
 
 ```bash
-# Run all workflows on all drawings
+# Run all processors on all drawings
 npm run test:all
 
-# Run specific workflow
+# Run specific processor
 npm run test:cloud-vision
 npm run test:gemini
 npm run test:hybrid
@@ -163,27 +224,143 @@ npm run test:azure
 
 # Custom options
 npm run test -- --workflow cloud-vision --drawing drawing-001
-npm run test -- --workflow azure-document --drawing drawing-001
+npm run test -- --workflow azure-layout --drawing drawing-001
 ```
 
 ### 8. View Results
 
-Results are saved in `results/` directory:
-- `test-run-{id}.html` - Visual comparison report
-- `test-run-{id}.json` - Raw data
+Results are saved in two places:
 
-Open the HTML file in a browser to see the comparison.
+**1. Database (Viewable in Frontend UI):**
+- All test runs are stored in PostgreSQL
+- Access the frontend at http://localhost:5173/
+- Browse test runs chronologically
+- Compare results side-by-side
+- View detailed statistics and metrics
 
-## 📁 Project Structure
+**2. Generated Reports (`results/` directory):**
+- `test-run-{uuid}.html` - Standalone visual report
+- `test-run-{uuid}.json` - Raw JSON data
+- Open HTML files in browser for offline viewing
+
+## Running in Development
+
+Complete setup for developing and viewing OCR results:
+
+### Terminal 1: Start Database
+
+```bash
+cd /path/to/ocr-test-playground
+docker compose up -d
+```
+
+**Verify database is running:**
+```bash
+docker compose ps
+# Should show postgres and pgadmin containers running
+```
+
+### Terminal 2: Start Backend API Server
+
+```bash
+cd /path/to/ocr-test-playground
+npm run api:dev
+```
+
+**Expected output:**
+```
+OCR Visualization API Server
+================================
+Server listening on: http://localhost:3001
+Static files: http://localhost:3001/static/drawings/
+Health check: http://localhost:3001/health
+```
+
+**API Endpoints:**
+- `GET /api/test-runs` - List all test runs
+- `GET /api/test-runs/:id` - Get test run details
+- `GET /api/drawings` - List all drawings
+- `GET /api/drawings/:id/results` - Get OCR results for drawing
+- `GET /api/results/:id` - Get specific result with bounding boxes
+- `GET /static/drawings/` - Static drawing images
+
+### Terminal 3: Start Frontend Dev Server
+
+```bash
+cd /path/to/ocr-test-playground/frontend
+npm run dev
+```
+
+**Expected output:**
+```
+VITE v7.2.1  ready in XXX ms
+
+Local:   http://localhost:5173/
+Network: use --host to expose
+```
+
+### Access the Application
+
+1. **Frontend UI**: http://localhost:5173/
+   - View test runs chronologically
+   - Compare OCR results side-by-side
+   - Analyze statistics and accuracy metrics
+   - Interactive bounding box visualization
+
+2. **API Server**: http://localhost:3001/
+   - REST API for programmatic access
+   - Health check: http://localhost:3001/health
+
+3. **Database Admin**: http://localhost:5051/
+   - PgAdmin web interface
+   - Login: `admin@ocr-test.local` / `admin`
+   - View tables: test_runs, extraction_results, accuracy_metrics
+
+4. **Database Studio**: Run `npm run db:studio`
+   - Drizzle Studio visual DB explorer
+   - Opens at https://local.drizzle.studio/
+
+### Development Workflow
+
+```bash
+# 1. Add new test drawing to test-drawings/
+mkdir -p test-drawings/sample02
+cp my-drawing.png test-drawings/sample02/
+# Create metadata and ground truth files
+
+# 2. Run OCR tests
+npm run test:all
+
+# 3. View results in frontend
+# Open http://localhost:5173/ to see the new test run
+
+# 4. Iterate and compare
+# Modify processors, re-run tests, compare results
+```
+
+## Project Structure
 
 ```
 ocr-test-playground/
-├── src/
-│   ├── processors/           # OCR processors
+├── src/                      # Backend source code
+│   ├── api/                  # REST API server (Fastify)
+│   │   ├── server.ts         # API server entry point
+│   │   └── routes/           # API route handlers
+│   │       ├── drawings.ts
+│   │       ├── results.ts
+│   │       └── test-runs.ts
+│   ├── processors/           # OCR processor implementations
 │   │   ├── cloud-vision-processor.ts
 │   │   ├── gemini-processor.ts
-│   │   ├── azure-document-processor.ts
-│   │   └── hybrid-processor.ts
+│   │   ├── hybrid-processor.ts
+│   │   ├── azure-layout-processor.ts
+│   │   ├── azure-read-processor.ts
+│   │   ├── cloud-vision-gemini-hybrid-processor.ts
+│   │   ├── azure-read-gemini-hybrid-processor.ts
+│   │   ├── gemini-coordinates-processor.ts
+│   │   ├── gemini-bbox-synthesis-processor.ts
+│   │   ├── gemini-validation-processor.ts
+│   │   └── region-classifier-processor.ts
 │   ├── mastra/
 │   │   └── tools/            # Processing tools
 │   │       ├── dimension-extractor.ts
@@ -194,106 +371,208 @@ ocr-test-playground/
 │   │   ├── gemini-client.ts
 │   │   ├── azure-document-client.ts
 │   │   └── utils.ts
-│   ├── db/                   # Database
-│   │   ├── schema.ts
+│   ├── db/                   # Database schema & migrations
+│   │   ├── schema.ts         # Drizzle ORM schema
 │   │   └── index.ts
+│   ├── utils/                # Shared utilities
 │   ├── test-runner.ts        # CLI test runner
 │   └── index.ts              # Main entry point
+├── frontend/                 # React results viewer
+│   ├── src/
+│   │   ├── api/              # API client & React Query hooks
+│   │   ├── components/       # Reusable UI components
+│   │   │   ├── icons/        # Icon components
+│   │   │   ├── ImageCanvas.tsx
+│   │   │   ├── TestRunCard.tsx
+│   │   │   └── Tooltip.tsx
+│   │   ├── pages/            # Page components
+│   │   │   ├── Home.tsx
+│   │   │   ├── TestRunViewer.tsx
+│   │   │   ├── DrawingViewer.tsx
+│   │   │   ├── Comparison.tsx
+│   │   │   └── Statistics.tsx
+│   │   ├── types/            # TypeScript type definitions
+│   │   ├── utils/            # Frontend utilities
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   ├── package.json
+│   └── vite.config.ts
 ├── test-drawings/            # Your test images + metadata
-├── results/                  # Generated reports
+│   ├── README.md
+│   └── sample01/
+│       ├── zumen_04b.png
+│       ├── zumen_04b-metadata.json
+│       └── zumen_04b-ground-truth.txt
+├── results/                  # Generated HTML/JSON reports
+├── drizzle/                  # Database migrations
+├── docker-compose.yml        # PostgreSQL + PgAdmin
 └── package.json
 ```
 
-## 🔄 Workflows
+## Character-Level Accuracy Metrics
 
-### 1. Cloud Vision OCR Workflow
+Each test evaluates OCR quality using industry-standard metrics:
 
-Uses Google Cloud Vision Document Text Detection:
-- Extracts all text with bounding boxes
-- High accuracy for printed text
-- Processes dimensions with regex
-- Extracts equipment labels
+### Primary Metrics
 
-**Best for:** High-quality scanned drawings with clear text
+- **Character Error Rate (CER)** = edit_distance / total_characters
+  - Industry standard for OCR accuracy
+  - Lower is better (0.0 = perfect)
+  - Formula: (insertions + deletions + substitutions) / total_characters
 
-### 2. Gemini Multimodal Workflow
+- **Character Accuracy** = position-based match percentage
+  - Percentage of characters correctly recognized at correct positions
+  - Higher is better (0-100%)
 
-Uses Gemini 2.0 Flash with vision capabilities:
-- Understands context and relationships
-- Structured JSON output
-- Recognizes Japanese construction terms
-- Extracts equipment with specifications
+- **Character Set Coverage** = unique_chars_found / unique_chars_in_ground_truth
+  - Percentage of unique characters detected
+  - Higher is better (0-100%)
+  - Useful for detecting missing character types
 
-**Best for:** Complex layouts requiring understanding
+### Additional Metrics
 
-### 3. Azure Document Intelligence Workflow
-
-Uses Azure's prebuilt-layout model:
-- Specialized for technical document layouts
-- Preserves spatial relationships
-- Extracts tables and key-value pairs
-- Excellent for structured drawings
-
-**Best for:** Technical drawings with tables and structured layouts
-
-### 4. Hybrid Workflow
-
-Combines Cloud Vision + Gemini:
-- Runs both in parallel
-- Merges results with deduplication
-- Boosts confidence for items found by both
-- Calculates agreement metrics
-
-**Best for:** Maximum accuracy and confidence
-
-## 📊 Accuracy Metrics
-
-Each test calculates:
-
-- **Precision** = correct_items / items_found
-- **Recall** = items_found / total_items
-- **F1 Score** = 2 × (precision × recall) / (precision + recall)
-- **Confidence** = average confidence scores
+- **Exact Character Count Match** = does extracted count equal ground truth count?
+- **Edit Distance** = Levenshtein distance between extracted and ground truth
 - **Processing Time** = milliseconds per drawing
 - **API Cost** = estimated cost per drawing (¥)
 
-## 💡 Tips for Best Results
+### Understanding CER
 
-### Creating Test Drawings
+| CER | Quality | Interpretation |
+|-----|---------|----------------|
+| 0.00 - 0.05 | Excellent | 95%+ accuracy, production ready |
+| 0.05 - 0.10 | Good | 90-95% accuracy, minor errors |
+| 0.10 - 0.20 | Fair | 80-90% accuracy, needs review |
+| 0.20+ | Poor | <80% accuracy, significant issues |
 
-1. **Use diverse samples:**
-   - High-quality digital PDFs
-   - Scanned drawings (medium quality)
-   - Old/low-quality scans
-   - Hand-annotated drawings
+## How to Add New Test Drawings
 
-2. **Create accurate ground truth:**
-   - Manually verify all dimensions
-   - Use exact text from drawings
-   - Include position data if possible
+Step-by-step guide for adding test drawings to evaluate OCR accuracy.
 
-3. **Start small:**
-   - Test with 5-10 drawings first
-   - Expand after validating accuracy
+### Subdirectory Organization (Recommended)
 
-### Optimizing Extraction
+**Step 1: Create directory structure**
+```bash
+cd test-drawings
+mkdir -p sample02
+cd sample02
+```
 
-**For Cloud Vision:**
-- Pre-process images (contrast, noise removal)
-- Use high-resolution scans (300+ DPI)
-- Ensure text is horizontal
+**Step 2: Add your drawing image**
+```bash
+# Copy your drawing file (PNG, JPG, or PDF)
+cp /path/to/your-drawing.png ./floor-plan-001.png
+```
 
-**For Gemini:**
-- Craft detailed prompts
-- Specify exact JSON format needed
-- Test different prompt variations
+**Step 3: Create metadata JSON file**
 
-**For Hybrid:**
-- Use when accuracy is critical
-- Accept higher cost for better results
-- Review agreement metrics
+Create `floor-plan-001-metadata.json`:
+```json
+{
+  "id": "floor-plan-001",
+  "type": "floor-plan",
+  "quality": "high",
+  "source": "architectural-drawing",
+  "description": "Japanese residential floor plan with dimensions and room labels",
+  "groundTruth": {
+    "fullTextFile": "./floor-plan-001-ground-truth.txt"
+  }
+}
+```
 
-## 🔧 Development
+**Metadata field options:**
+- **type**: `"floor-plan"` | `"site-layout"` | `"elevation"` | `"section"` | `"detail"` | `"unknown"`
+- **quality**: `"high"` | `"medium"` | `"low"`
+- **source**: `"architectural-drawing"` | `"cad-generated"` | `"scanned"` | `"synthetic"` | `"manual"`
+
+**Step 4: Create ground truth text file**
+
+Create `floor-plan-001-ground-truth.txt`:
+```
+10,920
+1,820
+910
+浴室
+洗面室
+物入
+押入
+床の間
+トイレ
+キッチン
+13.24㎡
+リビング
+33.95㎡
+玄関
+和室
+1255×960 (防)
+640×770 (防)
+Date
+Designed by
+```
+
+**Important ground truth guidelines:**
+- Transcribe exactly as it appears on the drawing
+- Use actual line breaks (press Enter) - not `\n`
+- Include all text: numbers, dimensions, Japanese, symbols
+- Maintain reading order (top-to-bottom, left-to-right)
+- Save with UTF-8 encoding
+- Don't skip small text elements
+- Don't normalize or clean the text
+- Don't add text that's not in the drawing
+
+**Step 5: Verify file structure**
+```bash
+test-drawings/sample02/
+├── floor-plan-001.png
+├── floor-plan-001-metadata.json
+└── floor-plan-001-ground-truth.txt
+```
+
+**Step 6: Run tests**
+```bash
+# From project root
+npm run test:all
+
+# Or test specific processor
+npm run test:cloud-vision
+npm run test:gemini
+```
+
+**Step 7: View results**
+- Frontend UI: http://localhost:5173/
+- HTML report: `results/test-run-{uuid}.html`
+- Database: Check test_runs table
+
+### File Naming Convention
+
+**Required pattern:**
+```
+{base-name}.{extension}               # The drawing image
+{base-name}-metadata.json             # Metadata
+{base-name}-ground-truth.txt          # Ground truth text
+```
+
+**Examples:**
+```bash
+# Example 1: PNG in subdirectory
+test-drawings/sample01/
+├── zumen_04b.png
+├── zumen_04b-metadata.json
+└── zumen_04b-ground-truth.txt
+
+# Example 2: PDF in root
+test-drawings/
+├── architectural-plan.pdf
+├── architectural-plan-metadata.json
+└── architectural-plan-ground-truth.txt
+```
+
+**Automatic discovery:**
+- Test runner scans `test-drawings/` directory recursively
+- Finds all images with matching metadata files
+- Loads ground truth from external `.txt` files
+
+## Development
 
 ```bash
 # Watch mode for development
@@ -305,96 +584,9 @@ npm run db:migrate
 
 # Explore database
 npm run db:studio
+# Opens at https://local.drizzle.studio/
+
+# Run frontend development server
+cd frontend
+npm run dev
 ```
-
-## 📈 Sample Output
-
-After running tests, you'll get:
-
-```
-🧪 OCR Test Runner
-
-📁 Loading test drawings...
-✅ Found 5 test drawing(s)
-
-============================================================
-📄 Processing: drawing-001.png
-============================================================
-
-▶️  Running cloud-vision on drawing-001...
-✅ Completed in 2.34s
-📊 Calculating accuracy...
-
-📈 Accuracy Metrics for cloud-vision:
-  Dimension F1: 87.5%
-  Equipment F1: 92.3%
-  Confidence: 85.0%
-
-============================================================
-📊 Generating Comparison Report...
-============================================================
-
-✅ Report generated: ./results/test-run-abc123.html
-
-🏆 Summary:
-  Best Overall: gemini-2.0-flash
-  Best Accuracy: hybrid
-  Fastest: cloud-vision
-  Cheapest: gemini-2.0-flash
-
-✨ All tests completed!
-```
-
-## 🎓 Next Steps
-
-After completing R&D:
-
-1. **Analyze Results:**
-   - Review HTML reports
-   - Compare accuracy vs. cost
-   - Identify failure patterns
-
-2. **Document Findings:**
-   - Which tool works best for your drawings?
-   - What accuracy level is acceptable?
-   - Cost projections for production use
-
-3. **Make Recommendation:**
-   - Primary tool choice
-   - Backup options
-   - Integration plan
-
-4. **Production Integration:**
-   - Integrate chosen workflow into main 3D K-Field system
-   - Connect to AI API or Laravel API
-   - Add to plan-layout-generator pipeline
-
-## 🚨 Troubleshooting
-
-**Database connection errors:**
-```bash
-# Restart PostgreSQL
-docker compose down
-docker compose up -d
-```
-
-**Google Cloud Vision errors:**
-- Check service account permissions
-- Verify API is enabled
-- Check credentials file path
-
-**Gemini API errors:**
-- Verify API key is correct
-- Check API quota limits
-- Ensure model name is correct
-
-**Azure Document Intelligence errors:**
-- Check endpoint URL format
-- Verify API key is valid
-- Ensure resource is in correct region
-- Check API quota limits
-
-**No test drawings found:**
-- Create `test-drawings/` directory
-- Add image files
-- Add corresponding `-metadata.json` files
