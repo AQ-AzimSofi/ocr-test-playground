@@ -15,29 +15,7 @@ export const testDrawings = pgTable('test_drawings', {
 
   // Ground truth data for accuracy calculation
   groundTruth: jsonb('ground_truth').notNull().$type<{
-    dimensions: Array<{
-      value: string;
-      x?: number;
-      y?: number;
-      element?: string;
-      type?: string;
-    }>;
-    equipment: Array<{
-      name: string;
-      spec?: string;
-      x?: number;
-      y?: number;
-    }>;
-    areas: Array<{
-      name: string;
-      width?: string;
-      depth?: string;
-      size?: string;
-    }>;
-    distances?: Array<{
-      value: string;
-      between?: string[];
-    }>;
+    fullText: string; // Complete text content from the drawing for character-level comparison
   }>(),
 
   metadata: jsonb('metadata').$type<Record<string, any>>(),
@@ -52,49 +30,32 @@ export const extractionResults = pgTable('extraction_results', {
   drawingId: text('drawing_id').notNull().references(() => testDrawings.drawingId),
   tool: text('tool').notNull(), // 'cloud-vision', 'gemini-2.0-flash', 'hybrid'
 
-  // Raw extraction output
+  // Raw extraction output (full text OCR'ed from the drawing)
   rawText: text('raw_text'),
-  extractedData: jsonb('extracted_data').$type<{
-    dimensions?: Array<{
-      value: string;
-      location?: string;
-      element?: string;
-      type?: string;
-      confidence?: number;
-    }>;
-    equipment?: Array<{
-      name: string;
-      spec?: string;
-      position?: { x: number; y: number };
-      confidence?: number;
-    }>;
-    areas?: Array<{
-      name: string;
-      size?: string;
-      confidence?: number;
-    }>;
-    distances?: Array<{
-      value: string;
-      between?: string[];
-      confidence?: number;
-    }>;
-  }>(),
 
   // Bounding boxes (if available)
   boundingBoxes: jsonb('bounding_boxes').$type<Array<{
     text: string;
     bounds: Array<{ x: number; y: number }>;
+    confidence?: number;
+    page?: number;
+    bboxSource?: 'ocr' | 'gemini-percentage' | 'estimated' | 'synthesized'; // Track how bbox was generated
+    metadata?: Record<string, any>;
   }>>(),
 
   // Performance metrics
   processingTimeMs: real('processing_time_ms'),
   apiCost: real('api_cost'), // in yen
 
+  // Additional metadata for hybrid processors and analysis
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 /**
  * Accuracy metrics calculated by comparing extraction results with ground truth
+ * Focuses on character-level OCR accuracy
  */
 export const accuracyMetrics = pgTable('accuracy_metrics', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -102,43 +63,40 @@ export const accuracyMetrics = pgTable('accuracy_metrics', {
   drawingId: text('drawing_id').notNull().references(() => testDrawings.drawingId),
   tool: text('tool').notNull(),
 
-  // Text accuracy (if OCR was performed)
-  characterAccuracy: real('character_accuracy'), // %
-  wordAccuracy: real('word_accuracy'), // %
+  // Character-level OCR accuracy metrics
+  characterErrorRate: real('character_error_rate'), // CER (0.0 = perfect, 1.0 = completely wrong)
+  characterAccuracy: real('character_accuracy'), // Position-based accuracy (0-100%)
+  characterSetCoverage: real('character_set_coverage'), // Unique character coverage (0-100%)
 
-  // Dimension extraction metrics
-  dimensionsFound: integer('dimensions_found'),
-  dimensionsTotal: integer('dimensions_total'),
-  dimensionsCorrect: integer('dimensions_correct'),
-  dimensionRecall: real('dimension_recall'), // found/total
-  dimensionPrecision: real('dimension_precision'), // correct/found
-  dimensionF1Score: real('dimension_f1_score'),
+  // Character count metrics
+  extractedCharCount: integer('extracted_char_count'),
+  groundTruthCharCount: integer('ground_truth_char_count'),
+  exactCharCountMatch: boolean('exact_char_count_match'),
+  charCountDifference: integer('char_count_difference'), // Can be negative or positive
 
-  // Equipment/label extraction metrics
-  equipmentFound: integer('equipment_found'),
-  equipmentTotal: integer('equipment_total'),
-  equipmentCorrect: integer('equipment_correct'),
-  equipmentRecall: real('equipment_recall'),
-  equipmentPrecision: real('equipment_precision'),
-  equipmentF1Score: real('equipment_f1_score'),
+  // Edit distance (Levenshtein)
+  editDistance: integer('edit_distance'),
 
-  // Area extraction metrics
-  areasFound: integer('areas_found'),
-  areasTotal: integer('areas_total'),
-  areasCorrect: integer('areas_correct'),
-  areaRecall: real('area_recall'),
-  areaPrecision: real('area_precision'),
-
-  // Overall confidence score
+  // Overall confidence score (if provided by API)
   avgConfidenceScore: real('avg_confidence_score'),
+
+  // Bbox source statistics (for processors with multiple bbox sources)
+  bboxSourceStats: jsonb('bbox_source_stats').$type<{
+    ocr?: number; // Count of precise OCR bboxes
+    geminiPercentage?: number; // Count of Gemini-provided percentage bboxes
+    estimated?: number; // Count of estimated bboxes
+    synthesized?: number; // Count of synthesized bboxes
+  }>(),
 
   // Detailed breakdown
   breakdown: jsonb('breakdown').$type<{
-    dimensionErrors?: string[];
-    equipmentErrors?: string[];
-    areaErrors?: string[];
-    falsePositives?: string[];
-    falseNegatives?: string[];
+    extractedText?: string;
+    groundTruthText?: string;
+    characterDifferences?: Array<{
+      position: number;
+      expected: string;
+      actual: string;
+    }>;
   }>(),
 
   calculatedAt: timestamp('calculated_at').defaultNow().notNull(),
@@ -158,18 +116,12 @@ export const toolComparisons = pgTable('tool_comparisons', {
 
   // Metric comparisons
   metricComparison: jsonb('metric_comparison').$type<{
-    dimensionAccuracy: { toolA: number; toolB: number; winner: string };
-    equipmentAccuracy: { toolA: number; toolB: number; winner: string };
+    characterErrorRate: { toolA: number; toolB: number; winner: string };
+    characterAccuracy: { toolA: number; toolB: number; winner: string };
+    characterSetCoverage: { toolA: number; toolB: number; winner: string };
     processingTime: { toolA: number; toolB: number; winner: string };
     cost: { toolA: number; toolB: number; winner: string };
     overallScore: { toolA: number; toolB: number; winner: string };
-  }>(),
-
-  // Agreement analysis (how often both tools found the same data)
-  agreement: jsonb('agreement').$type<{
-    dimensionsAgreed: number;
-    equipmentAgreed: number;
-    totalAgreement: number; // %
   }>(),
 
   comparedAt: timestamp('compared_at').defaultNow().notNull(),
@@ -193,7 +145,8 @@ export const testRuns = pgTable('test_runs', {
   summary: jsonb('summary').$type<{
     totalDrawings: number;
     totalExtractions: number;
-    avgAccuracyByTool: Record<string, number>;
+    avgCharacterErrorRateByTool: Record<string, number>;
+    avgCharacterAccuracyByTool: Record<string, number>;
     avgProcessingTimeByTool: Record<string, number>;
     totalCostByTool: Record<string, number>;
     recommendedTool: string;

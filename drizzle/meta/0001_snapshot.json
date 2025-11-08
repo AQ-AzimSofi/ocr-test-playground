@@ -1,0 +1,452 @@
+{
+  "id": "35d59f6d-96cc-4333-be51-2c24316e1f55",
+  "prevId": "82090161-b13e-4892-bae7-9bb92d49358c",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.accuracy_metrics": {
+      "name": "accuracy_metrics",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "extraction_result_id": {
+          "name": "extraction_result_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "drawing_id": {
+          "name": "drawing_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tool": {
+          "name": "tool",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "character_error_rate": {
+          "name": "character_error_rate",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "character_accuracy": {
+          "name": "character_accuracy",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "character_set_coverage": {
+          "name": "character_set_coverage",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "extracted_char_count": {
+          "name": "extracted_char_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ground_truth_char_count": {
+          "name": "ground_truth_char_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exact_char_count_match": {
+          "name": "exact_char_count_match",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "char_count_difference": {
+          "name": "char_count_difference",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "edit_distance": {
+          "name": "edit_distance",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "avg_confidence_score": {
+          "name": "avg_confidence_score",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "breakdown": {
+          "name": "breakdown",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "calculated_at": {
+          "name": "calculated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "accuracy_metrics_extraction_result_id_extraction_results_id_fk": {
+          "name": "accuracy_metrics_extraction_result_id_extraction_results_id_fk",
+          "tableFrom": "accuracy_metrics",
+          "tableTo": "extraction_results",
+          "columnsFrom": [
+            "extraction_result_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "accuracy_metrics_drawing_id_test_drawings_drawing_id_fk": {
+          "name": "accuracy_metrics_drawing_id_test_drawings_drawing_id_fk",
+          "tableFrom": "accuracy_metrics",
+          "tableTo": "test_drawings",
+          "columnsFrom": [
+            "drawing_id"
+          ],
+          "columnsTo": [
+            "drawing_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.extraction_results": {
+      "name": "extraction_results",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "drawing_id": {
+          "name": "drawing_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tool": {
+          "name": "tool",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_text": {
+          "name": "raw_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bounding_boxes": {
+          "name": "bounding_boxes",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "processing_time_ms": {
+          "name": "processing_time_ms",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "api_cost": {
+          "name": "api_cost",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "extraction_results_drawing_id_test_drawings_drawing_id_fk": {
+          "name": "extraction_results_drawing_id_test_drawings_drawing_id_fk",
+          "tableFrom": "extraction_results",
+          "tableTo": "test_drawings",
+          "columnsFrom": [
+            "drawing_id"
+          ],
+          "columnsTo": [
+            "drawing_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.test_drawings": {
+      "name": "test_drawings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "drawing_id": {
+          "name": "drawing_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_path": {
+          "name": "file_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quality": {
+          "name": "quality",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ground_truth": {
+          "name": "ground_truth",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "test_drawings_drawing_id_unique": {
+          "name": "test_drawings_drawing_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "drawing_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.test_runs": {
+      "name": "test_runs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "run_name": {
+          "name": "run_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "drawing_ids": {
+          "name": "drawing_ids",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tools": {
+          "name": "tools",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed": {
+          "name": "completed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tool_comparisons": {
+      "name": "tool_comparisons",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "drawing_id": {
+          "name": "drawing_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tool_a": {
+          "name": "tool_a",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tool_b": {
+          "name": "tool_b",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "better_tool": {
+          "name": "better_tool",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metric_comparison": {
+          "name": "metric_comparison",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "compared_at": {
+          "name": "compared_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tool_comparisons_drawing_id_test_drawings_drawing_id_fk": {
+          "name": "tool_comparisons_drawing_id_test_drawings_drawing_id_fk",
+          "tableFrom": "tool_comparisons",
+          "tableTo": "test_drawings",
+          "columnsFrom": [
+            "drawing_id"
+          ],
+          "columnsTo": [
+            "drawing_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

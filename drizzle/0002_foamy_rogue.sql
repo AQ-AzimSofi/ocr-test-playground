@@ -1,0 +1,1 @@
+ALTER TABLE "extraction_results" ADD COLUMN "metadata" jsonb;

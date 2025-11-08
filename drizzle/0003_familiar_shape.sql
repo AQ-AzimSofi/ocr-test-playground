@@ -1,0 +1,1 @@
+ALTER TABLE "accuracy_metrics" ADD COLUMN "bbox_source_stats" jsonb;
