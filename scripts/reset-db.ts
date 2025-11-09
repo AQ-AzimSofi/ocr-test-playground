@@ -3,7 +3,10 @@ import * as dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.development' });
 
-const sql = postgres(process.env.DATABASE_URL || 'postgresql://ocr_user:ocr_password@localhost:5432/ocr_test_db');
+const sql = postgres(
+  process.env.DATABASE_URL ||
+    'postgresql://ocr_user:ocr_password@localhost:5432/ocr_test_db'
+);
 
 try {
   // Drop both public and drizzle schemas to ensure clean state
@@ -16,7 +19,9 @@ try {
   await sql`CREATE SCHEMA public`;
   console.log('Public schema recreated');
 
-  console.log('\nDatabase reset successfully. Run "npm run db:migrate" or "npm run db:push" to apply schema.');
+  console.log(
+    '\nDatabase reset successfully. Run "npm run db:migrate" or "npm run db:push" to apply schema.'
+  );
 } catch (err) {
   console.error('Error:', err instanceof Error ? err.message : err);
   process.exit(1);

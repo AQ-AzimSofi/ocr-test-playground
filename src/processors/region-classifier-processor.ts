@@ -10,7 +10,10 @@ import { cropImageRegion, CropRegion } from '../utils/image-cropper.js';
  * - Low confidence regions: Re-process with Gemini
  * - Tables: Keep structured data from Azure Layout
  */
-export async function processWithRegionClassifier(imagePath: string, drawingId: string) {
+export async function processWithRegionClassifier(
+  imagePath: string,
+  drawingId: string
+) {
   console.log(`  Processing with Region Classifier...`);
   const startTime = Date.now();
 
@@ -19,10 +22,12 @@ export async function processWithRegionClassifier(imagePath: string, drawingId: 
     console.log(`  Running Azure Layout (structure analysis)...`);
     const layoutResult = await azureDocumentClient.analyzeLayout(imagePath);
 
-    console.log(`  Azure Layout found: ${layoutResult.lines.length} lines, ${(layoutResult.tables || []).length} tables`);
+    console.log(
+      `  Azure Layout found: ${layoutResult.lines.length} lines, ${(layoutResult.tables || []).length} tables`
+    );
 
     // Group lines into regions by proximity
-    // For simplicity, we'll use lines as individual regions
+    // Uses lines as individual regions for classification
     const regions = layoutResult.lines.map((line: any, index: number) => ({
       text: line.text,
       bounds: line.bounds,
@@ -33,22 +38,32 @@ export async function processWithRegionClassifier(imagePath: string, drawingId: 
 
     // Classify regions based on confidence
     const confidenceThreshold = 0.85;
-    const highConfidenceRegions = regions.filter(r => r.confidence >= confidenceThreshold);
-    const lowConfidenceRegions = regions.filter(r => r.confidence < confidenceThreshold);
+    const highConfidenceRegions = regions.filter(
+      (r) => r.confidence >= confidenceThreshold
+    );
+    const lowConfidenceRegions = regions.filter(
+      (r) => r.confidence < confidenceThreshold
+    );
 
     console.log(`  Classification:`);
-    console.log(`     High confidence: ${highConfidenceRegions.length} regions`);
-    console.log(`     Low confidence: ${lowConfidenceRegions.length} regions (will re-process with Gemini)`);
+    console.log(
+      `     High confidence: ${highConfidenceRegions.length} regions`
+    );
+    console.log(
+      `     Low confidence: ${lowConfidenceRegions.length} regions (will re-process with Gemini)`
+    );
 
     // Step 2: Process low-confidence regions with Gemini
     let geminiProcessedCount = 0;
     const regionUpdates = new Map<number, string>();
 
     if (lowConfidenceRegions.length > 0) {
-      console.log(`  Re-processing ${lowConfidenceRegions.length} low-confidence regions with Gemini...`);
+      console.log(
+        `  Re-processing ${lowConfidenceRegions.length} low-confidence regions with Gemini...`
+      );
 
       // Crop low-confidence regions
-      const cropRegions: CropRegion[] = lowConfidenceRegions.map(region => ({
+      const cropRegions: CropRegion[] = lowConfidenceRegions.map((region) => ({
         bounds: region.bounds,
         text: region.text,
         confidence: region.confidence,
@@ -57,12 +72,12 @@ export async function processWithRegionClassifier(imagePath: string, drawingId: 
 
       // Batch crop regions
       const croppedRegions = await Promise.all(
-        cropRegions.map(region => cropImageRegion(imagePath, region, 10))
+        cropRegions.map((region) => cropImageRegion(imagePath, region, 10))
       );
 
       // Batch process with Gemini
       const geminiResults = await geminiClient.batchExtractTextFromRegions(
-        croppedRegions.map(cropped => ({
+        croppedRegions.map((cropped) => ({
           base64: cropped.base64,
           originalText: cropped.region.text,
         }))
@@ -79,11 +94,13 @@ export async function processWithRegionClassifier(imagePath: string, drawingId: 
         }
       }
 
-      console.log(`  Updated ${geminiProcessedCount} regions with Gemini corrections`);
+      console.log(
+        `  Updated ${geminiProcessedCount} regions with Gemini corrections`
+      );
     }
 
     // Step 3: Build final bounding boxes
-    const finalBboxes = regions.map(region => {
+    const finalBboxes = regions.map((region) => {
       const updatedText = regionUpdates.get(region.index);
 
       return {
@@ -117,13 +134,19 @@ export async function processWithRegionClassifier(imagePath: string, drawingId: 
     });
 
     const finalText = sortedRegions
-      .map(region => regionUpdates.get(region.index) || region.text)
+      .map((region) => regionUpdates.get(region.index) || region.text)
       .join('\n');
 
     // Step 5: Calculate costs
     const processingTime = Date.now() - startTime;
-    const azureCost = azureDocumentClient.estimateCost(layoutResult.pages.length, 'layout');
-    const geminiRegionCost = geminiClient.estimateCost(geminiProcessedCount, true);
+    const azureCost = azureDocumentClient.estimateCost(
+      layoutResult.pages.length,
+      'layout'
+    );
+    const geminiRegionCost = geminiClient.estimateCost(
+      geminiProcessedCount,
+      true
+    );
     const totalCost = azureCost + geminiRegionCost;
 
     // Save to database
@@ -148,8 +171,12 @@ export async function processWithRegionClassifier(imagePath: string, drawingId: 
       })
       .returning();
 
-    console.log(`  Region Classifier completed in ${(processingTime / 1000).toFixed(2)}s`);
-    console.log(`     Extracted ${finalText.length} characters from ${regions.length} regions`);
+    console.log(
+      `  Region Classifier completed in ${(processingTime / 1000).toFixed(2)}s`
+    );
+    console.log(
+      `     Extracted ${finalText.length} characters from ${regions.length} regions`
+    );
     console.log(`     Gemini enhanced ${geminiProcessedCount} regions`);
 
     return {

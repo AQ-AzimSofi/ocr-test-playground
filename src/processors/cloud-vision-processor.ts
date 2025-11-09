@@ -4,14 +4,18 @@ import { db, extractionResults } from '../db/index.js';
 /**
  * Process drawing with Google Cloud Vision API for character-level OCR
  */
-export async function processWithCloudVision(imagePath: string, drawingId: string) {
+export async function processWithCloudVision(
+  imagePath: string,
+  drawingId: string
+) {
   console.log(`  Processing with Cloud Vision...`);
   const startTime = Date.now();
 
   try {
     // Extract text using Cloud Vision
     const result = await cloudVisionClient.extractText(imagePath);
-    const boundingBoxes = await cloudVisionClient.extractTextWithBoundingBoxes(imagePath);
+    const boundingBoxes =
+      await cloudVisionClient.extractTextWithBoundingBoxes(imagePath);
 
     const processingTime = Date.now() - startTime;
     const estimatedCost = cloudVisionClient.estimateCost(1);
@@ -29,7 +33,9 @@ export async function processWithCloudVision(imagePath: string, drawingId: strin
       })
       .returning();
 
-    console.log(`  Cloud Vision completed in ${(processingTime / 1000).toFixed(2)}s`);
+    console.log(
+      `  Cloud Vision completed in ${(processingTime / 1000).toFixed(2)}s`
+    );
     console.log(`     Extracted ${result.text.length} characters`);
 
     return {

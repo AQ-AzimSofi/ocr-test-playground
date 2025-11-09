@@ -1,7 +1,11 @@
 import { azureDocumentClient } from '../lib/azure-document-client.js';
 import { geminiClient } from '../lib/gemini-client.js';
 import { db, extractionResults } from '../db/index.js';
-import { batchCropRegions, mergeRegionTexts, type CropRegion } from '../utils/image-cropper.js';
+import {
+  batchCropRegions,
+  mergeRegionTexts,
+  type CropRegion,
+} from '../utils/image-cropper.js';
 
 /**
  * Azure Read + Gemini Hybrid Processor (Word-Level Fusion)
@@ -17,8 +21,13 @@ import { batchCropRegions, mergeRegionTexts, type CropRegion } from '../utils/im
  * Benefits: Word-level precision, fewer crops than paragraph-level
  */
 
-export async function processWithAzureReadGeminiHybrid(imagePath: string, drawingId: string) {
-  console.log(`  Processing with Azure Read + Gemini Hybrid (Word-Level Fusion)...`);
+export async function processWithAzureReadGeminiHybrid(
+  imagePath: string,
+  drawingId: string
+) {
+  console.log(
+    `  Processing with Azure Read + Gemini Hybrid (Word-Level Fusion)...`
+  );
   const startTime = Date.now();
 
   try {
@@ -26,7 +35,9 @@ export async function processWithAzureReadGeminiHybrid(imagePath: string, drawin
     const azureResult = await azureDocumentClient.analyzeRead(imagePath);
     const azureText = azureResult.content;
 
-    console.log(`  Azure Read: ${azureResult.words.length} words, ${azureText.length} chars`);
+    console.log(
+      `  Azure Read: ${azureResult.words.length} words, ${azureText.length} chars`
+    );
 
     // Step 2: Separate high/low confidence words
     const LOW_CONFIDENCE_THRESHOLD = 0.85;
@@ -49,13 +60,20 @@ export async function processWithAzureReadGeminiHybrid(imagePath: string, drawin
       }
     });
 
-    const lowConfidencePercentage = (lowConfidenceWords.length / azureResult.words.length) * 100;
-    const avgConfidence = azureResult.words.length > 0
-      ? azureResult.words.reduce((sum, w) => sum + w.confidence, 0) / azureResult.words.length
-      : 0;
+    const lowConfidencePercentage =
+      (lowConfidenceWords.length / azureResult.words.length) * 100;
+    const avgConfidence =
+      azureResult.words.length > 0
+        ? azureResult.words.reduce((sum, w) => sum + w.confidence, 0) /
+          azureResult.words.length
+        : 0;
 
-    console.log(`  High confidence: ${highConfidenceWords.length} words (>=${LOW_CONFIDENCE_THRESHOLD * 100}%)`);
-    console.log(`  Low confidence: ${lowConfidenceWords.length} words (${lowConfidencePercentage.toFixed(1)}%)`);
+    console.log(
+      `  High confidence: ${highConfidenceWords.length} words (>=${LOW_CONFIDENCE_THRESHOLD * 100}%)`
+    );
+    console.log(
+      `  Low confidence: ${lowConfidenceWords.length} words (${lowConfidencePercentage.toFixed(1)}%)`
+    );
     console.log(`  Average confidence: ${(avgConfidence * 100).toFixed(1)}%`);
 
     // Step 3: Crop low-confidence words from image
@@ -64,18 +82,21 @@ export async function processWithAzureReadGeminiHybrid(imagePath: string, drawin
     let geminiCost = 0;
 
     if (lowConfidenceWords.length > 0) {
-      console.log(`  Cropping ${lowConfidenceWords.length} low-confidence words...`);
+      console.log(
+        `  Cropping ${lowConfidenceWords.length} low-confidence words...`
+      );
       croppedWords = await batchCropRegions(imagePath, lowConfidenceWords, 5); // Smaller padding for words
 
       // Step 4: Send crops to Gemini for re-extraction
       console.log(`  Sending ${croppedWords.length} words to Gemini...`);
 
-      const geminiInputs = croppedWords.map(cropped => ({
+      const geminiInputs = croppedWords.map((cropped) => ({
         base64: cropped.base64,
         originalText: cropped.region.text,
       }));
 
-      const geminiResults = await geminiClient.batchExtractTextFromRegions(geminiInputs);
+      const geminiResults =
+        await geminiClient.batchExtractTextFromRegions(geminiInputs);
 
       // Step 5: Build map of corrected texts
       croppedWords.forEach((cropped, i) => {
@@ -86,32 +107,45 @@ export async function processWithAzureReadGeminiHybrid(imagePath: string, drawin
       geminiCost = geminiClient.estimateCost(lowConfidenceWords.length, true);
       console.log(`  Gemini corrected ${geminiCorrectedTexts.size} words`);
     } else {
-      console.log(`  All words have high confidence - no Gemini correction needed!`);
+      console.log(
+        `  All words have high confidence - no Gemini correction needed!`
+      );
     }
 
     // Step 6: Merge results - build final text and bounding boxes
-    const allWords = azureResult.words.map((word, index): CropRegion => ({
-      bounds: word.bounds,
-      text: word.text,
-      confidence: word.confidence,
-      index,
-    }));
+    const allWords = azureResult.words.map(
+      (word, index): CropRegion => ({
+        bounds: word.bounds,
+        text: word.text,
+        confidence: word.confidence,
+        index,
+      })
+    );
 
     const finalText = mergeRegionTexts(allWords, geminiCorrectedTexts);
 
     const processingTime = Date.now() - startTime;
 
     // Estimate combined cost
-    const azureCost = azureDocumentClient.estimateCost(azureResult.pages.length, 'read');
+    const azureCost = azureDocumentClient.estimateCost(
+      azureResult.pages.length,
+      'read'
+    );
     const estimatedCost = azureCost + geminiCost;
 
     // Calculate confidence distribution
     const confidenceRanges = {
-      excellent: azureResult.words.filter(w => w.confidence >= 0.95).length,
-      good: azureResult.words.filter(w => w.confidence >= 0.85 && w.confidence < 0.95).length,
-      medium: azureResult.words.filter(w => w.confidence >= 0.75 && w.confidence < 0.85).length,
-      low: azureResult.words.filter(w => w.confidence >= 0.60 && w.confidence < 0.75).length,
-      veryLow: azureResult.words.filter(w => w.confidence < 0.60).length,
+      excellent: azureResult.words.filter((w) => w.confidence >= 0.95).length,
+      good: azureResult.words.filter(
+        (w) => w.confidence >= 0.85 && w.confidence < 0.95
+      ).length,
+      medium: azureResult.words.filter(
+        (w) => w.confidence >= 0.75 && w.confidence < 0.85
+      ).length,
+      low: azureResult.words.filter(
+        (w) => w.confidence >= 0.6 && w.confidence < 0.75
+      ).length,
+      veryLow: azureResult.words.filter((w) => w.confidence < 0.6).length,
     };
 
     // Save to database with enhanced metadata
@@ -159,26 +193,57 @@ export async function processWithAzureReadGeminiHybrid(imagePath: string, drawin
           geminiCorrectedCount: geminiCorrectedTexts.size,
           confidenceDistribution: confidenceRanges,
           confidenceDistributionPercent: {
-            excellent: (confidenceRanges.excellent / azureResult.words.length * 100).toFixed(1) + '%',
-            good: (confidenceRanges.good / azureResult.words.length * 100).toFixed(1) + '%',
-            medium: (confidenceRanges.medium / azureResult.words.length * 100).toFixed(1) + '%',
-            low: (confidenceRanges.low / azureResult.words.length * 100).toFixed(1) + '%',
-            veryLow: (confidenceRanges.veryLow / azureResult.words.length * 100).toFixed(1) + '%',
+            excellent:
+              (
+                (confidenceRanges.excellent / azureResult.words.length) *
+                100
+              ).toFixed(1) + '%',
+            good:
+              (
+                (confidenceRanges.good / azureResult.words.length) *
+                100
+              ).toFixed(1) + '%',
+            medium:
+              (
+                (confidenceRanges.medium / azureResult.words.length) *
+                100
+              ).toFixed(1) + '%',
+            low:
+              ((confidenceRanges.low / azureResult.words.length) * 100).toFixed(
+                1
+              ) + '%',
+            veryLow:
+              (
+                (confidenceRanges.veryLow / azureResult.words.length) *
+                100
+              ).toFixed(1) + '%',
           },
           confidenceThreshold: LOW_CONFIDENCE_THRESHOLD,
           azureCost,
           geminiCost,
-          costSavings: (geminiClient.estimateCost(1, false) - geminiCost).toFixed(2) + ' yen (vs full-image Gemini)',
+          costSavings:
+            (geminiClient.estimateCost(1, false) - geminiCost).toFixed(2) +
+            ' yen (vs full-image Gemini)',
         },
       })
       .returning();
 
-    console.log(`  Azure Read + Gemini Hybrid completed in ${(processingTime / 1000).toFixed(2)}s`);
+    console.log(
+      `  Azure Read + Gemini Hybrid completed in ${(processingTime / 1000).toFixed(2)}s`
+    );
     console.log(`     Final text: ${finalText.length} chars`);
-    console.log(`     Azure Read: ${azureResult.words.length} words (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`);
-    console.log(`     Distribution: ${confidenceRanges.excellent} excellent, ${confidenceRanges.good} good, ${confidenceRanges.medium} medium, ${confidenceRanges.low + confidenceRanges.veryLow} low`);
-    console.log(`     Gemini corrections: ${geminiCorrectedTexts.size}/${lowConfidenceWords.length} low-confidence words`);
-    console.log(`     Cost: ${estimatedCost.toFixed(2)} yen (saved ${(geminiClient.estimateCost(1, false) - geminiCost).toFixed(2)} yen vs full Gemini)`);
+    console.log(
+      `     Azure Read: ${azureResult.words.length} words (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`
+    );
+    console.log(
+      `     Distribution: ${confidenceRanges.excellent} excellent, ${confidenceRanges.good} good, ${confidenceRanges.medium} medium, ${confidenceRanges.low + confidenceRanges.veryLow} low`
+    );
+    console.log(
+      `     Gemini corrections: ${geminiCorrectedTexts.size}/${lowConfidenceWords.length} low-confidence words`
+    );
+    console.log(
+      `     Cost: ${estimatedCost.toFixed(2)} yen (saved ${(geminiClient.estimateCost(1, false) - geminiCost).toFixed(2)} yen vs full Gemini)`
+    );
 
     return {
       success: true,

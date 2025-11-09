@@ -41,8 +41,8 @@ function boundsToRect(bounds: BoundingBox[]): {
   width: number;
   height: number;
 } {
-  const xCoords = bounds.map(b => b.x);
-  const yCoords = bounds.map(b => b.y);
+  const xCoords = bounds.map((b) => b.x);
+  const yCoords = bounds.map((b) => b.y);
 
   const minX = Math.min(...xCoords);
   const maxX = Math.max(...xCoords);
@@ -107,9 +107,7 @@ export async function cropImageRegion(
     }
 
     // Crop the image
-    const croppedBuffer = await sharp(imagePath)
-      .extract(cropBox)
-      .toBuffer();
+    const croppedBuffer = await sharp(imagePath).extract(cropBox).toBuffer();
 
     // Convert to base64 for API calls
     const base64 = croppedBuffer.toString('base64');
@@ -144,7 +142,7 @@ export async function batchCropRegions(
   for (let i = 0; i < regions.length; i += concurrency) {
     const batch = regions.slice(i, i + concurrency);
     const batchResults = await Promise.all(
-      batch.map(region => cropImageRegion(imagePath, region, padding))
+      batch.map((region) => cropImageRegion(imagePath, region, padding))
     );
     results.push(...batchResults);
   }
@@ -170,7 +168,9 @@ export async function saveCroppedRegions(
     await fs.promises.writeFile(filepath, cropped.buffer);
   }
 
-  console.log(`  Saved ${croppedRegions.length} cropped regions to ${outputDir}`);
+  console.log(
+    `  Saved ${croppedRegions.length} cropped regions to ${outputDir}`
+  );
 }
 
 /**
@@ -183,19 +183,19 @@ export function mergeRegionTexts(
 ): string {
   // Sort regions by their position in the image (top to bottom, left to right)
   const sortedRegions = [...originalRegions].sort((a, b) => {
-    const aTop = Math.min(...a.bounds.map(b => b.y));
-    const bTop = Math.min(...b.bounds.map(b => b.y));
+    const aTop = Math.min(...a.bounds.map((b) => b.y));
+    const bTop = Math.min(...b.bounds.map((b) => b.y));
     if (Math.abs(aTop - bTop) < 20) {
       // Same line, sort by x
-      const aLeft = Math.min(...a.bounds.map(b => b.x));
-      const bLeft = Math.min(...b.bounds.map(b => b.x));
+      const aLeft = Math.min(...a.bounds.map((b) => b.x));
+      const bLeft = Math.min(...b.bounds.map((b) => b.x));
       return aLeft - bLeft;
     }
     return aTop - bTop;
   });
 
   // Build merged text
-  const texts = sortedRegions.map(region => {
+  const texts = sortedRegions.map((region) => {
     // Use corrected text if available, otherwise use original
     return correctedTexts.get(region.index) || region.text;
   });

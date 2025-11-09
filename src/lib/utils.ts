@@ -20,7 +20,10 @@ export function normalizeText(text: string): string {
  * Levenshtein distance is defined as the minimum number of insertions, deletions, or substitutions
  *  required to transform one string into another. It serves as a measure of proximity between two strings.
  */
-export function calculateLevenshteinDistance(str1: string, str2: string): number {
+export function calculateLevenshteinDistance(
+  str1: string,
+  str2: string
+): number {
   const len1 = str1.length;
   const len2 = str2.length;
 
@@ -62,7 +65,10 @@ export function calculateCER(extracted: string, groundTruth: string): number {
   const normalizedExtracted = normalizeText(extracted);
   const normalizedGroundTruth = normalizeText(groundTruth);
 
-  const editDistance = calculateLevenshteinDistance(normalizedExtracted, normalizedGroundTruth);
+  const editDistance = calculateLevenshteinDistance(
+    normalizedExtracted,
+    normalizedGroundTruth
+  );
   const totalChars = normalizedGroundTruth.length;
 
   if (totalChars === 0) {
@@ -77,7 +83,10 @@ export function calculateCER(extracted: string, groundTruth: string): number {
  * Compares characters at each position and calculates percentage of matches
  * @returns Accuracy as a percentage (0-100)
  */
-export function calculateCharacterAccuracy(extracted: string, groundTruth: string): number {
+export function calculateCharacterAccuracy(
+  extracted: string,
+  groundTruth: string
+): number {
   const normalizedExtracted = normalizeText(extracted);
   const normalizedGroundTruth = normalizeText(groundTruth);
 
@@ -85,7 +94,10 @@ export function calculateCharacterAccuracy(extracted: string, groundTruth: strin
     return normalizedExtracted.length === 0 ? 100 : 0;
   }
 
-  const maxLength = Math.max(normalizedExtracted.length, normalizedGroundTruth.length);
+  const maxLength = Math.max(
+    normalizedExtracted.length,
+    normalizedGroundTruth.length
+  );
   let correctChars = 0;
 
   for (let i = 0; i < maxLength; i++) {
@@ -102,7 +114,10 @@ export function calculateCharacterAccuracy(extracted: string, groundTruth: strin
  * Measures what percentage of unique characters in ground truth were found in extracted text
  * @returns Coverage as a percentage (0-100)
  */
-export function calculateCharacterSetCoverage(extracted: string, groundTruth: string): number {
+export function calculateCharacterSetCoverage(
+  extracted: string,
+  groundTruth: string
+): number {
   const normalizedExtracted = normalizeText(extracted);
   const normalizedGroundTruth = normalizeText(groundTruth);
 
@@ -127,7 +142,10 @@ export function calculateCharacterSetCoverage(extracted: string, groundTruth: st
  * Check if exact character count matches
  * @returns Object with match status and counts
  */
-export function calculateExactCharacterCount(extracted: string, groundTruth: string): {
+export function calculateExactCharacterCount(
+  extracted: string,
+  groundTruth: string
+): {
   matches: boolean;
   extractedCount: number;
   groundTruthCount: number;

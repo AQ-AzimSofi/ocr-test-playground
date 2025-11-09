@@ -14,7 +14,10 @@ import { segmentText } from '../utils/gemini-parser.js';
  * Process drawing by combining Gemini text with Cloud Vision bounding boxes
  * Uses fuzzy matching and bbox synthesis for unmatched text
  */
-export async function processWithGeminiBboxSynthesis(imagePath: string, drawingId: string) {
+export async function processWithGeminiBboxSynthesis(
+  imagePath: string,
+  drawingId: string
+) {
   console.log(`  Processing with Gemini Bbox Synthesis...`);
   const startTime = Date.now();
 
@@ -35,7 +38,7 @@ export async function processWithGeminiBboxSynthesis(imagePath: string, drawingI
     console.log(`  Cloud Vision found: ${cloudVisionBboxes.length} bboxes`);
 
     // Convert Cloud Vision bboxes to our internal format
-    const cvBboxes: BoundingBox[] = cloudVisionBboxes.map(bbox => ({
+    const cvBboxes: BoundingBox[] = cloudVisionBboxes.map((bbox) => ({
       bounds: bbox.bounds,
       text: bbox.text,
       confidence: bbox.confidence,
@@ -44,7 +47,9 @@ export async function processWithGeminiBboxSynthesis(imagePath: string, drawingI
     // Segment Gemini text into matchable units (words/characters)
     const geminiSegments = segmentText(geminiResult.text, 'word');
 
-    console.log(`  Matching ${geminiSegments.length} Gemini segments to Cloud Vision bboxes...`);
+    console.log(
+      `  Matching ${geminiSegments.length} Gemini segments to Cloud Vision bboxes...`
+    );
 
     const matchedBboxes: Array<{
       text: string;
@@ -121,7 +126,9 @@ export async function processWithGeminiBboxSynthesis(imagePath: string, drawingI
 
     // If no Cloud Vision bboxes available, create estimated bboxes for all Gemini text
     if (cvBboxes.length === 0 && geminiSegments.length > 0) {
-      console.log(`  No Cloud Vision bboxes available, estimating all bboxes...`);
+      console.log(
+        `  No Cloud Vision bboxes available, estimating all bboxes...`
+      );
 
       const defaultCharDimensions = {
         avgWidth: 20,
@@ -162,9 +169,11 @@ export async function processWithGeminiBboxSynthesis(imagePath: string, drawingI
 
     // Count bbox sources
     const bboxSourceCounts = {
-      ocr: matchedBboxes.filter(b => b.bboxSource === 'ocr').length,
-      synthesized: matchedBboxes.filter(b => b.bboxSource === 'synthesized').length,
-      estimated: matchedBboxes.filter(b => b.bboxSource === 'estimated').length,
+      ocr: matchedBboxes.filter((b) => b.bboxSource === 'ocr').length,
+      synthesized: matchedBboxes.filter((b) => b.bboxSource === 'synthesized')
+        .length,
+      estimated: matchedBboxes.filter((b) => b.bboxSource === 'estimated')
+        .length,
     };
 
     // Save to database
@@ -187,7 +196,9 @@ export async function processWithGeminiBboxSynthesis(imagePath: string, drawingI
       })
       .returning();
 
-    console.log(`  Gemini Bbox Synthesis completed in ${(processingTime / 1000).toFixed(2)}s`);
+    console.log(
+      `  Gemini Bbox Synthesis completed in ${(processingTime / 1000).toFixed(2)}s`
+    );
     console.log(`     Extracted ${geminiResult.text.length} characters`);
     console.log(
       `     Generated ${matchedBboxes.length} bboxes (${bboxSourceCounts.ocr} OCR, ${bboxSourceCounts.synthesized} synthesized, ${bboxSourceCounts.estimated} estimated)`

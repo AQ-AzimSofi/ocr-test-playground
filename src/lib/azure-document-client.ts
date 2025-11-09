@@ -1,4 +1,7 @@
-import { AzureKeyCredential, DocumentAnalysisClient } from '@azure/ai-form-recognizer';
+import {
+  AzureKeyCredential,
+  DocumentAnalysisClient,
+} from '@azure/ai-form-recognizer';
 import * as fs from 'fs';
 
 /**
@@ -18,7 +21,10 @@ export class AzureDocumentClient {
       );
     }
 
-    this.client = new DocumentAnalysisClient(endpoint, new AzureKeyCredential(apiKey));
+    this.client = new DocumentAnalysisClient(
+      endpoint,
+      new AzureKeyCredential(apiKey)
+    );
   }
 
   /**
@@ -29,7 +35,10 @@ export class AzureDocumentClient {
   async analyzeRead(imagePath: string) {
     const imageStream = fs.createReadStream(imagePath);
 
-    const poller = await this.client.beginAnalyzeDocument('prebuilt-read', imageStream);
+    const poller = await this.client.beginAnalyzeDocument(
+      'prebuilt-read',
+      imageStream
+    );
     const result = await poller.pollUntilDone();
 
     if (!result) {
@@ -54,7 +63,10 @@ export class AzureDocumentClient {
   async analyzeLayout(imagePath: string) {
     const imageStream = fs.createReadStream(imagePath);
 
-    const poller = await this.client.beginAnalyzeDocument('prebuilt-layout', imageStream);
+    const poller = await this.client.beginAnalyzeDocument(
+      'prebuilt-layout',
+      imageStream
+    );
     const result = await poller.pollUntilDone();
 
     if (!result) {
@@ -81,7 +93,9 @@ export class AzureDocumentClient {
    * Azure API sometimes returns only 2 points (diagonal corners)
    * This converts 2-point boxes to proper 4-point rectangles
    */
-  private normalizeBoundingBox(polygon: any[]): Array<{ x: number; y: number }> {
+  private normalizeBoundingBox(
+    polygon: any[]
+  ): Array<{ x: number; y: number }> {
     const points = polygon.map((point: any) => ({
       x: point.x || 0,
       y: point.y || 0,
@@ -95,7 +109,9 @@ export class AzureDocumentClient {
     // If we already have 4 or more points, return as-is
     if (points.length >= 4) {
       if (debugEnabled) {
-        console.log(`[Azure] Bbox already has ${inputLength} points (no normalization needed)`);
+        console.log(
+          `[Azure] Bbox already has ${inputLength} points (no normalization needed)`
+        );
       }
       return points;
     }
@@ -104,16 +120,20 @@ export class AzureDocumentClient {
     if (points.length === 2) {
       const [topLeft, bottomRight] = points;
       const normalized = [
-        topLeft,                                    // Top-left
-        { x: bottomRight.x, y: topLeft.y },        // Top-right
-        bottomRight,                                // Bottom-right
-        { x: topLeft.x, y: bottomRight.y },        // Bottom-left
+        topLeft, // Top-left
+        { x: bottomRight.x, y: topLeft.y }, // Top-right
+        bottomRight, // Bottom-right
+        { x: topLeft.x, y: bottomRight.y }, // Bottom-left
       ];
 
       // Debug log for 2-point to 4-point conversion
       if (debugEnabled) {
-        console.log(`[Azure] Normalized bbox: ${inputLength} points -> ${normalized.length} points`);
-        console.log(`  Input: [${JSON.stringify(points[0])}, ${JSON.stringify(points[1])}]`);
+        console.log(
+          `[Azure] Normalized bbox: ${inputLength} points -> ${normalized.length} points`
+        );
+        console.log(
+          `  Input: [${JSON.stringify(points[0])}, ${JSON.stringify(points[1])}]`
+        );
         console.log(`  Output: 4-point rectangle`);
       }
 
@@ -122,7 +142,9 @@ export class AzureDocumentClient {
 
     // If we have 3 points or 1 point, return as-is (frontend will skip these)
     if (points.length === 1 || points.length === 3) {
-      console.warn(`[Azure] WARNING: Bbox with ${points.length} point(s) cannot be normalized - returning as-is`);
+      console.warn(
+        `[Azure] WARNING: Bbox with ${points.length} point(s) cannot be normalized - returning as-is`
+      );
     }
 
     return points;
@@ -256,7 +278,10 @@ export class AzureDocumentClient {
    * - Read model: $1.50 per 1000 pages = $0.0015 per page
    * - Layout model: $10 per 1000 pages = $0.01 per page
    */
-  estimateCost(pageCount: number = 1, model: 'read' | 'layout' = 'layout'): number {
+  estimateCost(
+    pageCount: number = 1,
+    model: 'read' | 'layout' = 'layout'
+  ): number {
     const costPerPageUSD = model === 'read' ? 0.0015 : 0.01;
     const yenPerDollar = 150;
     return pageCount * costPerPageUSD * yenPerDollar;

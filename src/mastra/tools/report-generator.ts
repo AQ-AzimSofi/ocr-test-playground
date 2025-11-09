@@ -10,7 +10,8 @@ import { formatTime, formatCost } from '../../lib/utils.js';
  */
 export const reportGeneratorTool = createTool({
   id: 'report-generator',
-  description: 'Generate comparison report for OCR test results based on character-level accuracy',
+  description:
+    'Generate comparison report for OCR test results based on character-level accuracy',
   inputSchema: z.object({
     testRunId: z.string(),
     testResults: z.array(
@@ -89,24 +90,33 @@ export const reportGeneratorTool = createTool({
       const stats = toolStats[tool];
       stats.avgCER = stats.avgCER / stats.testCount;
       stats.avgCharacterAccuracy = stats.avgCharacterAccuracy / stats.testCount;
-      stats.avgCharacterSetCoverage = stats.avgCharacterSetCoverage / stats.testCount;
+      stats.avgCharacterSetCoverage =
+        stats.avgCharacterSetCoverage / stats.testCount;
       stats.avgProcessingTime = stats.avgProcessingTime / stats.testCount;
     }
 
     // Find best tools
     const lowestCERTool =
-      Object.entries(toolStats).sort((a, b) => a[1].avgCER - b[1].avgCER)[0]?.[0] || '';
+      Object.entries(toolStats).sort(
+        (a, b) => a[1].avgCER - b[1].avgCER
+      )[0]?.[0] || '';
 
     const bestAccuracyTool =
-      Object.entries(toolStats).sort((a, b) => b[1].avgCharacterAccuracy - a[1].avgCharacterAccuracy)[0]?.[0] || '';
+      Object.entries(toolStats).sort(
+        (a, b) => b[1].avgCharacterAccuracy - a[1].avgCharacterAccuracy
+      )[0]?.[0] || '';
 
     const bestOverallTool = lowestCERTool; // Lowest CER is best overall
 
     const fastestTool =
-      Object.entries(toolStats).sort((a, b) => a[1].avgProcessingTime - b[1].avgProcessingTime)[0]?.[0] || '';
+      Object.entries(toolStats).sort(
+        (a, b) => a[1].avgProcessingTime - b[1].avgProcessingTime
+      )[0]?.[0] || '';
 
     const cheapestTool =
-      Object.entries(toolStats).sort((a, b) => a[1].totalCost - b[1].totalCost)[0]?.[0] || '';
+      Object.entries(toolStats).sort(
+        (a, b) => a[1].totalCost - b[1].totalCost
+      )[0]?.[0] || '';
 
     // Generate HTML report
     const html = generateHTMLReport(testRunId, testResults, toolStats, {
@@ -159,7 +169,10 @@ export const reportGeneratorTool = createTool({
  * Calculate gradient color based on metric value
  * Returns RGB color string for inline styling
  */
-function getGradientColor(value: number, metricType: 'cer' | 'accuracy' | 'coverage' | 'time'): string {
+function getGradientColor(
+  value: number,
+  metricType: 'cer' | 'accuracy' | 'coverage' | 'time'
+): string {
   let normalizedValue: number;
 
   // Normalize value to 0-100 scale based on metric type
@@ -167,7 +180,7 @@ function getGradientColor(value: number, metricType: 'cer' | 'accuracy' | 'cover
     case 'cer':
       // CER: 0% = best (green), 15% = orange, 30%+ = worst (red)
       // Clamp to 0-30 range and normalize to 0-100
-      normalizedValue = Math.min(Math.max(value * 100, 0), 30) / 30 * 100;
+      normalizedValue = (Math.min(Math.max(value * 100, 0), 30) / 30) * 100;
       break;
 
     case 'accuracy':
@@ -193,15 +206,15 @@ function getGradientColor(value: number, metricType: 'cer' | 'accuracy' | 'cover
   if (normalizedValue <= 50) {
     // Green to Orange (0-50)
     const ratio = normalizedValue / 50;
-    r = Math.round(76 + (255 - 76) * ratio);   // 76 → 255
+    r = Math.round(76 + (255 - 76) * ratio); // 76 → 255
     g = Math.round(175 + (152 - 175) * ratio); // 175 → 152
-    b = Math.round(80 + (0 - 80) * ratio);     // 80 → 0
+    b = Math.round(80 + (0 - 80) * ratio); // 80 → 0
   } else {
     // Orange to Red (50-100)
     const ratio = (normalizedValue - 50) / 50;
-    r = 255;                                    // stays 255
-    g = Math.round(152 - 152 * ratio);         // 152 → 0
-    b = 0;                                      // stays 0
+    r = 255; // stays 255
+    g = Math.round(152 - 152 * ratio); // 152 → 0
+    b = 0; // stays 0
   }
 
   return `rgb(${r}, ${g}, ${b})`;
@@ -230,7 +243,10 @@ function getContrastTextColor(bgRgb: string): string {
 /**
  * Generate inline style string for metric with gradient color
  */
-function getMetricStyle(value: number, metricType: 'cer' | 'accuracy' | 'coverage' | 'time'): string {
+function getMetricStyle(
+  value: number,
+  metricType: 'cer' | 'accuracy' | 'coverage' | 'time'
+): string {
   const bgColor = getGradientColor(value, metricType);
   const textColor = getContrastTextColor(bgColor);
   return `background-color: ${bgColor}; color: ${textColor};`;
@@ -243,13 +259,15 @@ function generateHTMLReport(
   summary: any
 ): string {
   // Calculate min/max processing times for normalization
-  const allProcessingTimes = Object.values(toolStats).map((stats: any) => stats.avgProcessingTime);
+  const allProcessingTimes = Object.values(toolStats).map(
+    (stats: any) => stats.avgProcessingTime
+  );
   const minProcessingTime = Math.min(...allProcessingTimes);
   const maxProcessingTime = Math.max(...allProcessingTimes);
   const processingTimeRange = maxProcessingTime - minProcessingTime || 1; // Avoid division by zero
 
   // Also get min/max for individual results
-  const allResultTimes = testResults.map(r => r.metrics.processingTimeMs);
+  const allResultTimes = testResults.map((r) => r.metrics.processingTimeMs);
   const minResultTime = Math.min(...allResultTimes);
   const maxResultTime = Math.max(...allResultTimes);
   const resultTimeRange = maxResultTime - minResultTime || 1;
@@ -365,12 +383,14 @@ function generateHTMLReport(
     </thead>
     <tbody>
       ${Object.entries(toolStats)
-        .map(
-          ([tool, stats]: [string, any]) => {
-            // Normalize processing time to 0-100 scale for gradient
-            const normalizedTime = ((stats.avgProcessingTime - minProcessingTime) / processingTimeRange) * 100;
+        .map(([tool, stats]: [string, any]) => {
+          // Normalize processing time to 0-100 scale for gradient
+          const normalizedTime =
+            ((stats.avgProcessingTime - minProcessingTime) /
+              processingTimeRange) *
+            100;
 
-            return `
+          return `
         <tr>
           <td><strong>${tool}</strong></td>
           <td><span class="metric" style="${getMetricStyle(stats.avgCER, 'cer')}">${(stats.avgCER * 100).toFixed(2)}%</span></td>
@@ -381,8 +401,7 @@ function generateHTMLReport(
           <td>${stats.testCount}</td>
         </tr>
       `;
-          }
-        )
+        })
         .join('')}
     </tbody>
   </table>
@@ -403,25 +422,26 @@ function generateHTMLReport(
     </thead>
     <tbody>
       ${testResults
-        .map(
-          (result) => {
-            // Normalize processing time to 0-100 scale for gradient
-            const normalizedTime = ((result.metrics.processingTimeMs - minResultTime) / resultTimeRange) * 100;
+        .map((result) => {
+          // Normalize processing time to 0-100 scale for gradient
+          const normalizedTime =
+            ((result.metrics.processingTimeMs - minResultTime) /
+              resultTimeRange) *
+            100;
 
-            return `
+          return `
         <tr>
           <td>${result.drawingId}</td>
           <td>${result.tool}</td>
           <td><span class="metric" style="${getMetricStyle(result.metrics.characterErrorRate, 'cer')}">${(result.metrics.characterErrorRate * 100).toFixed(2)}%</span></td>
           <td><span class="metric" style="${getMetricStyle(result.metrics.characterAccuracy, 'accuracy')}">${result.metrics.characterAccuracy.toFixed(1)}%</span></td>
           <td><span class="metric" style="${getMetricStyle(result.metrics.characterSetCoverage, 'coverage')}">${result.metrics.characterSetCoverage.toFixed(1)}%</span></td>
-          <td class="char-count">${result.metrics.extractedCharCount}/${result.metrics.groundTruthCharCount} ${result.metrics.exactCharCountMatch ? '✓' : '✗'}</td>
+          <td class="char-count">${result.metrics.extractedCharCount}/${result.metrics.groundTruthCharCount} ${result.metrics.exactCharCountMatch ? 'match' : 'mismatch'}</td>
           <td><span class="metric" style="${getMetricStyle(normalizedTime, 'time')}">${formatTime(result.metrics.processingTimeMs)}</span></td>
           <td>${formatCost(result.metrics.apiCost)}</td>
         </tr>
       `;
-          }
-        )
+        })
         .join('')}
     </tbody>
   </table>

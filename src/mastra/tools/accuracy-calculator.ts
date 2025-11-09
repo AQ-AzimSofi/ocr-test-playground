@@ -14,17 +14,31 @@ import {
  */
 export const accuracyCalculatorTool = createTool({
   id: 'accuracy-calculator',
-  description: 'Calculate character-level OCR accuracy metrics by comparing extracted text with ground truth',
+  description:
+    'Calculate character-level OCR accuracy metrics by comparing extracted text with ground truth',
   inputSchema: z.object({
     extractedText: z.string(),
     groundTruthText: z.string(),
     confidenceScore: z.number().optional(),
-    boundingBoxes: z.array(z.object({
-      text: z.string(),
-      bounds: z.array(z.object({ x: z.number(), y: z.number() })),
-      confidence: z.number().optional(),
-      bboxSource: z.enum(['ocr', 'gemini-percentage', 'estimated', 'synthesized']).optional(),
-    })).optional(),
+    boundingBoxes: z
+      .array(
+        z.object({
+          text: z.string(),
+          bounds: z.array(z.object({ x: z.number(), y: z.number() })),
+          confidence: z.number().optional(),
+          bboxSource: z
+            .enum([
+              'ocr',
+              'gemini-percentage',
+              'estimated',
+              'synthesized',
+              'spatial-search',
+              'template-match',
+            ])
+            .optional(),
+        })
+      )
+      .optional(),
   }),
   outputSchema: z.object({
     // Character Error Rate (industry standard)
@@ -47,12 +61,16 @@ export const accuracyCalculatorTool = createTool({
     avgConfidenceScore: z.number().optional(),
 
     // Bbox source statistics
-    bboxSourceStats: z.object({
-      ocr: z.number().optional(),
-      geminiPercentage: z.number().optional(),
-      estimated: z.number().optional(),
-      synthesized: z.number().optional(),
-    }).optional(),
+    bboxSourceStats: z
+      .object({
+        ocr: z.number().optional(),
+        geminiPercentage: z.number().optional(),
+        estimated: z.number().optional(),
+        synthesized: z.number().optional(),
+        spatialSearch: z.number().optional(),
+        templateMatch: z.number().optional(),
+      })
+      .optional(),
 
     // Detailed breakdown
     breakdown: z.object({
@@ -69,7 +87,8 @@ export const accuracyCalculatorTool = createTool({
     }),
   }),
   execute: async ({ context }) => {
-    const { extractedText, groundTruthText, confidenceScore, boundingBoxes } = context;
+    const { extractedText, groundTruthText, confidenceScore, boundingBoxes } =
+      context;
 
     // Normalize both texts
     const normalizedExtracted = normalizeText(extractedText);
@@ -83,6 +102,8 @@ export const accuracyCalculatorTool = createTool({
         geminiPercentage: 0,
         estimated: 0,
         synthesized: 0,
+        spatialSearch: 0,
+        templateMatch: 0,
       };
 
       for (const bbox of boundingBoxes) {
@@ -94,6 +115,10 @@ export const accuracyCalculatorTool = createTool({
           stats.estimated++;
         } else if (bbox.bboxSource === 'synthesized') {
           stats.synthesized++;
+        } else if (bbox.bboxSource === 'spatial-search') {
+          stats.spatialSearch++;
+        } else if (bbox.bboxSource === 'template-match') {
+          stats.templateMatch++;
         }
       }
 
@@ -102,14 +127,22 @@ export const accuracyCalculatorTool = createTool({
         geminiPercentage: stats.geminiPercentage || undefined,
         estimated: stats.estimated || undefined,
         synthesized: stats.synthesized || undefined,
+        spatialSearch: stats.spatialSearch || undefined,
+        templateMatch: stats.templateMatch || undefined,
       };
     }
 
     // Calculate Character Error Rate (CER)
-    const characterErrorRate = calculateCER(normalizedExtracted, normalizedGroundTruth);
+    const characterErrorRate = calculateCER(
+      normalizedExtracted,
+      normalizedGroundTruth
+    );
 
     // Calculate character-by-character accuracy
-    const characterAccuracy = calculateCharacterAccuracy(normalizedExtracted, normalizedGroundTruth);
+    const characterAccuracy = calculateCharacterAccuracy(
+      normalizedExtracted,
+      normalizedGroundTruth
+    );
 
     // Calculate character set coverage
     const characterSetCoverage = calculateCharacterSetCoverage(
@@ -118,10 +151,16 @@ export const accuracyCalculatorTool = createTool({
     );
 
     // Calculate exact character count
-    const charCount = calculateExactCharacterCount(normalizedExtracted, normalizedGroundTruth);
+    const charCount = calculateExactCharacterCount(
+      normalizedExtracted,
+      normalizedGroundTruth
+    );
 
     // Calculate Levenshtein edit distance
-    const editDistance = calculateLevenshteinDistance(normalizedExtracted, normalizedGroundTruth);
+    const editDistance = calculateLevenshteinDistance(
+      normalizedExtracted,
+      normalizedGroundTruth
+    );
 
     // Generate character-level differences (up to 100 for performance)
     const characterDifferences: Array<{
@@ -130,7 +169,10 @@ export const accuracyCalculatorTool = createTool({
       actual: string;
     }> = [];
 
-    const maxLength = Math.max(normalizedExtracted.length, normalizedGroundTruth.length);
+    const maxLength = Math.max(
+      normalizedExtracted.length,
+      normalizedGroundTruth.length
+    );
     let diffCount = 0;
 
     for (let i = 0; i < maxLength && diffCount < 100; i++) {
@@ -154,7 +196,7 @@ export const accuracyCalculatorTool = createTool({
       `Character Set Coverage: ${characterSetCoverage.toFixed(2)}%`,
       `Edit Distance: ${editDistance}`,
       `Character Count: ${charCount.extractedCount}/${charCount.groundTruthCount} ${
-        charCount.matches ? '✓' : '✗'
+        charCount.matches ? 'match' : 'mismatch'
       }`,
       characterDifferences.length > 0
         ? `Found ${characterDifferences.length}${diffCount >= 100 ? '+' : ''} character differences`

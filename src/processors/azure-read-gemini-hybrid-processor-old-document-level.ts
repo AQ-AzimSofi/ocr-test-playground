@@ -42,7 +42,10 @@ interface ComparisonResult {
   }>;
 }
 
-export async function processWithAzureReadGeminiHybrid(imagePath: string, drawingId: string) {
+export async function processWithAzureReadGeminiHybrid(
+  imagePath: string,
+  drawingId: string
+) {
   console.log(`  Processing with Azure Read + Gemini Hybrid...`);
   const startTime = Date.now();
 
@@ -82,7 +85,8 @@ export async function processWithAzureReadGeminiHybrid(imagePath: string, drawin
     // Calculate similarity between Azure and Gemini results
     const editDistance = Levenshtein.get(azureText, geminiText);
     const maxLength = Math.max(azureText.length, geminiText.length);
-    const similarity = maxLength > 0 ? ((maxLength - editDistance) / maxLength) * 100 : 0;
+    const similarity =
+      maxLength > 0 ? ((maxLength - editDistance) / maxLength) * 100 : 0;
 
     // Decision logic for text selection
     let selectedText: string;
@@ -90,12 +94,15 @@ export async function processWithAzureReadGeminiHybrid(imagePath: string, drawin
     const discrepancies: ComparisonResult['discrepancies'] = [];
 
     // Calculate low-confidence percentage at word level
-    const lowConfidencePercentage = (lowConfidenceWords.length / azureResult.words.length) * 100;
+    const lowConfidencePercentage =
+      (lowConfidenceWords.length / azureResult.words.length) * 100;
 
     // Calculate average confidence
-    const avgConfidence = azureResult.words.length > 0
-      ? azureResult.words.reduce((sum, w) => sum + (w.confidence || 0), 0) / azureResult.words.length
-      : 0;
+    const avgConfidence =
+      azureResult.words.length > 0
+        ? azureResult.words.reduce((sum, w) => sum + (w.confidence || 0), 0) /
+          azureResult.words.length
+        : 0;
 
     if (lowConfidencePercentage > 30) {
       // Many low-confidence words - prefer Gemini
@@ -103,7 +110,7 @@ export async function processWithAzureReadGeminiHybrid(imagePath: string, drawin
       selectionReason = `High percentage of low-confidence words (${lowConfidencePercentage.toFixed(1)}%) - using Gemini`;
 
       // Flag all low-confidence words as discrepancies
-      lowConfidenceWords.forEach(word => {
+      lowConfidenceWords.forEach((word) => {
         discrepancies.push({
           word,
           geminiVersion: 'Used Gemini due to low confidence',
@@ -125,7 +132,7 @@ export async function processWithAzureReadGeminiHybrid(imagePath: string, drawin
       selectionReason = `High agreement (${similarity.toFixed(1)}%) - using Azure with word-level spatial data`;
 
       // Still flag low-confidence words for user awareness
-      lowConfidenceWords.forEach(word => {
+      lowConfidenceWords.forEach((word) => {
         discrepancies.push({
           word,
           geminiVersion: 'Alternative extraction available from Gemini',
@@ -137,7 +144,10 @@ export async function processWithAzureReadGeminiHybrid(imagePath: string, drawin
     const processingTime = Date.now() - startTime;
 
     // Estimate combined cost
-    const azureCost = azureDocumentClient.estimateCost(azureResult.pages.length, 'read');
+    const azureCost = azureDocumentClient.estimateCost(
+      azureResult.pages.length,
+      'read'
+    );
     const geminiCost = geminiClient.estimateCost(geminiText.length);
     const estimatedCost = azureCost + geminiCost;
 
@@ -154,8 +164,10 @@ export async function processWithAzureReadGeminiHybrid(imagePath: string, drawin
           confidence: word.confidence,
           page: word.page,
           metadata: {
-            isLowConfidence: lowConfidenceWords.some(w => w.index === index),
-            usedGeminiFallback: selectedText === geminiText && lowConfidenceWords.some(w => w.index === index),
+            isLowConfidence: lowConfidenceWords.some((w) => w.index === index),
+            usedGeminiFallback:
+              selectedText === geminiText &&
+              lowConfidenceWords.some((w) => w.index === index),
             granularity: 'word',
           },
         })),
@@ -180,14 +192,22 @@ export async function processWithAzureReadGeminiHybrid(imagePath: string, drawin
       })
       .returning();
 
-    console.log(`  ✅ Azure Read + Gemini Hybrid completed in ${(processingTime / 1000).toFixed(2)}s`);
-    console.log(`     Selected: ${selectedText === azureText ? 'Azure Read' : 'Gemini'} (${selectedText.length} chars)`);
-    console.log(`     Azure Read: ${azureText.length} chars, ${azureResult.words.length} words (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`);
+    console.log(
+      `  Azure Read + Gemini Hybrid completed in ${(processingTime / 1000).toFixed(2)}s`
+    );
+    console.log(
+      `     Selected: ${selectedText === azureText ? 'Azure Read' : 'Gemini'} (${selectedText.length} chars)`
+    );
+    console.log(
+      `     Azure Read: ${azureText.length} chars, ${azureResult.words.length} words (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`
+    );
     console.log(`     Gemini: ${geminiText.length} chars`);
     console.log(`     Agreement: ${similarity.toFixed(1)}%`);
-    console.log(`     Low confidence words: ${lowConfidenceWords.length}/${azureResult.words.length} (${lowConfidencePercentage.toFixed(1)}%)`);
+    console.log(
+      `     Low confidence words: ${lowConfidenceWords.length}/${azureResult.words.length} (${lowConfidencePercentage.toFixed(1)}%)`
+    );
     if (discrepancies.length > 0) {
-      console.log(`     ⚠️  ${discrepancies.length} words flagged for review`);
+      console.log(`     Warning: ${discrepancies.length} words flagged for review`);
     }
 
     return {
@@ -209,7 +229,7 @@ export async function processWithAzureReadGeminiHybrid(imagePath: string, drawin
       },
     };
   } catch (error) {
-    console.error(`  ❌ Azure Read + Gemini Hybrid failed:`, error);
+    console.error(`  Azure Read + Gemini Hybrid failed:`, error);
     throw error;
   }
 }

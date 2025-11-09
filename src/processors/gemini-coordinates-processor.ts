@@ -1,14 +1,20 @@
 import { geminiClient } from '../lib/gemini-client.js';
 import { db, extractionResults } from '../db/index.js';
 import sharp from 'sharp';
-import { parseGeminiCoordinates, hasCoordinateFormat } from '../utils/gemini-parser.js';
+import {
+  parseGeminiCoordinates,
+  hasCoordinateFormat,
+} from '../utils/gemini-parser.js';
 import { percentageToBbox } from '../utils/bbox-estimator.js';
 
 /**
  * Process drawing with Gemini using coordinate-based prompting
  * Attempts to get both text AND approximate bounding boxes from Gemini
  */
-export async function processWithGeminiCoordinates(imagePath: string, drawingId: string) {
+export async function processWithGeminiCoordinates(
+  imagePath: string,
+  drawingId: string
+) {
   console.log(`  Processing with Gemini Coordinates...`);
   const startTime = Date.now();
 
@@ -52,21 +58,26 @@ Include all:
 - Special characters (×, ㎡, m², etc.)`;
 
     // Extract with custom prompt
-    const response = await geminiClient.extractWithCustomPrompt(imagePath, prompt);
+    const response = await geminiClient.extractWithCustomPrompt(
+      imagePath,
+      prompt
+    );
 
     console.log(`  Gemini response preview: ${response.substring(0, 200)}...`);
 
     // Try to parse coordinates from response
     const coordinates = parseGeminiCoordinates(response);
 
-    console.log(`  Parsed ${coordinates.length} text elements with coordinates`);
+    console.log(
+      `  Parsed ${coordinates.length} text elements with coordinates`
+    );
 
     let boundingBoxes = [];
     let rawText = '';
 
     if (coordinates.length > 0) {
       // Successfully parsed coordinate format
-      boundingBoxes = coordinates.map(coord => {
+      boundingBoxes = coordinates.map((coord) => {
         const bbox = percentageToBbox(
           coord.top,
           coord.left,
@@ -85,7 +96,7 @@ Include all:
       });
 
       // Reconstruct text from coordinates (preserving order)
-      rawText = coordinates.map(c => c.text).join('\n');
+      rawText = coordinates.map((c) => c.text).join('\n');
     } else {
       // Fallback: treat as plain text extraction
       console.warn('  Failed to parse coordinates, using raw text only');
@@ -114,7 +125,9 @@ Include all:
       })
       .returning();
 
-    console.log(`  Gemini Coordinates completed in ${(processingTime / 1000).toFixed(2)}s`);
+    console.log(
+      `  Gemini Coordinates completed in ${(processingTime / 1000).toFixed(2)}s`
+    );
     console.log(`     Extracted ${rawText.length} characters`);
     console.log(`     Generated ${boundingBoxes.length} bounding boxes`);
 

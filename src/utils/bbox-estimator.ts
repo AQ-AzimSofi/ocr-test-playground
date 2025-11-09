@@ -55,7 +55,10 @@ export function fuzzyMatchTextToBbox(
 
     const similarity = calculateTextSimilarity(text, bbox.text);
 
-    if (similarity >= threshold && (!bestMatch || similarity > bestMatch.similarity)) {
+    if (
+      similarity >= threshold &&
+      (!bestMatch || similarity > bestMatch.similarity)
+    ) {
       bestMatch = {
         bbox,
         similarity,
@@ -71,7 +74,9 @@ export function fuzzyMatchTextToBbox(
 /**
  * Calculate average character dimensions from known bounding boxes
  */
-export function calculateAverageCharDimensions(bboxes: BoundingBox[]): CharDimensions {
+export function calculateAverageCharDimensions(
+  bboxes: BoundingBox[]
+): CharDimensions {
   const widths: number[] = [];
   const heights: number[] = [];
 
@@ -142,7 +147,7 @@ export function findNearestBboxes(
   bboxes: BoundingBox[],
   n: number = 5
 ): BoundingBox[] {
-  const distances = bboxes.map(bbox => ({
+  const distances = bboxes.map((bbox) => ({
     bbox,
     distance: Math.hypot(
       point.x - getBboxCentroid(bbox).x,
@@ -152,7 +157,7 @@ export function findNearestBboxes(
 
   distances.sort((a, b) => a.distance - b.distance);
 
-  return distances.slice(0, n).map(d => d.bbox);
+  return distances.slice(0, n).map((d) => d.bbox);
 }
 
 /**
@@ -342,8 +347,8 @@ export function descriptionToApproximatePosition(
  */
 export function calculateIoU(bbox1: BoundingBox, bbox2: BoundingBox): number {
   const getBounds = (bbox: BoundingBox) => {
-    const xs = bbox.bounds.map(p => p.x);
-    const ys = bbox.bounds.map(p => p.y);
+    const xs = bbox.bounds.map((p) => p.x);
+    const ys = bbox.bounds.map((p) => p.y);
     return {
       x1: Math.min(...xs),
       y1: Math.min(...ys),

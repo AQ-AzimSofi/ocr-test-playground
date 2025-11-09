@@ -1,5 +1,11 @@
 import { FastifyPluginAsync } from 'fastify';
-import { db, testRuns, extractionResults, accuracyMetrics, testDrawings } from '../../db/index.js';
+import {
+  db,
+  testRuns,
+  extractionResults,
+  accuracyMetrics,
+  testDrawings,
+} from '../../db/index.js';
 import { eq, inArray, desc } from 'drizzle-orm';
 
 export const testRunsRoutes: FastifyPluginAsync = async (fastify) => {
@@ -95,9 +101,12 @@ export const testRunsRoutes: FastifyPluginAsync = async (fastify) => {
       // Debug logging for bounding boxes
       fastify.log.info('[TEST-RUN-API] Extraction results retrieved:');
       for (const result of results) {
-        const hasBBoxes = result.boundingBoxes && Array.isArray(result.boundingBoxes);
+        const hasBBoxes =
+          result.boundingBoxes && Array.isArray(result.boundingBoxes);
         const bboxCount = hasBBoxes ? result.boundingBoxes!.length : 0;
-        fastify.log.info(`  - Tool: ${result.tool}, Drawing: ${result.drawingId}, BBoxes: ${bboxCount}`);
+        fastify.log.info(
+          `  - Tool: ${result.tool}, Drawing: ${result.drawingId}, BBoxes: ${bboxCount}`
+        );
       }
 
       // Get accuracy metrics for all results
@@ -115,7 +124,9 @@ export const testRunsRoutes: FastifyPluginAsync = async (fastify) => {
           const result = drawingResults.find((r) => r.tool === tool);
           if (!result) return null;
 
-          const metric = metrics.find((m) => m.extractionResultId === result.id);
+          const metric = metrics.find(
+            (m) => m.extractionResultId === result.id
+          );
 
           return {
             tool,
@@ -168,14 +179,20 @@ export const testRunsRoutes: FastifyPluginAsync = async (fastify) => {
         return {
           tool,
           avgCER:
-            toolMetrics.reduce((sum, m) => sum + (m.characterErrorRate || 0), 0) /
-            toolMetrics.length,
+            toolMetrics.reduce(
+              (sum, m) => sum + (m.characterErrorRate || 0),
+              0
+            ) / toolMetrics.length,
           avgAccuracy:
-            toolMetrics.reduce((sum, m) => sum + (m.characterAccuracy || 0), 0) /
-            toolMetrics.length,
+            toolMetrics.reduce(
+              (sum, m) => sum + (m.characterAccuracy || 0),
+              0
+            ) / toolMetrics.length,
           avgCoverage:
-            toolMetrics.reduce((sum, m) => sum + (m.characterSetCoverage || 0), 0) /
-            toolMetrics.length,
+            toolMetrics.reduce(
+              (sum, m) => sum + (m.characterSetCoverage || 0),
+              0
+            ) / toolMetrics.length,
           avgProcessingTime:
             toolResults.reduce((sum, r) => sum + (r.processingTimeMs || 0), 0) /
             toolResults.length,
@@ -191,7 +208,9 @@ export const testRunsRoutes: FastifyPluginAsync = async (fastify) => {
         for (const toolResult of comparison.tools) {
           if (toolResult) {
             const bboxCount = toolResult.result.boundingBoxes?.length || 0;
-            fastify.log.info(`    - Tool: ${toolResult.tool}, BBoxes: ${bboxCount}`);
+            fastify.log.info(
+              `    - Tool: ${toolResult.tool}, BBoxes: ${bboxCount}`
+            );
           }
         }
       }

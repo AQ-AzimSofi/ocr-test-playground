@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 
-import { db, testDrawings, extractionResults, accuracyMetrics, testRuns } from './db/index.js';
+import {
+  db,
+  testDrawings,
+  extractionResults,
+  accuracyMetrics,
+  testRuns,
+} from './db/index.js';
 import { processWithCloudVision } from './processors/cloud-vision-processor.js';
 import { processWithGemini } from './processors/gemini-processor.js';
 import { processWithHybrid } from './processors/hybrid-processor.js';
@@ -12,6 +18,7 @@ import { processWithGeminiCoordinates } from './processors/gemini-coordinates-pr
 import { processWithGeminiBboxSynthesis } from './processors/gemini-bbox-synthesis-processor.js';
 import { processWithGeminiValidation } from './processors/gemini-validation-processor.js';
 import { processWithRegionClassifier } from './processors/region-classifier-processor.js';
+import { processWithGeminiGeometric } from './processors/gemini-geometric-processor.js';
 import { accuracyCalculatorTool } from './mastra/tools/accuracy-calculator.js';
 import { reportGeneratorTool } from './mastra/tools/report-generator.js';
 import * as fs from 'fs';
@@ -59,16 +66,24 @@ function loadGroundTruthText(metadata: any, metadataDir: string): any {
 
   // If fullTextFile is specified, read from external file
   if (metadata.groundTruth.fullTextFile) {
-    const textFilePath = path.join(metadataDir, metadata.groundTruth.fullTextFile);
+    const textFilePath = path.join(
+      metadataDir,
+      metadata.groundTruth.fullTextFile
+    );
 
     if (fs.existsSync(textFilePath)) {
       try {
         const fullText = fs.readFileSync(textFilePath, 'utf-8');
         // Populate fullText from the file
         metadata.groundTruth.fullText = fullText;
-        console.log(`  Loaded ground truth from: ${metadata.groundTruth.fullTextFile}`);
+        console.log(
+          `  Loaded ground truth from: ${metadata.groundTruth.fullTextFile}`
+        );
       } catch (error) {
-        console.error(`  Warning: Could not read ground truth file ${textFilePath}:`, error);
+        console.error(
+          `  Warning: Could not read ground truth file ${textFilePath}:`,
+          error
+        );
       }
     } else {
       console.error(`  Warning: Ground truth file not found: ${textFilePath}`);
@@ -82,7 +97,7 @@ async function loadTestDrawings() {
   const drawingsDir = path.join(process.cwd(), 'test-drawings');
 
   if (!fs.existsSync(drawingsDir)) {
-    console.error('❌ test-drawings directory not found');
+    console.error('Error: test-drawings directory not found');
     console.log('Please create test-drawings/ and add your test drawings');
     return [];
   }
@@ -117,7 +132,9 @@ async function loadTestDrawings() {
           metadata,
         });
       }
-    } else if (['.png', '.jpg', '.jpeg', '.pdf'].some((ext) => file.name.endsWith(ext))) {
+    } else if (
+      ['.png', '.jpg', '.jpeg', '.pdf'].some((ext) => file.name.endsWith(ext))
+    ) {
       // Image in root test-drawings directory
       const filePath = path.join(drawingsDir, file.name);
       const baseName = file.name.replace(/\.(png|jpg|jpeg|pdf)$/, '');
@@ -173,6 +190,8 @@ async function runProcessor(
       result = await processWithGeminiValidation(imagePath, drawingId);
     } else if (processor === 'region-classifier') {
       result = await processWithRegionClassifier(imagePath, drawingId);
+    } else if (processor === 'gemini-geometric') {
+      result = await processWithGeminiGeometric(imagePath, drawingId);
     } else {
       throw new Error(`Unknown processor: ${processor}`);
     }
@@ -197,7 +216,9 @@ async function calculateAccuracy(extractionResultId: string, groundTruth: any) {
   }
 
   if (!groundTruth?.fullText) {
-    console.error('No ground truth text found - please provide fullText in metadata');
+    console.error(
+      'No ground truth text found - please provide fullText in metadata'
+    );
     return null;
   }
 
@@ -253,7 +274,9 @@ async function main() {
     console.log('\nTo add test drawings:');
     console.log('1. Create test-drawings/ directory');
     console.log('2. Add image files (.png, .jpg, .pdf)');
-    console.log('3. Add corresponding -metadata.json files with ground truth data');
+    console.log(
+      '3. Add corresponding -metadata.json files with ground truth data'
+    );
     console.log('\nExample metadata file (drawing-001-metadata.json):');
     console.log(
       JSON.stringify(
@@ -263,7 +286,8 @@ async function main() {
           quality: 'high',
           source: 'scanned',
           groundTruth: {
-            fullText: '10,920\n1,820\n910\n浴室\n洗面室\n押入\n床の間\n板の間\n...',
+            fullText:
+              '10,920\n1,820\n910\n浴室\n洗面室\n押入\n床の間\n板の間\n...',
           },
         },
         null,
@@ -316,21 +340,23 @@ async function main() {
       runName: `Test Run ${new Date().toISOString()}`,
       description: `Testing workflow: ${workflow}`,
       drawingIds: drawings.map((d) => d.metadata?.id || d.fileName),
-      tools: workflow === 'all'
-        ? [
-            'cloud-vision',
-            'gemini',
-            'hybrid',
-            'azure-layout',
-            'azure-read',
-            'cloud-vision-gemini-hybrid',
-            'azure-read-gemini-hybrid',
-            'gemini-coordinates',
-            'gemini-bbox-synthesis',
-            'gemini-validation',
-            'region-classifier'
-          ]
-        : [workflow],
+      tools:
+        workflow === 'all'
+          ? [
+              'cloud-vision',
+              'gemini',
+              'hybrid',
+              'azure-layout',
+              'azure-read',
+              'cloud-vision-gemini-hybrid',
+              'azure-read-gemini-hybrid',
+              'gemini-coordinates',
+              'gemini-bbox-synthesis',
+              'gemini-validation',
+              'region-classifier',
+              'gemini-geometric',
+            ]
+          : [workflow],
       summary: {
         totalDrawings: drawings.length,
         totalExtractions: 0,
@@ -368,26 +394,44 @@ async function main() {
             'gemini-coordinates',
             'gemini-bbox-synthesis',
             'gemini-validation',
-            'region-classifier'
+            'region-classifier',
+            'gemini-geometric',
           ]
         : [workflow];
 
     for (const processor of processorsToRun) {
       try {
         // Run processor
-        const result = await runProcessor(processor, drawing.filePath, drawingId);
+        const result = await runProcessor(
+          processor,
+          drawing.filePath,
+          drawingId
+        );
 
         // Calculate accuracy if ground truth is available
         if (groundTruth && result.extractionResultId) {
           console.log('  Calculating accuracy...');
-          const accuracy = await calculateAccuracy(result.extractionResultId, groundTruth);
+          const accuracy = await calculateAccuracy(
+            result.extractionResultId,
+            groundTruth
+          );
 
           if (accuracy) {
-            console.log(`\n  Character-Level Accuracy Metrics for ${processor}:`);
-            console.log(`     Character Error Rate (CER): ${(accuracy.characterErrorRate * 100).toFixed(2)}%`);
-            console.log(`     Character Accuracy: ${accuracy.characterAccuracy.toFixed(1)}%`);
-            console.log(`     Character Set Coverage: ${accuracy.characterSetCoverage.toFixed(1)}%`);
-            console.log(`     Character Count: ${accuracy.extractedCharCount}/${accuracy.groundTruthCharCount} ${accuracy.exactCharCountMatch ? 'MATCH' : 'DIFF'}`);
+            console.log(
+              `\n  Character-Level Accuracy Metrics for ${processor}:`
+            );
+            console.log(
+              `     Character Error Rate (CER): ${(accuracy.characterErrorRate * 100).toFixed(2)}%`
+            );
+            console.log(
+              `     Character Accuracy: ${accuracy.characterAccuracy.toFixed(1)}%`
+            );
+            console.log(
+              `     Character Set Coverage: ${accuracy.characterSetCoverage.toFixed(1)}%`
+            );
+            console.log(
+              `     Character Count: ${accuracy.extractedCharCount}/${accuracy.groundTruthCharCount} ${accuracy.exactCharCountMatch ? 'MATCH' : 'DIFF'}`
+            );
             console.log(`     Edit Distance: ${accuracy.editDistance}`);
 
             // Fetch processing time and cost from extraction result
@@ -413,7 +457,10 @@ async function main() {
           }
         }
       } catch (error) {
-        console.error(`Failed to process ${drawingId} with ${processor}:`, error);
+        console.error(
+          `Failed to process ${drawingId} with ${processor}:`,
+          error
+        );
       }
     }
   }
@@ -434,8 +481,12 @@ async function main() {
 
     console.log(`\nReport generated: ${report.reportPath}`);
     console.log('\nSummary:');
-    console.log(`  Best Overall (Lowest CER): ${report.summary.bestOverallTool}`);
-    console.log(`  Best Character Accuracy: ${report.summary.bestAccuracyTool}`);
+    console.log(
+      `  Best Overall (Lowest CER): ${report.summary.bestOverallTool}`
+    );
+    console.log(
+      `  Best Character Accuracy: ${report.summary.bestAccuracyTool}`
+    );
     console.log(`  Lowest CER: ${report.summary.lowestCERTool}`);
     console.log(`  Fastest: ${report.summary.fastestTool}`);
     console.log(`  Cheapest: ${report.summary.cheapestTool}`);

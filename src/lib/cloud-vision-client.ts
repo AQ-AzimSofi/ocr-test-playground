@@ -55,11 +55,13 @@ export class CloudVisionClient {
     for (const page of fullTextAnnotation.pages) {
       for (const block of page.blocks || []) {
         for (const paragraph of block.paragraphs || []) {
-          const text = paragraph.words
-            ?.map((word) =>
-              word.symbols?.map((symbol) => symbol.text).join('') || ''
-            )
-            .join(' ') || '';
+          const text =
+            paragraph.words
+              ?.map(
+                (word) =>
+                  word.symbols?.map((symbol) => symbol.text).join('') || ''
+              )
+              .join(' ') || '';
 
           const vertices = paragraph.boundingBox?.vertices || [];
           const confidence = paragraph.confidence || 0;
@@ -79,7 +81,9 @@ export class CloudVisionClient {
   /**
    * Extract blocks of text with their positions
    */
-  private extractBlocks(fullTextAnnotation: vision.protos.google.cloud.vision.v1.ITextAnnotation) {
+  private extractBlocks(
+    fullTextAnnotation: vision.protos.google.cloud.vision.v1.ITextAnnotation
+  ) {
     const blocks: Array<{
       text: string;
       bounds: Array<{ x: number; y: number }>;
@@ -92,13 +96,15 @@ export class CloudVisionClient {
 
     for (const page of fullTextAnnotation.pages) {
       for (const block of page.blocks || []) {
-        const text = block.paragraphs
-          ?.map((p) =>
-            p.words
-              ?.map((w) => w.symbols?.map((s) => s.text).join('') || '')
-              .join(' ') || ''
-          )
-          .join('\n') || '';
+        const text =
+          block.paragraphs
+            ?.map(
+              (p) =>
+                p.words
+                  ?.map((w) => w.symbols?.map((s) => s.text).join('') || '')
+                  .join(' ') || ''
+            )
+            .join('\n') || '';
 
         const vertices = block.boundingBox?.vertices || [];
         const confidence = block.confidence || 0;

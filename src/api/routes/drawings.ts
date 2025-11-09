@@ -57,52 +57,58 @@ export const drawingsRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // GET /api/drawings/:id/results - Get all OCR results for a drawing
-  fastify.get<{ Params: { id: string } }>('/:id/results', async (request, reply) => {
-    try {
-      const { id } = request.params;
+  fastify.get<{ Params: { id: string } }>(
+    '/:id/results',
+    async (request, reply) => {
+      try {
+        const { id } = request.params;
 
-      // First check if drawing exists
-      const [drawing] = await db
-        .select()
-        .from(testDrawings)
-        .where(eq(testDrawings.drawingId, id))
-        .limit(1);
+        // First check if drawing exists
+        const [drawing] = await db
+          .select()
+          .from(testDrawings)
+          .where(eq(testDrawings.drawingId, id))
+          .limit(1);
 
-      if (!drawing) {
-        return reply.status(404).send({
+        if (!drawing) {
+          return reply.status(404).send({
+            success: false,
+            error: `Drawing not found: ${id}`,
+          });
+        }
+
+        // Get all extraction results for this drawing
+        const results = await db
+          .select()
+          .from(extractionResults)
+          .where(eq(extractionResults.drawingId, id))
+          .orderBy(extractionResults.createdAt);
+
+        // Group results by tool
+        const resultsByTool = results.reduce(
+          (acc, result) => {
+            acc[result.tool] = result;
+            return acc;
+          },
+          {} as Record<string, (typeof results)[0]>
+        );
+
+        return {
+          success: true,
+          data: {
+            drawing,
+            results,
+            resultsByTool,
+            tools: results.map((r) => r.tool),
+          },
+        };
+      } catch (error) {
+        fastify.log.error(error);
+        reply.status(500).send({
           success: false,
-          error: `Drawing not found: ${id}`,
+          error: 'Failed to fetch OCR results',
         });
       }
-
-      // Get all extraction results for this drawing
-      const results = await db
-        .select()
-        .from(extractionResults)
-        .where(eq(extractionResults.drawingId, id))
-        .orderBy(extractionResults.createdAt);
-
-      // Group results by tool
-      const resultsByTool = results.reduce((acc, result) => {
-        acc[result.tool] = result;
-        return acc;
-      }, {} as Record<string, typeof results[0]>);
-
-      return {
-        success: true,
-        data: {
-          drawing,
-          results,
-          resultsByTool,
-          tools: results.map(r => r.tool),
-        },
-      };
-    } catch (error) {
-      fastify.log.error(error);
-      reply.status(500).send({
-        success: false,
-        error: 'Failed to fetch OCR results',
-      });
     }
-  });
+  );
 };

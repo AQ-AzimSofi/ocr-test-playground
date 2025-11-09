@@ -8,7 +8,8 @@ import { extractDimensions, extractEquipmentLabels } from '../../lib/utils.js';
  */
 export const dimensionExtractorTool = createTool({
   id: 'dimension-extractor',
-  description: 'Extract dimensions and measurements from construction drawing text',
+  description:
+    'Extract dimensions and measurements from construction drawing text',
   inputSchema: z.object({
     text: z.string().describe('Raw text extracted from drawing'),
   }),

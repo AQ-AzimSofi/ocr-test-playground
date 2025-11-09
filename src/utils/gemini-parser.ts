@@ -74,7 +74,9 @@ export function parseGeminiCoordinates(response: string): GeminiCoordinate[] {
  * Parse Gemini validation response
  * Looks for missing text and incorrect text with location descriptions
  */
-export function parseGeminiValidation(response: string): GeminiValidationResult {
+export function parseGeminiValidation(
+  response: string
+): GeminiValidationResult {
   const result: GeminiValidationResult = {
     missingText: [],
     incorrectText: [],
@@ -88,7 +90,11 @@ export function parseGeminiValidation(response: string): GeminiValidationResult 
     const line = lines[i].trim().toLowerCase();
 
     // Detect section headers
-    if (line.includes('missing') || line.includes('not found') || line.includes('欠けている')) {
+    if (
+      line.includes('missing') ||
+      line.includes('not found') ||
+      line.includes('欠けている')
+    ) {
       currentSection = 'missing';
       continue;
     }
@@ -115,12 +121,16 @@ export function parseGeminiValidation(response: string): GeminiValidationResult 
     // - '寸法線' in the center
     if (currentSection === 'missing') {
       const textMatch = line.match(/[「"']([^「"']+)[」"']/);
-      const text = textMatch ? textMatch[1] : line.replace(/^[-*•]\s*/, '').trim();
+      const text = textMatch
+        ? textMatch[1]
+        : line.replace(/^[-*•]\s*/, '').trim();
 
       if (text) {
         // Try to extract location description
         const locationMatch = line.match(/(?:at|near|in|on|の)\s+([^,.)]+)/i);
-        const locationDescription = locationMatch ? locationMatch[1].trim() : undefined;
+        const locationDescription = locationMatch
+          ? locationMatch[1].trim()
+          : undefined;
 
         result.missingText.push({ text, locationDescription });
       }
@@ -138,14 +148,18 @@ export function parseGeminiValidation(response: string): GeminiValidationResult 
       let locationDescription: string | undefined;
 
       // Format: Found "X" but should be "Y"
-      const format1 = line.match(/found\s+[「"']([^「"']+)[」"'].*should.*[「"']([^「"']+)[」"']/i);
+      const format1 = line.match(
+        /found\s+[「"']([^「"']+)[」"'].*should.*[「"']([^「"']+)[」"']/i
+      );
       if (format1) {
         found = format1[1];
         shouldBe = format1[2];
       }
 
       // Format: "X" → "Y" or "X" -> "Y"
-      const format2 = line.match(/[「"']([^「"']+)[」"']\s*(?:→|->)\s*[「"']([^「"']+)[」"']/);
+      const format2 = line.match(
+        /[「"']([^「"']+)[」"']\s*(?:→|->)\s*[「"']([^「"']+)[」"']/
+      );
 
       if (format2) {
         found = format2[1];
@@ -153,7 +167,9 @@ export function parseGeminiValidation(response: string): GeminiValidationResult 
       }
 
       // Format: Incorrect: "X" (should be "Y")
-      const format3 = line.match(/[「"']([^「"']+)[」"'].*\(.*should.*[「"']([^「"']+)[」"']/i);
+      const format3 = line.match(
+        /[「"']([^「"']+)[」"'].*\(.*should.*[「"']([^「"']+)[」"']/i
+      );
       if (format3) {
         found = format3[1];
         shouldBe = format3[2];
@@ -162,7 +178,9 @@ export function parseGeminiValidation(response: string): GeminiValidationResult 
       if (found && shouldBe) {
         // Try to extract location
         const locationMatch = line.match(/(?:at|near|in|on|の)\s+([^,.)]+)/i);
-        locationDescription = locationMatch ? locationMatch[1].trim() : undefined;
+        locationDescription = locationMatch
+          ? locationMatch[1].trim()
+          : undefined;
 
         result.incorrectText.push({ found, shouldBe, locationDescription });
       }
@@ -219,8 +237,8 @@ export function hasCoordinateFormat(response: string): boolean {
     const parts = line.split('|');
     if (parts.length >= 5) {
       // Check if parts 1-4 are numbers
-      const numbers = parts.slice(1, 5).map(p => parseFloat(p.trim()));
-      if (numbers.every(n => !isNaN(n))) {
+      const numbers = parts.slice(1, 5).map((p) => parseFloat(p.trim()));
+      if (numbers.every((n) => !isNaN(n))) {
         return true;
       }
     }
@@ -256,7 +274,10 @@ export function extractConfidenceFromResponse(response: string): number | null {
  * Split text into segments for matching
  * Handles both character-level and word-level segmentation
  */
-export function segmentText(text: string, segmentType: 'character' | 'word' = 'word'): string[] {
+export function segmentText(
+  text: string,
+  segmentType: 'character' | 'word' = 'word'
+): string[] {
   if (segmentType === 'character') {
     return text.split('');
   }
@@ -268,7 +289,11 @@ export function segmentText(text: string, segmentType: 'character' | 'word' = 'w
   for (const token of tokens) {
     // For Japanese text (mixed with ASCII), treat each character as a word
     // For pure ASCII, treat whole token as a word
-    if (/[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf]/.test(token)) {
+    if (
+      /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf]/.test(
+        token
+      )
+    ) {
       // Contains Japanese characters - split into individual chars
       segments.push(...token.split(''));
     } else {
@@ -286,7 +311,9 @@ export function segmentText(text: string, segmentType: 'character' | 'word' = 'w
  * Attempt to extract structured data from free-form Gemini response
  * This is a best-effort parser for when Gemini doesn't follow the format exactly
  */
-export function extractTextBlocks(response: string): Array<{ text: string; metadata?: any }> {
+export function extractTextBlocks(
+  response: string
+): Array<{ text: string; metadata?: any }> {
   const blocks: Array<{ text: string; metadata?: any }> = [];
 
   // Try to find quoted text blocks
@@ -305,7 +332,9 @@ export function extractTextBlocks(response: string): Array<{ text: string; metad
       // Skip short lines, section headers, and commentary
       if (
         trimmed.length > 0 &&
-        !trimmed.match(/^(missing|incorrect|found|should|here|text|extracted)/i) &&
+        !trimmed.match(
+          /^(missing|incorrect|found|should|here|text|extracted)/i
+        ) &&
         trimmed.length > 2
       ) {
         blocks.push({ text: trimmed });

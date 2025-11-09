@@ -41,17 +41,21 @@ interface ComparisonResult {
   }>;
 }
 
-export async function processWithCloudVisionGeminiHybrid(imagePath: string, drawingId: string) {
+export async function processWithCloudVisionGeminiHybrid(
+  imagePath: string,
+  drawingId: string
+) {
   console.log(`  Processing with Cloud Vision + Gemini Hybrid...`);
   const startTime = Date.now();
 
   try {
     // Run both tools in parallel for speed
-    const [cloudVisionResult, cloudVisionBBoxes, geminiResult] = await Promise.all([
-      cloudVisionClient.extractText(imagePath),
-      cloudVisionClient.extractTextWithBoundingBoxes(imagePath),
-      geminiClient.extractText(imagePath),
-    ]);
+    const [cloudVisionResult, cloudVisionBBoxes, geminiResult] =
+      await Promise.all([
+        cloudVisionClient.extractText(imagePath),
+        cloudVisionClient.extractTextWithBoundingBoxes(imagePath),
+        geminiClient.extractText(imagePath),
+      ]);
 
     const cloudVisionText = cloudVisionResult.text;
     const geminiText = geminiResult.text;
@@ -81,7 +85,8 @@ export async function processWithCloudVisionGeminiHybrid(imagePath: string, draw
     // Calculate similarity between Cloud Vision and Gemini results
     const editDistance = Levenshtein.get(cloudVisionText, geminiText);
     const maxLength = Math.max(cloudVisionText.length, geminiText.length);
-    const similarity = maxLength > 0 ? ((maxLength - editDistance) / maxLength) * 100 : 0;
+    const similarity =
+      maxLength > 0 ? ((maxLength - editDistance) / maxLength) * 100 : 0;
 
     // Decision logic for text selection
     let selectedText: string;
@@ -89,7 +94,8 @@ export async function processWithCloudVisionGeminiHybrid(imagePath: string, draw
     const discrepancies: ComparisonResult['discrepancies'] = [];
 
     // Strategy: Use Gemini when overall agreement is high OR when Cloud Vision has many low-confidence regions
-    const lowConfidencePercentage = (lowConfidenceRegions.length / cloudVisionBBoxes.length) * 100;
+    const lowConfidencePercentage =
+      (lowConfidenceRegions.length / cloudVisionBBoxes.length) * 100;
 
     if (lowConfidencePercentage > 30) {
       // Many low-confidence regions - prefer Gemini
@@ -97,7 +103,7 @@ export async function processWithCloudVisionGeminiHybrid(imagePath: string, draw
       selectionReason = `High percentage of low-confidence regions (${lowConfidencePercentage.toFixed(1)}%) - using Gemini`;
 
       // Flag all low-confidence regions as discrepancies
-      lowConfidenceRegions.forEach(region => {
+      lowConfidenceRegions.forEach((region) => {
         discrepancies.push({
           region,
           geminiVersion: 'Used Gemini due to low confidence',
@@ -119,7 +125,7 @@ export async function processWithCloudVisionGeminiHybrid(imagePath: string, draw
       selectionReason = `High agreement (${similarity.toFixed(1)}%) - using Cloud Vision with spatial data`;
 
       // Still flag low-confidence regions for user awareness
-      lowConfidenceRegions.forEach(region => {
+      lowConfidenceRegions.forEach((region) => {
         discrepancies.push({
           region,
           geminiVersion: 'Alternative extraction available from Gemini',
@@ -136,9 +142,13 @@ export async function processWithCloudVisionGeminiHybrid(imagePath: string, draw
     const estimatedCost = cloudVisionCost + geminiCost;
 
     // Calculate average confidence from Cloud Vision
-    const avgConfidence = cloudVisionBBoxes.length > 0
-      ? cloudVisionBBoxes.reduce((sum, bbox) => sum + (bbox.confidence || 1.0), 0) / cloudVisionBBoxes.length
-      : undefined;
+    const avgConfidence =
+      cloudVisionBBoxes.length > 0
+        ? cloudVisionBBoxes.reduce(
+            (sum, bbox) => sum + (bbox.confidence || 1.0),
+            0
+          ) / cloudVisionBBoxes.length
+        : undefined;
 
     // Save to database with comprehensive metadata
     const [dbResult] = await db
@@ -152,8 +162,12 @@ export async function processWithCloudVisionGeminiHybrid(imagePath: string, draw
           bounds: bbox.bounds,
           confidence: bbox.confidence,
           metadata: {
-            isLowConfidence: lowConfidenceRegions.some(r => r.index === index),
-            usedGeminiFallback: selectedText === geminiText && lowConfidenceRegions.some(r => r.index === index),
+            isLowConfidence: lowConfidenceRegions.some(
+              (r) => r.index === index
+            ),
+            usedGeminiFallback:
+              selectedText === geminiText &&
+              lowConfidenceRegions.some((r) => r.index === index),
           },
         })),
         processingTimeMs: processingTime,
@@ -161,7 +175,8 @@ export async function processWithCloudVisionGeminiHybrid(imagePath: string, draw
         metadata: {
           cloudVisionCharCount: cloudVisionText.length,
           geminiCharCount: geminiText.length,
-          selectedSource: selectedText === cloudVisionText ? 'cloud-vision' : 'gemini',
+          selectedSource:
+            selectedText === cloudVisionText ? 'cloud-vision' : 'gemini',
           selectionReason,
           similarity,
           editDistance,
@@ -175,14 +190,24 @@ export async function processWithCloudVisionGeminiHybrid(imagePath: string, draw
       })
       .returning();
 
-    console.log(`  ✅ Cloud Vision + Gemini Hybrid completed in ${(processingTime / 1000).toFixed(2)}s`);
-    console.log(`     Selected: ${selectedText === cloudVisionText ? 'Cloud Vision' : 'Gemini'} (${selectedText.length} chars)`);
-    console.log(`     Cloud Vision: ${cloudVisionText.length} chars (avg confidence: ${((avgConfidence || 0) * 100).toFixed(1)}%)`);
+    console.log(
+      `  Cloud Vision + Gemini Hybrid completed in ${(processingTime / 1000).toFixed(2)}s`
+    );
+    console.log(
+      `     Selected: ${selectedText === cloudVisionText ? 'Cloud Vision' : 'Gemini'} (${selectedText.length} chars)`
+    );
+    console.log(
+      `     Cloud Vision: ${cloudVisionText.length} chars (avg confidence: ${((avgConfidence || 0) * 100).toFixed(1)}%)`
+    );
     console.log(`     Gemini: ${geminiText.length} chars`);
     console.log(`     Agreement: ${similarity.toFixed(1)}%`);
-    console.log(`     Low confidence regions: ${lowConfidenceRegions.length}/${cloudVisionBBoxes.length} (${lowConfidencePercentage.toFixed(1)}%)`);
+    console.log(
+      `     Low confidence regions: ${lowConfidenceRegions.length}/${cloudVisionBBoxes.length} (${lowConfidencePercentage.toFixed(1)}%)`
+    );
     if (discrepancies.length > 0) {
-      console.log(`     ⚠️  ${discrepancies.length} regions flagged for review`);
+      console.log(
+        `     Warning: ${discrepancies.length} regions flagged for review`
+      );
     }
 
     return {
@@ -203,7 +228,7 @@ export async function processWithCloudVisionGeminiHybrid(imagePath: string, draw
       },
     };
   } catch (error) {
-    console.error(`  ❌ Cloud Vision + Gemini Hybrid failed:`, error);
+    console.error(`  Cloud Vision + Gemini Hybrid failed:`, error);
     throw error;
   }
 }

@@ -27,7 +27,9 @@ export class GeminiClient {
    * Extract all visible text from an image using OCR
    * Includes post-processing to remove AI commentary/preambles
    */
-  async extractText(imagePath: string): Promise<{ text: string; confidence: number }> {
+  async extractText(
+    imagePath: string
+  ): Promise<{ text: string; confidence: number }> {
     const model = this.genAI.getGenerativeModel({ model: this.model });
 
     const prompt = `You are a pure OCR system. Extract ALL visible text from this image.
@@ -72,7 +74,8 @@ CORRECT (DO THIS):
     const rawText = response.text();
 
     // Clean the response to remove any AI-generated commentary
-    const { cleaned, hadCommentary, removedPatterns } = cleanAICommentary(rawText);
+    const { cleaned, hadCommentary, removedPatterns } =
+      cleanAICommentary(rawText);
 
     // Log warning if commentary was detected and removed
     if (hadCommentary) {
@@ -82,7 +85,7 @@ CORRECT (DO THIS):
     }
 
     // Gemini doesn't provide confidence scores for raw text extraction
-    // We'll use a default high confidence since it's a vision model
+    // Using a default high confidence since it's a vision model
     return {
       text: cleaned,
       confidence: 0.95,
@@ -165,7 +168,7 @@ This may help you understand the text in this region.`;
     for (let i = 0; i < regions.length; i += concurrency) {
       const batch = regions.slice(i, i + concurrency);
       const batchResults = await Promise.all(
-        batch.map(region =>
+        batch.map((region) =>
           this.extractTextFromRegion(region.base64, {
             originalText: region.originalText,
           })

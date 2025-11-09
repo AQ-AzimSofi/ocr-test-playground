@@ -65,10 +65,16 @@ const start = async () => {
     console.log('API Endpoints:');
     console.log(`  GET  /api/drawings              - List all drawings`);
     console.log(`  GET  /api/drawings/:id          - Get drawing by ID`);
-    console.log(`  GET  /api/drawings/:id/results  - Get all OCR results for drawing`);
-    console.log(`  GET  /api/results/:id           - Get specific result with bounding boxes`);
+    console.log(
+      `  GET  /api/drawings/:id/results  - Get all OCR results for drawing`
+    );
+    console.log(
+      `  GET  /api/results/:id           - Get specific result with bounding boxes`
+    );
     console.log(`  GET  /api/test-runs             - List all test runs`);
-    console.log(`  GET  /api/test-runs/:id         - Get test run with comparison data`);
+    console.log(
+      `  GET  /api/test-runs/:id         - Get test run with comparison data`
+    );
     console.log('');
   } catch (err) {
     fastify.log.error(err);
