@@ -72,7 +72,10 @@ export function getBoundingRect(bounds: Array<{ x: number; y: number }>) {
 /**
  * Check if two bounding boxes overlap (for synchronized hover in comparison view)
  */
-export function doBBoxesOverlap(bbox1: BoundingBox, bbox2: BoundingBox): boolean {
+export function doBBoxesOverlap(
+  bbox1: BoundingBox,
+  bbox2: BoundingBox
+): boolean {
   const rect1 = getBoundingRect(bbox1.bounds);
   const rect2 = getBoundingRect(bbox2.bounds);
 

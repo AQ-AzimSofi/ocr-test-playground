@@ -25,7 +25,10 @@ export function ProcessorDropdown({
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
         setHoveredOption(null);
       }
@@ -33,7 +36,8 @@ export function ProcessorDropdown({
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      return () =>
+        document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [isOpen]);
 
@@ -60,7 +64,10 @@ export function ProcessorDropdown({
     setHoveredOption(null);
   };
 
-  const handleOptionHover = (option: string, event: React.MouseEvent<HTMLDivElement>) => {
+  const handleOptionHover = (
+    option: string,
+    event: React.MouseEvent<HTMLDivElement>
+  ) => {
     setHoveredOption(option);
     const rect = event.currentTarget.getBoundingClientRect();
 
@@ -117,7 +124,12 @@ export function ProcessorDropdown({
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </button>
 
@@ -146,11 +158,17 @@ export function ProcessorDropdown({
               >
                 <div className="flex items-center justify-between">
                   <span>{displayName}</span>
-                  {info?.recommended && <span className="text-yellow-500 ml-2">⭐</span>}
-                  {info?.experimental && <span className="text-blue-500 ml-2">🆕</span>}
+                  {info?.recommended && (
+                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded ml-2">Recommended</span>
+                  )}
+                  {info?.experimental && (
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded ml-2">Experimental</span>
+                  )}
                 </div>
                 {info && (
-                  <div className="text-xs text-gray-500 mt-1">{info.shortDescription}</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {info.shortDescription}
+                  </div>
                 )}
               </div>
             );
@@ -175,15 +193,23 @@ export function ProcessorDropdown({
               <div>
                 <div className="font-semibold text-lg mb-2 flex items-center gap-2">
                   {info.displayName}
-                  {info.recommended && <span className="text-yellow-400">⭐</span>}
-                  {info.experimental && <span className="text-blue-400">🆕</span>}
+                  {info.recommended && (
+                    <span className="text-xs bg-yellow-500 text-gray-900 px-2 py-0.5 rounded">Recommended</span>
+                  )}
+                  {info.experimental && (
+                    <span className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded">Experimental</span>
+                  )}
                 </div>
 
-                <div className="text-sm text-gray-200 mb-3">{info.fullDescription}</div>
+                <div className="text-sm text-gray-200 mb-3">
+                  {info.fullDescription}
+                </div>
 
                 <div className="space-y-2 text-sm">
                   <div>
-                    <span className="font-semibold text-gray-300">How it works:</span>
+                    <span className="font-semibold text-gray-300">
+                      How it works:
+                    </span>
                     <ul className="list-disc list-inside ml-2 text-gray-200 mt-1">
                       {info.howItWorks.map((step, idx) => (
                         <li key={idx} className="text-xs">
@@ -194,7 +220,9 @@ export function ProcessorDropdown({
                   </div>
 
                   <div>
-                    <span className="font-semibold text-gray-300">Best for:</span>
+                    <span className="font-semibold text-gray-300">
+                      Best for:
+                    </span>
                     <span className="text-gray-200 ml-1">{info.bestFor}</span>
                   </div>
 
@@ -205,7 +233,9 @@ export function ProcessorDropdown({
                     </div>
                     <div>
                       <span className="font-semibold text-gray-300">Bbox:</span>
-                      <span className="text-gray-200 ml-1 capitalize">{info.bboxAccuracy}</span>
+                      <span className="text-gray-200 ml-1 capitalize">
+                        {info.bboxAccuracy}
+                      </span>
                     </div>
                   </div>
                 </div>

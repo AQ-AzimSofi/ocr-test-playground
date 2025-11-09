@@ -51,7 +51,10 @@ export function TextCardsList({
   };
 
   return (
-    <div className="space-y-2 max-h-96 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+    <div
+      className="space-y-2 max-h-96 overflow-y-auto pr-2"
+      style={{ scrollbarWidth: 'thin' }}
+    >
       {boundingBoxes.length === 0 ? (
         <div className="text-center py-8 text-gray-500 text-sm">
           No text detected for {toolName}
@@ -62,7 +65,10 @@ export function TextCardsList({
           const hasGeminiCorrection = bbox.metadata?.geminiUpdated;
           const originalText = bbox.metadata?.originalText;
           const validatedText = bbox.text;
-          const hasTextDifference = hasGeminiCorrection && originalText && originalText !== validatedText;
+          const hasTextDifference =
+            hasGeminiCorrection &&
+            originalText &&
+            originalText !== validatedText;
 
           return (
             <button
@@ -77,11 +83,20 @@ export function TextCardsList({
             >
               {/* Card Header */}
               <div className="flex items-start justify-between mb-2">
-                <span className="text-xs font-medium text-gray-500">#{index + 1}</span>
+                <span className="text-xs font-medium text-gray-500">
+                  #{index + 1}
+                </span>
                 <div className="flex items-center gap-2">
                   {hasGeminiCorrection && (
-                    <div className="flex items-center gap-1 text-blue-600" title="Corrected by Gemini">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <div
+                      className="flex items-center gap-1 text-blue-600"
+                      title="Corrected by Gemini"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
                         <path
                           fillRule="evenodd"
                           d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -91,7 +106,9 @@ export function TextCardsList({
                     </div>
                   )}
                   {bbox.confidence !== undefined && (
-                    <span className={getConfidenceBadgeClasses(bbox.confidence)}>
+                    <span
+                      className={getConfidenceBadgeClasses(bbox.confidence)}
+                    >
                       {Math.round(bbox.confidence * 100)}%
                     </span>
                   )}
@@ -104,14 +121,18 @@ export function TextCardsList({
                   <>
                     {/* Validated Text (shown first as requested) */}
                     <div>
-                      <div className="text-xs text-blue-600 font-medium mb-1">Validated:</div>
+                      <div className="text-xs text-blue-600 font-medium mb-1">
+                        Validated:
+                      </div>
                       <div className="text-sm font-medium text-gray-900 leading-relaxed">
                         {validatedText}
                       </div>
                     </div>
                     {/* Original Text (shown below) */}
                     <div>
-                      <div className="text-xs text-gray-500 mb-1">Original:</div>
+                      <div className="text-xs text-gray-500 mb-1">
+                        Original:
+                      </div>
                       <div className="text-xs text-gray-600 leading-relaxed line-through">
                         {originalText}
                       </div>

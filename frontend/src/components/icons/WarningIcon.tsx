@@ -7,7 +7,7 @@ interface WarningIconProps {
 
 export const WarningIcon: React.FC<WarningIconProps> = ({
   className = '',
-  size = 16
+  size = 16,
 }) => {
   return (
     <svg
@@ -31,12 +31,7 @@ export const WarningIcon: React.FC<WarningIconProps> = ({
         strokeWidth="1.5"
         strokeLinecap="round"
       />
-      <circle
-        cx="8"
-        cy="11.5"
-        r="0.5"
-        fill="currentColor"
-      />
+      <circle cx="8" cy="11.5" r="0.5" fill="currentColor" />
     </svg>
   );
 };

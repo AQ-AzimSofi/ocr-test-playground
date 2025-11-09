@@ -2,7 +2,10 @@
  * Get color based on confidence score
  * Green (≥95%) → Yellow (85-95%) → Orange (75-85%) → Red (<75%)
  */
-export function getConfidenceColor(confidence: number | undefined, alpha: number = 1): string {
+export function getConfidenceColor(
+  confidence: number | undefined,
+  alpha: number = 1
+): string {
   const conf = confidence ?? 1.0;
 
   if (conf >= 0.95) {
@@ -19,7 +22,9 @@ export function getConfidenceColor(confidence: number | undefined, alpha: number
 /**
  * Get Tailwind CSS class for confidence badge
  */
-export function getConfidenceBadgeClass(confidence: number | undefined): string {
+export function getConfidenceBadgeClass(
+  confidence: number | undefined
+): string {
   const conf = confidence ?? 1.0;
 
   if (conf >= 0.95) {

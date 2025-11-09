@@ -57,9 +57,14 @@ export function DrawingViewer() {
   const boundingBoxes = currentResult?.boundingBoxes || [];
   const imageUrl = apiClient.getImageURL(drawing.filePath);
 
-  const geminiUpdateCount = boundingBoxes.filter((b) => b.metadata?.geminiUpdated).length;
-  const lowConfidenceCount = boundingBoxes.filter((b) => (b.confidence ?? 1) < 0.85).length;
-  const hoveredBBox = hoveredIndex !== null ? boundingBoxes[hoveredIndex] : null;
+  const geminiUpdateCount = boundingBoxes.filter(
+    (b) => b.metadata?.geminiUpdated
+  ).length;
+  const lowConfidenceCount = boundingBoxes.filter(
+    (b) => (b.confidence ?? 1) < 0.85
+  ).length;
+  const hoveredBBox =
+    hoveredIndex !== null ? boundingBoxes[hoveredIndex] : null;
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -67,10 +72,15 @@ export function DrawingViewer() {
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <Link to="/" className="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block">
+            <Link
+              to="/"
+              className="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block"
+            >
               ← Back to Home
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">{drawing.fileName}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {drawing.fileName}
+            </h1>
             <p className="text-sm text-gray-500 mt-1">
               Type: {drawing.type} | Quality: {drawing.quality}
             </p>
@@ -78,7 +88,9 @@ export function DrawingViewer() {
 
           {/* Tool Selector */}
           <div className="flex items-center gap-4">
-            <label className="text-sm font-medium text-gray-700">OCR Tool:</label>
+            <label className="text-sm font-medium text-gray-700">
+              OCR Tool:
+            </label>
             <ProcessorDropdown
               value={selectedTool}
               onChange={setSelectedTool}
@@ -115,11 +127,15 @@ export function DrawingViewer() {
           <div className="flex gap-6 mt-4 text-sm">
             <div>
               <span className="text-gray-600">Processing:</span>{' '}
-              <span className="font-medium">{currentResult.processingTimeMs}ms</span>
+              <span className="font-medium">
+                {currentResult.processingTimeMs}ms
+              </span>
             </div>
             <div>
               <span className="text-gray-600">Cost:</span>{' '}
-              <span className="font-medium">¥{currentResult.apiCost?.toFixed(2)}</span>
+              <span className="font-medium">
+                ¥{currentResult.apiCost?.toFixed(2)}
+              </span>
             </div>
             <div>
               <span className="text-gray-600">Bounding Boxes:</span>{' '}
@@ -128,14 +144,18 @@ export function DrawingViewer() {
             {geminiUpdateCount > 0 && (
               <div className="flex items-center gap-1">
                 <span className="text-blue-600">Gemini Updates:</span>{' '}
-                <span className="font-medium text-blue-600">{geminiUpdateCount}</span>
+                <span className="font-medium text-blue-600">
+                  {geminiUpdateCount}
+                </span>
               </div>
             )}
             {lowConfidenceCount > 0 && (
               <div className="flex items-center gap-1">
                 <WarningIcon size={16} className="text-orange-600" />
                 <span className="text-orange-600">Low Confidence:</span>{' '}
-                <span className="font-medium text-orange-600">{lowConfidenceCount}</span>
+                <span className="font-medium text-orange-600">
+                  {lowConfidenceCount}
+                </span>
               </div>
             )}
           </div>
@@ -160,7 +180,9 @@ export function DrawingViewer() {
             />
           ) : (
             <div className="flex items-center justify-center h-full bg-gray-100 rounded-lg">
-              <p className="text-gray-500">No bounding boxes available for this tool</p>
+              <p className="text-gray-500">
+                No bounding boxes available for this tool
+              </p>
             </div>
           )}
         </main>
@@ -206,7 +228,9 @@ export function DrawingViewer() {
                 onChange={(e) => setShowOnlyLowConfidence(e.target.checked)}
                 className="w-4 h-4"
               />
-              <span className="text-sm">Show only low confidence (&lt;85%)</span>
+              <span className="text-sm">
+                Show only low confidence (&lt;85%)
+              </span>
             </label>
 
             <label className="flex items-center gap-2 cursor-pointer">
@@ -223,7 +247,9 @@ export function DrawingViewer() {
           {/* Gemini Updates List */}
           {geminiUpdateCount > 0 && (
             <div>
-              <h3 className="text-sm font-semibold mb-2">Gemini Corrections ({geminiUpdateCount})</h3>
+              <h3 className="text-sm font-semibold mb-2">
+                Gemini Corrections ({geminiUpdateCount})
+              </h3>
               <div className="space-y-2 max-h-96 overflow-auto">
                 {boundingBoxes
                   .filter((b) => b.metadata?.geminiUpdated)
@@ -232,14 +258,20 @@ export function DrawingViewer() {
                       key={idx}
                       className="p-2 bg-blue-50 border border-blue-200 rounded text-xs cursor-pointer hover:bg-blue-100"
                       onClick={() => {
-                        const actualIndex = boundingBoxes.findIndex((b) => b === bbox);
+                        const actualIndex = boundingBoxes.findIndex(
+                          (b) => b === bbox
+                        );
                         setSelectedIndex(actualIndex);
                       }}
                     >
-                      <div className="font-medium text-blue-900">{bbox.text}</div>
+                      <div className="font-medium text-blue-900">
+                        {bbox.text}
+                      </div>
                       {bbox.metadata?.originalText && (
                         <div className="text-gray-600 mt-1">
-                          <span className="line-through">{bbox.metadata.originalText}</span>
+                          <span className="line-through">
+                            {bbox.metadata.originalText}
+                          </span>
                         </div>
                       )}
                     </div>

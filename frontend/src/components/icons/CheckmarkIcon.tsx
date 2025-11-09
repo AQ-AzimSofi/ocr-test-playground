@@ -7,7 +7,7 @@ interface CheckmarkIconProps {
 
 export const CheckmarkIcon: React.FC<CheckmarkIconProps> = ({
   className = '',
-  size = 16
+  size = 16,
 }) => {
   return (
     <svg

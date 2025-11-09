@@ -23,7 +23,8 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     name: 'cloud-vision',
     displayName: 'Cloud Vision',
     shortDescription: 'Fast, reliable paragraph-level OCR',
-    fullDescription: 'Google Cloud Vision Document Text Detection provides high-accuracy OCR with paragraph-level bounding boxes.',
+    fullDescription:
+      'Google Cloud Vision Document Text Detection provides high-accuracy OCR with paragraph-level bounding boxes.',
     howItWorks: [
       'Sends image to Google Cloud Vision API',
       'Extracts text with paragraph-level bounding boxes',
@@ -41,11 +42,12 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     category: 'core',
   },
 
-  'gemini': {
+  gemini: {
     name: 'gemini',
     displayName: 'Gemini 2.5 Flash',
     shortDescription: 'AI-powered vision model with context understanding',
-    fullDescription: 'Google Gemini 2.5 Flash multimodal AI provides advanced text extraction with contextual understanding, especially strong for complex layouts and Japanese text.',
+    fullDescription:
+      'Google Gemini 2.5 Flash multimodal AI provides advanced text extraction with contextual understanding, especially strong for complex layouts and Japanese text.',
     howItWorks: [
       'Sends image to Gemini 2.5 Flash vision model',
       'AI analyzes image contextually',
@@ -58,7 +60,8 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
       'Context-aware extraction',
       'Handles complex layouts',
     ],
-    bestFor: 'Complex layouts with mixed Japanese/English or text with difficult backgrounds',
+    bestFor:
+      'Complex layouts with mixed Japanese/English or text with difficult backgrounds',
     cost: '~0.05 yen per image',
     bboxAccuracy: 'none',
     category: 'core',
@@ -68,7 +71,8 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     name: 'azure-layout',
     displayName: 'Azure Layout',
     shortDescription: 'Structure-aware OCR with table detection',
-    fullDescription: 'Azure AI Document Intelligence prebuilt-layout model provides advanced layout analysis with table detection and structured data extraction.',
+    fullDescription:
+      'Azure AI Document Intelligence prebuilt-layout model provides advanced layout analysis with table detection and structured data extraction.',
     howItWorks: [
       'Analyzes document structure and layout',
       'Detects tables, paragraphs, and key-value pairs',
@@ -91,7 +95,8 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     name: 'azure-read',
     displayName: 'Azure Read',
     shortDescription: 'Cost-effective word-level OCR',
-    fullDescription: 'Azure AI Document Intelligence read model provides fast, cost-effective OCR with word-level precision and confidence scores.',
+    fullDescription:
+      'Azure AI Document Intelligence read model provides fast, cost-effective OCR with word-level precision and confidence scores.',
     howItWorks: [
       'Sends image to Azure Read API',
       'Extracts text at word-level granularity',
@@ -110,11 +115,12 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     category: 'core',
   },
 
-  'hybrid': {
+  hybrid: {
     name: 'hybrid',
     displayName: 'Hybrid (Legacy)',
     shortDescription: 'Simple parallel processing (Cloud Vision + Gemini)',
-    fullDescription: 'Original hybrid approach that runs Cloud Vision and Gemini in parallel and selects the best result based on text length. Superseded by region-level hybrid processors.',
+    fullDescription:
+      'Original hybrid approach that runs Cloud Vision and Gemini in parallel and selects the best result based on text length. Superseded by region-level hybrid processors.',
     howItWorks: [
       'Runs Cloud Vision and Gemini simultaneously',
       'Compares text length of both results',
@@ -137,7 +143,8 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     name: 'cloud-vision-gemini-hybrid',
     displayName: 'Cloud Vision + Gemini Hybrid',
     shortDescription: 'Region-level fusion with AI correction (RECOMMENDED)',
-    fullDescription: 'Advanced hybrid processor that combines Cloud Vision\'s precise bounding boxes with Gemini\'s superior text detection. Uses confidence-based selective correction at the region level.',
+    fullDescription:
+      "Advanced hybrid processor that combines Cloud Vision's precise bounding boxes with Gemini's superior text detection. Uses confidence-based selective correction at the region level.",
     howItWorks: [
       'Cloud Vision extracts text with paragraph-level bboxes',
       'Analyzes confidence scores for each region',
@@ -163,7 +170,8 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     name: 'azure-read-gemini-hybrid',
     displayName: 'Azure Read + Gemini Hybrid',
     shortDescription: 'Budget-friendly hybrid with word-level precision',
-    fullDescription: 'Similar to Cloud Vision hybrid but uses Azure Read as the base, providing word-level precision at a lower cost. Gemini corrects low-confidence words.',
+    fullDescription:
+      'Similar to Cloud Vision hybrid but uses Azure Read as the base, providing word-level precision at a lower cost. Gemini corrects low-confidence words.',
     howItWorks: [
       'Azure Read extracts text at word-level',
       'Analyzes confidence scores per word',
@@ -174,7 +182,7 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     keyFeatures: [
       'Word-level granularity (finer than paragraph)',
       'More cost-effective than Cloud Vision hybrid',
-      'Azure\'s multilingual strength + Gemini\'s intelligence',
+      "Azure's multilingual strength + Gemini's intelligence",
       'Preserves word-level bounding boxes',
     ],
     bestFor: 'Budget-conscious projects needing high accuracy',
@@ -187,7 +195,8 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     name: 'gemini-coordinates',
     displayName: 'Gemini Coordinates (Experimental)',
     shortDescription: 'Asks Gemini for text + percentage coordinates',
-    fullDescription: 'Experimental processor that prompts Gemini to provide both text and approximate bounding box coordinates as percentages of image dimensions.',
+    fullDescription:
+      'Experimental processor that prompts Gemini to provide both text and approximate bounding box coordinates as percentages of image dimensions.',
     howItWorks: [
       'Sends image to Gemini with special coordinate prompt',
       'Requests format: TEXT|top|left|width|height (percentages)',
@@ -212,7 +221,8 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     name: 'gemini-bbox-synthesis',
     displayName: 'Gemini Bbox Synthesis (Experimental)',
     shortDescription: 'Matches Gemini text to Cloud Vision bboxes',
-    fullDescription: 'Experimental fusion processor that combines Gemini\'s superior text detection with Cloud Vision\'s precise bounding boxes through intelligent fuzzy matching and bbox synthesis.',
+    fullDescription:
+      "Experimental fusion processor that combines Gemini's superior text detection with Cloud Vision's precise bounding boxes through intelligent fuzzy matching and bbox synthesis.",
     howItWorks: [
       'Runs Gemini (text) + Cloud Vision (text + bboxes) in parallel',
       'Segments Gemini text into matchable units',
@@ -239,7 +249,8 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     name: 'gemini-validation',
     displayName: 'Gemini Validation (Experimental)',
     shortDescription: 'Uses Gemini as QA reviewer to validate Azure results',
-    fullDescription: 'Experimental processor that uses Azure Read as baseline, then asks Gemini to act as a quality assurance reviewer to identify missing or incorrect text.',
+    fullDescription:
+      'Experimental processor that uses Azure Read as baseline, then asks Gemini to act as a quality assurance reviewer to identify missing or incorrect text.',
     howItWorks: [
       'Runs Azure Read for baseline OCR with bboxes',
       'Sends image + Azure text to Gemini for validation',
@@ -266,8 +277,10 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
   'region-classifier': {
     name: 'region-classifier',
     displayName: 'Region Classifier (Experimental)',
-    shortDescription: 'Smart routing: Azure for high confidence, Gemini for low',
-    fullDescription: 'Experimental processor that intelligently routes different content regions to optimal processors based on Azure Layout\'s confidence scores.',
+    shortDescription:
+      'Smart routing: Azure for high confidence, Gemini for low',
+    fullDescription:
+      "Experimental processor that intelligently routes different content regions to optimal processors based on Azure Layout's confidence scores.",
     howItWorks: [
       'Runs Azure Layout for structure analysis',
       'Classifies each region by confidence level',
@@ -293,7 +306,9 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
 /**
  * Get processor info by name
  */
-export function getProcessorInfo(processorName: string): ProcessorInfo | undefined {
+export function getProcessorInfo(
+  processorName: string
+): ProcessorInfo | undefined {
   return processorMetadata[processorName];
 }
 
@@ -307,8 +322,12 @@ export function getAllProcessorNames(): string[] {
 /**
  * Get processors by category
  */
-export function getProcessorsByCategory(category: ProcessorInfo['category']): ProcessorInfo[] {
-  return Object.values(processorMetadata).filter(p => p.category === category);
+export function getProcessorsByCategory(
+  category: ProcessorInfo['category']
+): ProcessorInfo[] {
+  return Object.values(processorMetadata).filter(
+    (p) => p.category === category
+  );
 }
 
 /**
@@ -319,8 +338,8 @@ export function getProcessorDisplayLabel(processorName: string): string {
   if (!info) return processorName;
 
   let label = info.displayName;
-  if (info.recommended) label += ' ⭐';
-  if (info.experimental) label += ' 🆕';
+  if (info.recommended) label += ' (Recommended)';
+  if (info.experimental) label += ' (Experimental)';
 
   return label;
 }

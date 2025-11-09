@@ -68,12 +68,19 @@ export function Tooltip({ bbox, position }: TooltipProps) {
 
       {/* Source */}
       <div className="text-xs text-gray-500 mb-2">
-        Source: <span className="font-medium">{bbox.metadata?.source || 'Unknown'}</span>
+        Source:{' '}
+        <span className="font-medium">
+          {bbox.metadata?.source || 'Unknown'}
+        </span>
       </div>
 
       {/* Processing Status */}
-      <div className={`p-2 rounded border ${processingStatus.bgColor} ${processingStatus.borderColor}`}>
-        <div className={`text-xs font-medium ${processingStatus.color} flex items-center gap-1`}>
+      <div
+        className={`p-2 rounded border ${processingStatus.bgColor} ${processingStatus.borderColor}`}
+      >
+        <div
+          className={`text-xs font-medium ${processingStatus.color} flex items-center gap-1`}
+        >
           {geminiUpdated && <CheckmarkIcon size={12} />}
           {processingStatus.text}
         </div>
@@ -90,7 +97,8 @@ export function Tooltip({ bbox, position }: TooltipProps) {
           {bbox.metadata?.originalText && (
             <div className="text-xs space-y-1">
               <div className="text-gray-600">
-                <span className="font-medium">Original:</span> {bbox.metadata.originalText}
+                <span className="font-medium">Original:</span>{' '}
+                {bbox.metadata.originalText}
               </div>
               <div className="text-gray-600">
                 <span className="font-medium">Corrected:</span> {bbox.text}

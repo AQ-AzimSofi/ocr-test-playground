@@ -5,7 +5,9 @@ import { TestRunCard } from '../components/TestRunCard';
 export function Home() {
   const { data, isLoading, error } = useTestRuns();
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterCompleted, setFilterCompleted] = useState<'all' | 'completed' | 'in-progress'>('all');
+  const [filterCompleted, setFilterCompleted] = useState<
+    'all' | 'completed' | 'in-progress'
+  >('all');
 
   if (isLoading) {
     return (
@@ -32,8 +34,12 @@ export function Home() {
       searchQuery === '' ||
       run.runName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       run.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      run.drawings?.some((d) => d.fileName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      run.tools.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()));
+      run.drawings?.some((d) =>
+        d.fileName.toLowerCase().includes(searchQuery.toLowerCase())
+      ) ||
+      run.tools.some((t) =>
+        t.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
     // Status filter
     const matchesStatus =
@@ -49,9 +55,12 @@ export function Home() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">OCR Test Runs</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            OCR Test Runs
+          </h1>
           <p className="text-gray-600">
-            View and compare OCR test results chronologically. Click a test run to see detailed results.
+            View and compare OCR test results chronologically. Click a test run
+            to see detailed results.
           </p>
         </div>
       </div>
@@ -111,7 +120,9 @@ export function Home() {
             <TestRunCard
               key={testRun.id}
               testRun={testRun}
-              isLatest={idx === 0 && filterCompleted === 'all' && searchQuery === ''}
+              isLatest={
+                idx === 0 && filterCompleted === 'all' && searchQuery === ''
+              }
             />
           ))}
         </div>

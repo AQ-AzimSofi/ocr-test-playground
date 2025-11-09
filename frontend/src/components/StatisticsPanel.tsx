@@ -34,7 +34,8 @@ function calculateStats(boundingBoxes: BoundingBox[]): Stats {
   });
 
   const lowConfidenceNotCorrected = lowConfidence - geminiCorrected;
-  const correctionRate = lowConfidence > 0 ? (geminiCorrected / lowConfidence) * 100 : 0;
+  const correctionRate =
+    lowConfidence > 0 ? (geminiCorrected / lowConfidence) * 100 : 0;
 
   return {
     total,
@@ -46,12 +47,17 @@ function calculateStats(boundingBoxes: BoundingBox[]): Stats {
   };
 }
 
-export function StatisticsPanel({ boundingBoxes, toolName }: StatisticsPanelProps) {
+export function StatisticsPanel({
+  boundingBoxes,
+  toolName,
+}: StatisticsPanelProps) {
   const stats = calculateStats(boundingBoxes);
 
   return (
     <div className="border rounded-lg p-4 bg-gray-50">
-      <h3 className="text-sm font-semibold mb-3 text-gray-700">{toolName} Statistics</h3>
+      <h3 className="text-sm font-semibold mb-3 text-gray-700">
+        {toolName} Statistics
+      </h3>
 
       <div className="space-y-2 text-sm">
         {/* Total boxes */}
@@ -97,7 +103,13 @@ export function StatisticsPanel({ boundingBoxes, toolName }: StatisticsPanelProp
           <span className="font-medium text-blue-700">
             {stats.geminiCorrected}
             <span className="text-xs text-gray-500 ml-1">
-              ({stats.lowConfidence > 0 ? ((stats.geminiCorrected / stats.lowConfidence) * 100).toFixed(1) : 0}%)
+              (
+              {stats.lowConfidence > 0
+                ? ((stats.geminiCorrected / stats.lowConfidence) * 100).toFixed(
+                    1
+                  )
+                : 0}
+              %)
             </span>
           </span>
         </div>
@@ -111,7 +123,14 @@ export function StatisticsPanel({ boundingBoxes, toolName }: StatisticsPanelProp
           <span className="font-medium text-yellow-700">
             {stats.lowConfidenceNotCorrected}
             <span className="text-xs text-gray-500 ml-1">
-              ({stats.lowConfidence > 0 ? ((stats.lowConfidenceNotCorrected / stats.lowConfidence) * 100).toFixed(1) : 0}%)
+              (
+              {stats.lowConfidence > 0
+                ? (
+                    (stats.lowConfidenceNotCorrected / stats.lowConfidence) *
+                    100
+                  ).toFixed(1)
+                : 0}
+              %)
             </span>
           </span>
         </div>
@@ -120,13 +139,16 @@ export function StatisticsPanel({ boundingBoxes, toolName }: StatisticsPanelProp
         {stats.lowConfidence > 0 && (
           <div className="pt-2 mt-2 border-t border-gray-300">
             <div className="flex justify-between items-center">
-              <span className="text-gray-700 font-medium">Correction Rate:</span>
+              <span className="text-gray-700 font-medium">
+                Correction Rate:
+              </span>
               <span className="font-semibold text-blue-600">
                 {stats.correctionRate.toFixed(1)}%
               </span>
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {stats.geminiCorrected} of {stats.lowConfidence} low-confidence regions were corrected
+              {stats.geminiCorrected} of {stats.lowConfidence} low-confidence
+              regions were corrected
             </div>
           </div>
         )}
@@ -135,7 +157,8 @@ export function StatisticsPanel({ boundingBoxes, toolName }: StatisticsPanelProp
         {stats.lowConfidence === 0 && (
           <div className="pt-2 mt-2 border-t border-gray-300">
             <div className="text-xs text-gray-500 italic">
-              All regions have high confidence (≥85%). No regions were sent to Gemini for correction.
+              All regions have high confidence (≥85%). No regions were sent to
+              Gemini for correction.
             </div>
           </div>
         )}

@@ -27,7 +27,8 @@ export const useDrawing = (id: string | undefined) => {
 export const useDrawingResults = (id: string | undefined) => {
   return useQuery({
     queryKey: ['drawing-results', id],
-    queryFn: () => apiClient.getDrawingResults(id!) as Promise<APIResponse<DrawingResults>>,
+    queryFn: () =>
+      apiClient.getDrawingResults(id!) as Promise<APIResponse<DrawingResults>>,
     enabled: !!id,
   });
 };
@@ -35,7 +36,8 @@ export const useDrawingResults = (id: string | undefined) => {
 export const useResult = (id: string | undefined) => {
   return useQuery({
     queryKey: ['result', id],
-    queryFn: () => apiClient.getResult(id!) as Promise<APIResponse<ResultWithDetails>>,
+    queryFn: () =>
+      apiClient.getResult(id!) as Promise<APIResponse<ResultWithDetails>>,
     enabled: !!id,
   });
 };
@@ -50,7 +52,8 @@ export const useTestRuns = () => {
 export const useTestRun = (id: string | undefined) => {
   return useQuery({
     queryKey: ['test-run', id],
-    queryFn: () => apiClient.getTestRun(id!) as Promise<APIResponse<TestRunDetails>>,
+    queryFn: () =>
+      apiClient.getTestRun(id!) as Promise<APIResponse<TestRunDetails>>,
     enabled: !!id,
   });
 };

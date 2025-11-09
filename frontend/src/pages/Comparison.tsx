@@ -71,7 +71,8 @@ export function Comparison() {
   // Get the hovered bounding box from the appropriate side
   let hoveredBBox: BoundingBox | null = null;
   if (hoveredIndex !== null && hoveredSide) {
-    const boxes = hoveredSide === 'left' ? leftBoundingBoxes : rightBoundingBoxes;
+    const boxes =
+      hoveredSide === 'left' ? leftBoundingBoxes : rightBoundingBoxes;
     hoveredBBox = boxes[hoveredIndex] || null;
   }
 
@@ -97,10 +98,15 @@ export function Comparison() {
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <Link to="/" className="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block">
+            <Link
+              to="/"
+              className="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block"
+            >
               ← Back to Home
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">{drawing.fileName}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {drawing.fileName}
+            </h1>
           </div>
 
           {/* Toggle Controls */}
@@ -200,7 +206,13 @@ export function Comparison() {
               <ImageCanvas
                 imageUrl={imageUrl}
                 boundingBoxes={leftBoundingBoxes}
-                hoveredIndex={syncHover && hoveredSide === 'right' ? hoveredIndex : hoveredSide === 'left' ? hoveredIndex : null}
+                hoveredIndex={
+                  syncHover && hoveredSide === 'right'
+                    ? hoveredIndex
+                    : hoveredSide === 'left'
+                      ? hoveredIndex
+                      : null
+                }
                 onHover={handleLeftHover}
                 selectedIndex={selectedIndex}
                 onSelect={setSelectedIndex}
@@ -223,7 +235,13 @@ export function Comparison() {
               <ImageCanvas
                 imageUrl={imageUrl}
                 boundingBoxes={rightBoundingBoxes}
-                hoveredIndex={syncHover && hoveredSide === 'left' ? hoveredIndex : hoveredSide === 'right' ? hoveredIndex : null}
+                hoveredIndex={
+                  syncHover && hoveredSide === 'left'
+                    ? hoveredIndex
+                    : hoveredSide === 'right'
+                      ? hoveredIndex
+                      : null
+                }
                 onHover={handleRightHover}
                 selectedIndex={selectedIndex}
                 onSelect={setSelectedIndex}
@@ -282,7 +300,9 @@ export function Comparison() {
                 onChange={(e) => setShowOnlyLowConfidence(e.target.checked)}
                 className="w-4 h-4"
               />
-              <span className="text-sm">Show only low confidence (&lt;85%)</span>
+              <span className="text-sm">
+                Show only low confidence (&lt;85%)
+              </span>
             </label>
 
             <label className="flex items-center gap-2 cursor-pointer">
@@ -320,15 +340,22 @@ export function Comparison() {
               <div className="space-y-2 text-sm text-gray-600">
                 <div>
                   <span className="font-medium">Processing Time Diff:</span>{' '}
-                  {Math.abs(leftResult.processingTimeMs - rightResult.processingTimeMs)}ms
+                  {Math.abs(
+                    leftResult.processingTimeMs - rightResult.processingTimeMs
+                  )}
+                  ms
                 </div>
                 <div>
                   <span className="font-medium">Cost Diff:</span> ¥
-                  {Math.abs((leftResult.apiCost || 0) - (rightResult.apiCost || 0)).toFixed(2)}
+                  {Math.abs(
+                    (leftResult.apiCost || 0) - (rightResult.apiCost || 0)
+                  ).toFixed(2)}
                 </div>
                 <div>
                   <span className="font-medium">BBox Count Diff:</span>{' '}
-                  {Math.abs(leftBoundingBoxes.length - rightBoundingBoxes.length)}
+                  {Math.abs(
+                    leftBoundingBoxes.length - rightBoundingBoxes.length
+                  )}
                 </div>
               </div>
             )}

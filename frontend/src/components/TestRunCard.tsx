@@ -13,11 +13,14 @@ const TOOL_COLORS: Record<string, string> = {
   'cloud-vision': 'bg-blue-100 text-blue-800 border-blue-300',
   'gemini-2.0-flash': 'bg-purple-100 text-purple-800 border-purple-300',
   gemini: 'bg-purple-100 text-purple-800 border-purple-300',
-  hybrid: 'bg-gradient-to-r from-blue-100 to-purple-100 text-purple-800 border-purple-300',
+  hybrid:
+    'bg-gradient-to-r from-blue-100 to-purple-100 text-purple-800 border-purple-300',
   'azure-layout': 'bg-cyan-100 text-cyan-800 border-cyan-300',
   'azure-read': 'bg-teal-100 text-teal-800 border-teal-300',
-  'cloud-vision-gemini-hybrid': 'bg-gradient-to-r from-blue-100 to-purple-100 text-indigo-800 border-indigo-300',
-  'azure-read-gemini-hybrid': 'bg-gradient-to-r from-teal-100 to-purple-100 text-purple-800 border-purple-300',
+  'cloud-vision-gemini-hybrid':
+    'bg-gradient-to-r from-blue-100 to-purple-100 text-indigo-800 border-indigo-300',
+  'azure-read-gemini-hybrid':
+    'bg-gradient-to-r from-teal-100 to-purple-100 text-purple-800 border-purple-300',
 };
 
 export function TestRunCard({ testRun, isLatest = false }: TestRunCardProps) {
@@ -67,9 +70,7 @@ export function TestRunCard({ testRun, isLatest = false }: TestRunCardProps) {
             <div className="text-sm text-gray-700 font-medium mb-2">
               {dateOnly}
             </div>
-            <div className="text-xs text-gray-500 mb-3">
-              ({relativeTime})
-            </div>
+            <div className="text-xs text-gray-500 mb-3">({relativeTime})</div>
 
             <h3 className="text-lg font-semibold text-gray-900">
               {drawingName}
@@ -95,7 +96,8 @@ export function TestRunCard({ testRun, isLatest = false }: TestRunCardProps) {
               <span
                 key={tool}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${
-                  TOOL_COLORS[tool] || 'bg-gray-100 text-gray-800 border-gray-300'
+                  TOOL_COLORS[tool] ||
+                  'bg-gray-100 text-gray-800 border-gray-300'
                 }`}
               >
                 {tool}
@@ -115,13 +117,19 @@ export function TestRunCard({ testRun, isLatest = false }: TestRunCardProps) {
                 </div>
                 <div className="space-y-1">
                   {testRun.tools.slice(0, 2).map((tool) => {
-                    const avgTime = testRun.summary.avgProcessingTimeByTool[tool];
+                    const avgTime =
+                      testRun.summary.avgProcessingTimeByTool[tool];
                     return avgTime ? (
                       <div key={tool} className="flex justify-between text-xs">
-                        <span className="text-gray-600 truncate max-w-[120px]" title={tool}>
+                        <span
+                          className="text-gray-600 truncate max-w-[120px]"
+                          title={tool}
+                        >
                           {tool}
                         </span>
-                        <span className="font-medium">{avgTime.toFixed(0)}ms</span>
+                        <span className="font-medium">
+                          {avgTime.toFixed(0)}ms
+                        </span>
                       </div>
                     ) : null;
                   })}
@@ -142,7 +150,10 @@ export function TestRunCard({ testRun, isLatest = false }: TestRunCardProps) {
                     const cost = testRun.summary.totalCostByTool[tool];
                     return cost !== undefined ? (
                       <div key={tool} className="flex justify-between text-xs">
-                        <span className="text-gray-600 truncate max-w-[120px]" title={tool}>
+                        <span
+                          className="text-gray-600 truncate max-w-[120px]"
+                          title={tool}
+                        >
                           {tool}
                         </span>
                         <span className="font-medium">¥{cost.toFixed(2)}</span>
@@ -163,9 +174,12 @@ export function TestRunCard({ testRun, isLatest = false }: TestRunCardProps) {
               <div className="mt-3 pt-3 border-t border-gray-100">
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500">Best Overall:</span>
-                  <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                    TOOL_COLORS[testRun.summary.recommendedTool] || 'bg-gray-100 text-gray-800'
-                  }`}>
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-semibold ${
+                      TOOL_COLORS[testRun.summary.recommendedTool] ||
+                      'bg-gray-100 text-gray-800'
+                    }`}
+                  >
                     {testRun.summary.recommendedTool}
                   </span>
                 </div>
@@ -177,7 +191,10 @@ export function TestRunCard({ testRun, isLatest = false }: TestRunCardProps) {
               <div className="mt-3 pt-3 border-t border-gray-100">
                 <div className="text-xs text-gray-500">
                   <span className="font-medium">Latest Test Run</span>
-                  <div className="mt-1 text-gray-400 font-mono text-[10px] truncate" title={testRun.id}>
+                  <div
+                    className="mt-1 text-gray-400 font-mono text-[10px] truncate"
+                    title={testRun.id}
+                  >
                     ID: {testRun.id.substring(0, 8)}...
                   </div>
                   <div className="mt-1 text-blue-600 font-medium flex items-center gap-1">
