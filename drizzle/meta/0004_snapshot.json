@@ -1,6 +1,6 @@
 {
-  "id": "35d59f6d-96cc-4333-be51-2c24316e1f55",
-  "prevId": "82090161-b13e-4892-bae7-9bb92d49358c",
+  "id": "80fbbc2a-bfe8-4335-ab4c-915588a12f0e",
+  "prevId": "ac0213cd-ba16-45e5-a9f3-f6a7f9d298c1",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -87,6 +87,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "bbox_source_stats": {
+          "name": "bbox_source_stats",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
         "breakdown": {
           "name": "breakdown",
           "type": "jsonb",
@@ -118,6 +124,94 @@
           "tableTo": "test_drawings",
           "columnsFrom": ["drawing_id"],
           "columnsTo": ["drawing_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.element_relationships": {
+      "name": "element_relationships",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "drawing_id": {
+          "name": "drawing_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_object_id": {
+          "name": "source_object_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_type": {
+          "name": "target_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_id": {
+          "name": "target_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "relationship_type": {
+          "name": "relationship_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "spatial_data": {
+          "name": "spatial_data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "element_relationships_drawing_id_test_drawings_drawing_id_fk": {
+          "name": "element_relationships_drawing_id_test_drawings_drawing_id_fk",
+          "tableFrom": "element_relationships",
+          "tableTo": "test_drawings",
+          "columnsFrom": ["drawing_id"],
+          "columnsTo": ["drawing_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "element_relationships_source_object_id_geometric_objects_id_fk": {
+          "name": "element_relationships_source_object_id_geometric_objects_id_fk",
+          "tableFrom": "element_relationships",
+          "tableTo": "geometric_objects",
+          "columnsFrom": ["source_object_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -175,6 +269,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp",
@@ -191,6 +291,121 @@
           "tableTo": "test_drawings",
           "columnsFrom": ["drawing_id"],
           "columnsTo": ["drawing_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.geometric_objects": {
+      "name": "geometric_objects",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "extraction_result_id": {
+          "name": "extraction_result_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "drawing_id": {
+          "name": "drawing_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "object_type": {
+          "name": "object_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sub_type": {
+          "name": "sub_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "geometry": {
+          "name": "geometry",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "properties": {
+          "name": "properties",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "detection_method": {
+          "name": "detection_method",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "associated_dimension_id": {
+          "name": "associated_dimension_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "geometric_objects_extraction_result_id_extraction_results_id_fk": {
+          "name": "geometric_objects_extraction_result_id_extraction_results_id_fk",
+          "tableFrom": "geometric_objects",
+          "tableTo": "extraction_results",
+          "columnsFrom": ["extraction_result_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "geometric_objects_drawing_id_test_drawings_drawing_id_fk": {
+          "name": "geometric_objects_drawing_id_test_drawings_drawing_id_fk",
+          "tableFrom": "geometric_objects",
+          "tableTo": "test_drawings",
+          "columnsFrom": ["drawing_id"],
+          "columnsTo": ["drawing_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "geometric_objects_associated_dimension_id_geometric_objects_id_fk": {
+          "name": "geometric_objects_associated_dimension_id_geometric_objects_id_fk",
+          "tableFrom": "geometric_objects",
+          "tableTo": "geometric_objects",
+          "columnsFrom": ["associated_dimension_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

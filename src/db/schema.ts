@@ -1,4 +1,13 @@
-import { pgTable, uuid, text, timestamp, jsonb, real, integer, boolean } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  uuid,
+  text,
+  timestamp,
+  jsonb,
+  real,
+  integer,
+  boolean,
+} from 'drizzle-orm/pg-core';
 
 /**
  * Test drawings metadata
@@ -27,21 +36,31 @@ export const testDrawings = pgTable('test_drawings', {
  */
 export const extractionResults = pgTable('extraction_results', {
   id: uuid('id').primaryKey().defaultRandom(),
-  drawingId: text('drawing_id').notNull().references(() => testDrawings.drawingId),
+  drawingId: text('drawing_id')
+    .notNull()
+    .references(() => testDrawings.drawingId),
   tool: text('tool').notNull(), // 'cloud-vision', 'gemini-2.0-flash', 'hybrid'
 
   // Raw extraction output (full text OCR'ed from the drawing)
   rawText: text('raw_text'),
 
   // Bounding boxes (if available)
-  boundingBoxes: jsonb('bounding_boxes').$type<Array<{
-    text: string;
-    bounds: Array<{ x: number; y: number }>;
-    confidence?: number;
-    page?: number;
-    bboxSource?: 'ocr' | 'gemini-percentage' | 'estimated' | 'synthesized'; // Track how bbox was generated
-    metadata?: Record<string, any>;
-  }>>(),
+  boundingBoxes: jsonb('bounding_boxes').$type<
+    Array<{
+      text: string;
+      bounds: Array<{ x: number; y: number }>;
+      confidence?: number;
+      page?: number;
+      bboxSource?:
+        | 'ocr'
+        | 'gemini-percentage'
+        | 'estimated'
+        | 'synthesized'
+        | 'spatial-search'
+        | 'template-match'; // Track how bbox was generated
+      metadata?: Record<string, any>;
+    }>
+  >(),
 
   // Performance metrics
   processingTimeMs: real('processing_time_ms'),
@@ -59,8 +78,12 @@ export const extractionResults = pgTable('extraction_results', {
  */
 export const accuracyMetrics = pgTable('accuracy_metrics', {
   id: uuid('id').primaryKey().defaultRandom(),
-  extractionResultId: uuid('extraction_result_id').notNull().references(() => extractionResults.id),
-  drawingId: text('drawing_id').notNull().references(() => testDrawings.drawingId),
+  extractionResultId: uuid('extraction_result_id')
+    .notNull()
+    .references(() => extractionResults.id),
+  drawingId: text('drawing_id')
+    .notNull()
+    .references(() => testDrawings.drawingId),
   tool: text('tool').notNull(),
 
   // Character-level OCR accuracy metrics
@@ -107,7 +130,9 @@ export const accuracyMetrics = pgTable('accuracy_metrics', {
  */
 export const toolComparisons = pgTable('tool_comparisons', {
   id: uuid('id').primaryKey().defaultRandom(),
-  drawingId: text('drawing_id').notNull().references(() => testDrawings.drawingId),
+  drawingId: text('drawing_id')
+    .notNull()
+    .references(() => testDrawings.drawingId),
   toolA: text('tool_a').notNull(),
   toolB: text('tool_b').notNull(),
 
@@ -156,4 +181,85 @@ export const testRuns = pgTable('test_runs', {
   completed: boolean('completed').default(false),
   startedAt: timestamp('started_at').defaultNow().notNull(),
   completedAt: timestamp('completed_at'),
+});
+
+/**
+ * Geometric objects detected from architectural drawings
+ * Stores walls, doors, windows, and other structural elements
+ */
+export const geometricObjects = pgTable('geometric_objects', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  extractionResultId: uuid('extraction_result_id')
+    .notNull()
+    .references(() => extractionResults.id),
+  drawingId: text('drawing_id')
+    .notNull()
+    .references(() => testDrawings.drawingId),
+
+  // Object classification
+  objectType: text('object_type').notNull(), // 'wall', 'door', 'window', 'line', 'symbol', etc.
+  subType: text('sub_type'), // 'exterior-wall', 'sliding-door', 'casement-window', etc.
+
+  // Geometric data
+  geometry: jsonb('geometry').notNull().$type<{
+    type: 'line' | 'polygon' | 'point' | 'rectangle' | 'circle';
+    coordinates: Array<{ x: number; y: number }>; // Polygon/line vertices or single point
+    bounds?: { x: number; y: number; width: number; height: number }; // Bounding rectangle
+  }>(),
+
+  // Physical properties (in drawing units, typically mm)
+  properties: jsonb('properties').$type<{
+    length?: number; // For walls, lines
+    width?: number; // For doors, windows
+    thickness?: number; // For walls
+    height?: number; // For 3D elements
+    area?: number; // For rooms, surfaces
+    angle?: number; // Rotation angle in degrees
+    [key: string]: any; // Additional custom properties
+  }>(),
+
+  // Detection metadata
+  confidence: real('confidence'), // Detection confidence (0-1)
+  detectionMethod: text('detection_method').notNull(), // 'opencv-hough', 'ai-detection', 'hybrid', etc.
+
+  // Associated dimension text reference (if any)
+  associatedDimensionId: uuid('associated_dimension_id').references(
+    () => geometricObjects.id
+  ),
+
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * Relationships between geometric objects and dimension text
+ * Links extracted text (dimensions, labels) to geometric objects (walls, doors)
+ */
+export const elementRelationships = pgTable('element_relationships', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  drawingId: text('drawing_id')
+    .notNull()
+    .references(() => testDrawings.drawingId),
+
+  // Source geometric object
+  sourceObjectId: uuid('source_object_id')
+    .notNull()
+    .references(() => geometricObjects.id),
+
+  // Target (could be text bbox or another geometric object)
+  targetType: text('target_type').notNull(), // 'dimension-text', 'label-text', 'geometric-object'
+  targetId: text('target_id').notNull(), // UUID or text content
+
+  // Relationship type
+  relationshipType: text('relationship_type').notNull(), // 'has-dimension', 'has-label', 'adjacent-to', 'contains', etc.
+
+  // Spatial association
+  spatialData: jsonb('spatial_data').$type<{
+    distance?: number; // Distance between objects
+    direction?: 'above' | 'below' | 'left' | 'right' | 'inside' | 'outside';
+    confidence?: number; // Association confidence
+  }>(),
+
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });

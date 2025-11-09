@@ -19,13 +19,27 @@
     "test:gemini-bbox-synthesis": "tsx src/test-runner.ts --workflow gemini-bbox-synthesis",
     "test:gemini-validation": "tsx src/test-runner.ts --workflow gemini-validation",
     "test:region-classifier": "tsx src/test-runner.ts --workflow region-classifier",
+    "test:gemini-geometric": "tsx src/test-runner.ts --workflow gemini-geometric",
+    "test:revit-pipeline": "tsx src/test-revit-pipeline.ts",
+    "test:experiments": "tsx src/experiments/test-experiments.ts --experiment all",
+    "test:exp:template-matching": "tsx src/experiments/test-experiments.ts --experiment template-matching",
+    "test:exp:multi-ocr": "tsx src/experiments/test-experiments.ts --experiment multi-ocr-fusion",
+    "test:exp:grid-overlay": "tsx src/experiments/test-experiments.ts --experiment grid-overlay",
+    "test:exp:grid-20x20": "tsx src/experiments/test-experiments.ts --experiment grid-20x20",
+    "test:exp:grid-40x40": "tsx src/experiments/test-experiments.ts --experiment grid-40x40",
+    "test:exp:grid-80x80": "tsx src/experiments/test-experiments.ts --experiment grid-80x80",
+    "test:exp:grid-100x100": "tsx src/experiments/test-experiments.ts --experiment grid-100x100",
+    "test:exp:region-detection": "tsx src/experiments/test-experiments.ts --experiment region-detection",
+    "test:exp:baseline": "tsx src/experiments/test-experiments.ts --experiment baseline",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:reset": "tsx scripts/reset-db.ts",
     "db:fresh": "npm run db:reset && npm run db:migrate",
     "db:studio": "drizzle-kit studio",
-    "db:drop": "drizzle-kit drop"
+    "db:drop": "drizzle-kit drop",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [
     "ocr",
@@ -63,6 +77,7 @@
     "@types/string-similarity": "^4.0.2",
     "drizzle-kit": "^0.28.1",
     "pino-pretty": "^13.1.2",
+    "prettier": "^3.6.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }

@@ -107,12 +107,8 @@
           "name": "accuracy_metrics_extraction_result_id_extraction_results_id_fk",
           "tableFrom": "accuracy_metrics",
           "tableTo": "extraction_results",
-          "columnsFrom": [
-            "extraction_result_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["extraction_result_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -120,12 +116,8 @@
           "name": "accuracy_metrics_drawing_id_test_drawings_drawing_id_fk",
           "tableFrom": "accuracy_metrics",
           "tableTo": "test_drawings",
-          "columnsFrom": [
-            "drawing_id"
-          ],
-          "columnsTo": [
-            "drawing_id"
-          ],
+          "columnsFrom": ["drawing_id"],
+          "columnsTo": ["drawing_id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -203,12 +195,8 @@
           "name": "extraction_results_drawing_id_test_drawings_drawing_id_fk",
           "tableFrom": "extraction_results",
           "tableTo": "test_drawings",
-          "columnsFrom": [
-            "drawing_id"
-          ],
-          "columnsTo": [
-            "drawing_id"
-          ],
+          "columnsFrom": ["drawing_id"],
+          "columnsTo": ["drawing_id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -293,9 +281,7 @@
         "test_drawings_drawing_id_unique": {
           "name": "test_drawings_drawing_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "drawing_id"
-          ]
+          "columns": ["drawing_id"]
         }
       },
       "policies": {},
@@ -427,12 +413,8 @@
           "name": "tool_comparisons_drawing_id_test_drawings_drawing_id_fk",
           "tableFrom": "tool_comparisons",
           "tableTo": "test_drawings",
-          "columnsFrom": [
-            "drawing_id"
-          ],
-          "columnsTo": [
-            "drawing_id"
-          ],
+          "columnsFrom": ["drawing_id"],
+          "columnsTo": ["drawing_id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

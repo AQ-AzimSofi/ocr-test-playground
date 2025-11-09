@@ -7,11 +7,11 @@ services:
       POSTGRES_PASSWORD: ocr_password
       POSTGRES_DB: ocr_test_db
     ports:
-      - "5434:5432"
+      - '5434:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ocr_user -d ocr_test_db"]
+      test: ['CMD-SHELL', 'pg_isready -U ocr_user -d ocr_test_db']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -24,7 +24,7 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
-      - "5051:80"
+      - '5051:80'
     depends_on:
       - postgres
     volumes:

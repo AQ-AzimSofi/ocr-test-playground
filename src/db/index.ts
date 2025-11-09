@@ -5,7 +5,9 @@ import * as dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.development' });
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://ocr_user:ocr_password@localhost:5432/ocr_test_db';
+const connectionString =
+  process.env.DATABASE_URL ||
+  'postgresql://ocr_user:ocr_password@localhost:5432/ocr_test_db';
 
 // Create postgres connection
 const client = postgres(connectionString);
