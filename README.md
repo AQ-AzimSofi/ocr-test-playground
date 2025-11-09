@@ -36,6 +36,7 @@ The OCR Test Playground consists of four main components:
 ```
 
 **Access Points:**
+
 - Frontend UI: http://localhost:5173/
 - Backend API: http://localhost:3001/
 - Database Studio: https://local.drizzle.studio/
@@ -45,6 +46,7 @@ The OCR Test Playground consists of four main components:
 ## Purpose
 
 Evaluate and compare OCR/AI tools for extracting all text and characters from drawings:
+
 - **Numbers and dimensions** (10,920, 1,820, 910, 3500mm, 1255×960)
 - **Japanese text** (浴室, 洗面室, 押入, タワークレーン, 仮囲い)
 - **Special characters** (×, ㎡)
@@ -97,6 +99,7 @@ cp .env.development.example .env.development
 ### 3. Setup Google Cloud Credentials
 
 **For Google Cloud Vision API:**
+
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a project or select existing
 3. Enable Cloud Vision API
@@ -108,6 +111,7 @@ cp .env.development.example .env.development
    ```
 
 **For Google Gemini API:**
+
 1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
 2. Create API key
 3. Add to `.env.development`:
@@ -116,6 +120,7 @@ cp .env.development.example .env.development
    ```
 
 **For Azure AI Document Intelligence (Optional):**
+
 1. Go to [Azure Portal](https://portal.azure.com/)
 2. Create a "Document Intelligence" resource
 3. Get endpoint and API key from "Keys and Endpoint" section
@@ -172,6 +177,7 @@ mkdir -p test-drawings/sample01
 ```
 
 **Example metadata file:**
+
 ```json
 {
   "id": "drawing-001",
@@ -186,6 +192,7 @@ mkdir -p test-drawings/sample01
 ```
 
 **Example ground truth file (`drawing-001-ground-truth.txt`):**
+
 ```
 10,920
 1,820
@@ -204,6 +211,7 @@ mkdir -p test-drawings/sample01
 ```
 
 **Benefits of using external `.txt` files:**
+
 - Much easier to read and edit
 - No need to escape line breaks with `\n`
 - Can use any text editor
@@ -232,6 +240,7 @@ npm run test -- --workflow azure-layout --drawing drawing-001
 Results are saved in two places:
 
 **1. Database (Viewable in Frontend UI):**
+
 - All test runs are stored in PostgreSQL
 - Access the frontend at http://localhost:5173/
 - Browse test runs chronologically
@@ -239,6 +248,7 @@ Results are saved in two places:
 - View detailed statistics and metrics
 
 **2. Generated Reports (`results/` directory):**
+
 - `test-run-{uuid}.html` - Standalone visual report
 - `test-run-{uuid}.json` - Raw JSON data
 - Open HTML files in browser for offline viewing
@@ -255,6 +265,7 @@ docker compose up -d
 ```
 
 **Verify database is running:**
+
 ```bash
 docker compose ps
 # Should show postgres and pgadmin containers running
@@ -268,6 +279,7 @@ npm run api:dev
 ```
 
 **Expected output:**
+
 ```
 OCR Visualization API Server
 ================================
@@ -277,6 +289,7 @@ Health check: http://localhost:3001/health
 ```
 
 **API Endpoints:**
+
 - `GET /api/test-runs` - List all test runs
 - `GET /api/test-runs/:id` - Get test run details
 - `GET /api/drawings` - List all drawings
@@ -292,6 +305,7 @@ npm run dev
 ```
 
 **Expected output:**
+
 ```
 VITE v7.2.1  ready in XXX ms
 
@@ -438,12 +452,12 @@ Each test evaluates OCR quality using industry-standard metrics:
 
 ### Understanding CER
 
-| CER | Quality | Interpretation |
-|-----|---------|----------------|
-| 0.00 - 0.05 | Excellent | 95%+ accuracy, production ready |
-| 0.05 - 0.10 | Good | 90-95% accuracy, minor errors |
-| 0.10 - 0.20 | Fair | 80-90% accuracy, needs review |
-| 0.20+ | Poor | <80% accuracy, significant issues |
+| CER         | Quality   | Interpretation                    |
+| ----------- | --------- | --------------------------------- |
+| 0.00 - 0.05 | Excellent | 95%+ accuracy, production ready   |
+| 0.05 - 0.10 | Good      | 90-95% accuracy, minor errors     |
+| 0.10 - 0.20 | Fair      | 80-90% accuracy, needs review     |
+| 0.20+       | Poor      | <80% accuracy, significant issues |
 
 ## How to Add New Test Drawings
 
@@ -452,6 +466,7 @@ Step-by-step guide for adding test drawings to evaluate OCR accuracy.
 ### Subdirectory Organization (Recommended)
 
 **Step 1: Create directory structure**
+
 ```bash
 cd test-drawings
 mkdir -p sample02
@@ -459,6 +474,7 @@ cd sample02
 ```
 
 **Step 2: Add your drawing image**
+
 ```bash
 # Copy your drawing file (PNG, JPG, or PDF)
 cp /path/to/your-drawing.png ./floor-plan-001.png
@@ -467,6 +483,7 @@ cp /path/to/your-drawing.png ./floor-plan-001.png
 **Step 3: Create metadata JSON file**
 
 Create `floor-plan-001-metadata.json`:
+
 ```json
 {
   "id": "floor-plan-001",
@@ -481,6 +498,7 @@ Create `floor-plan-001-metadata.json`:
 ```
 
 **Metadata field options:**
+
 - **type**: `"floor-plan"` | `"site-layout"` | `"elevation"` | `"section"` | `"detail"` | `"unknown"`
 - **quality**: `"high"` | `"medium"` | `"low"`
 - **source**: `"architectural-drawing"` | `"cad-generated"` | `"scanned"` | `"synthetic"` | `"manual"`
@@ -488,6 +506,7 @@ Create `floor-plan-001-metadata.json`:
 **Step 4: Create ground truth text file**
 
 Create `floor-plan-001-ground-truth.txt`:
+
 ```
 10,920
 1,820
@@ -511,6 +530,7 @@ Designed by
 ```
 
 **Important ground truth guidelines:**
+
 - Transcribe exactly as it appears on the drawing
 - Use actual line breaks (press Enter) - not `\n`
 - Include all text: numbers, dimensions, Japanese, symbols
@@ -521,6 +541,7 @@ Designed by
 - Don't add text that's not in the drawing
 
 **Step 5: Verify file structure**
+
 ```bash
 test-drawings/sample02/
 ├── floor-plan-001.png
@@ -529,6 +550,7 @@ test-drawings/sample02/
 ```
 
 **Step 6: Run tests**
+
 ```bash
 # From project root
 npm run test:all
@@ -539,6 +561,7 @@ npm run test:gemini
 ```
 
 **Step 7: View results**
+
 - Frontend UI: http://localhost:5173/
 - HTML report: `results/test-run-{uuid}.html`
 - Database: Check test_runs table
@@ -546,6 +569,7 @@ npm run test:gemini
 ### File Naming Convention
 
 **Required pattern:**
+
 ```
 {base-name}.{extension}               # The drawing image
 {base-name}-metadata.json             # Metadata
@@ -553,6 +577,7 @@ npm run test:gemini
 ```
 
 **Examples:**
+
 ```bash
 # Example 1: PNG in subdirectory
 test-drawings/sample01/
@@ -568,6 +593,7 @@ test-drawings/
 ```
 
 **Automatic discovery:**
+
 - Test runner scans `test-drawings/` directory recursively
 - Finds all images with matching metadata files
 - Loads ground truth from external `.txt` files

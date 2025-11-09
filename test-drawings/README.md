@@ -64,6 +64,7 @@
 ## Field Descriptions
 
 ### Root Fields
+
 - `id`: Unique identifier for this drawing
 - `type`: Type of drawing (`site-layout`, `floor-plan`, `elevation`, etc.)
 - `quality`: Quality level (`high`, `medium`, `low`)
@@ -72,17 +73,20 @@
 ### Ground Truth Fields
 
 **dimensions:**
+
 - `value`: The dimension text as it appears (e.g., "3500mm")
 - `x`, `y`: Optional pixel coordinates
 - `element`: What this dimension measures
 - `type`: Type of dimension (`length`, `width`, `height`, `radius`, etc.)
 
 **equipment:**
+
 - `name`: Equipment name (Japanese or English)
 - `spec`: Specification (tonnage, size, etc.)
 - `x`, `y`: Optional position coordinates
 
 **areas:**
+
 - `name`: Area name
 - `width`, `depth`: Optional individual dimensions
 - `size`: Complete size string
@@ -106,19 +110,23 @@
 ## Getting Sample Drawings
 
 ### Option 1: Generate Synthetic Data
+
 Use your existing plan-layout-generator from 3D K-Field AI API to create test drawings.
 
 ### Option 2: CAD Software Samples
+
 - Download Jw_cad (Japanese CAD) sample files
 - Use DraftSight demo templates
 - LibreCAD construction samples
 
 ### Option 3: Public Resources
+
 - Search: "配置図 サンプル PDF"
 - Japanese government open data (MLIT)
 - Construction CAD template sites
 
 ### Option 4: Create Manual Test Cases
+
 - Use PowerPoint/Illustrator
 - Draw simple layouts with text
 - Export as PDF/PNG
