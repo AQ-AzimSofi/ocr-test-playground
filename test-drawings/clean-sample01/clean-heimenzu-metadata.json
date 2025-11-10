@@ -1,0 +1,10 @@
+{
+  "id": "clean-heimenzu",
+  "type": "floor-plan",
+  "quality": "high",
+  "source": "architectural-drawing",
+  "description": "Japanese architectural floor plan with room labels and dimensions",
+  "groundTruth": {
+    "fullTextFile": "./clean-heimenzu-ground-truth.txt"
+  }
+}
