@@ -21,6 +21,7 @@
     "test:region-classifier": "tsx src/test-runner.ts --workflow region-classifier",
     "test:gemini-geometric": "tsx src/test-runner.ts --workflow gemini-geometric",
     "test:revit-pipeline": "tsx src/test-revit-pipeline.ts",
+    "test:ai-pipeline": "tsx src/test-ai-pipeline.ts",
     "test:experiments": "tsx src/experiments/test-experiments.ts --experiment all",
     "test:exp:template-matching": "tsx src/experiments/test-experiments.ts --experiment template-matching",
     "test:exp:multi-ocr": "tsx src/experiments/test-experiments.ts --experiment multi-ocr-fusion",
