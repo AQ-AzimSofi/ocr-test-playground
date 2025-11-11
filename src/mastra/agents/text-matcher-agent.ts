@@ -5,14 +5,6 @@ import type { BoundingBox } from '../../types/processor-types.js';
 
 dotenv.config({ path: '.env.development' });
 
-/**
- * Text Matcher Agent
- *
- * Matches Gemini-detected texts to Cloud Vision bounding boxes.
- * Uses semantic understanding and fuzzy matching to find corresponding texts
- * between the two OCR systems, handling variations in formatting, spacing, and character recognition.
- */
-
 const TextMatchSchema = z.object({
   gemini_index: z.number(),
   cloud_vision_index: z.number(),
@@ -47,9 +39,6 @@ export type TextMatchingOutput = z.infer<typeof TextMatchingOutputSchema>;
 export type TextMatch = z.infer<typeof TextMatchSchema>;
 export type UnmatchedGeminiText = z.infer<typeof UnmatchedGeminiTextSchema>;
 
-/**
- * Match Gemini texts to Cloud Vision bounding boxes
- */
 export async function matchTexts(
   geminiResults: BoundingBox[],
   cloudVisionResults: BoundingBox[]
@@ -67,7 +56,6 @@ export async function matchTexts(
     },
   });
 
-  // Prepare simplified data for the AI (just text and approximate positions)
   const geminiTexts = geminiResults.map((bbox, index) => ({
     index,
     text: bbox.text,
@@ -196,7 +184,6 @@ EXAMPLE OUTPUT STRUCTURE:
   try {
     const parsedOutput = JSON.parse(jsonText);
 
-    // Validate and return
     return TextMatchingOutputSchema.parse(parsedOutput);
   } catch (error) {
     console.error('Failed to parse text matching output:', error);
@@ -205,9 +192,6 @@ EXAMPLE OUTPUT STRUCTURE:
   }
 }
 
-/**
- * Simple Levenshtein distance for fuzzy matching fallback
- */
 function levenshteinDistance(a: string, b: string): number {
   const matrix: number[][] = [];
 
@@ -225,9 +209,9 @@ function levenshteinDistance(a: string, b: string): number {
         matrix[i][j] = matrix[i - 1][j - 1];
       } else {
         matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1, // substitution
-          matrix[i][j - 1] + 1, // insertion
-          matrix[i - 1][j] + 1 // deletion
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
         );
       }
     }
@@ -236,9 +220,6 @@ function levenshteinDistance(a: string, b: string): number {
   return matrix[b.length][a.length];
 }
 
-/**
- * Deterministic fallback matching (if AI fails)
- */
 export function fallbackTextMatching(
   geminiResults: BoundingBox[],
   cloudVisionResults: BoundingBox[]
@@ -261,13 +242,11 @@ export function fallbackTextMatching(
       const cvX = cloudVisionResults[cvIdx].bounds[0].x;
       const cvY = cloudVisionResults[cvIdx].bounds[0].y;
 
-      // Exact match
       if (geminiText === cvText) {
         bestMatch = { index: cvIdx, confidence: 0.95 };
         break;
       }
 
-      // Fuzzy match
       const distance = levenshteinDistance(geminiText, cvText);
       if (distance <= 2) {
         const confidence = 0.85 - distance * 0.05;
@@ -276,7 +255,6 @@ export function fallbackTextMatching(
         }
       }
 
-      // Spatial proximity match
       const spatialDistance = Math.sqrt(
         Math.pow(geminiX - cvX, 2) + Math.pow(geminiY - cvY, 2)
       );
@@ -327,4 +305,148 @@ export function fallbackTextMatching(
     },
     summary: `Fallback matching: ${matchedPairs.length}/${geminiResults.length} texts matched`,
   };
+}
+
+export interface TextVerificationInput {
+  original_text: string;
+  bbox_index: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  confidence: number;
+}
+
+const VerifiedTextSchema = z.object({
+  bbox_index: z.number(),
+  original_text: z.string(),
+  verified_text: z.string(),
+  confidence: z.number().min(0).max(1),
+  changed: z.boolean(),
+  reasoning: z.string(),
+});
+
+const BatchVerificationOutputSchema = z.object({
+  verified_texts: z.array(VerifiedTextSchema),
+});
+
+export type VerifiedText = z.infer<typeof VerifiedTextSchema>;
+
+export async function verifyTextOCRBatch(
+  imagePath: string,
+  textsToVerify: TextVerificationInput[],
+  imageWidth: number,
+  imageHeight: number
+): Promise<VerifiedText[]> {
+  const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('GOOGLE_GEMINI_API_KEY environment variable not set');
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-2.5-flash',
+    generationConfig: {
+      responseMimeType: 'application/json',
+    },
+  });
+
+  const fs = await import('fs');
+  const imageBuffer = fs.readFileSync(imagePath);
+  const base64Image = imageBuffer.toString('base64');
+  const imagePart = {
+    inlineData: {
+      data: base64Image,
+      mimeType: 'image/png',
+    },
+  };
+
+  const textsDescription = textsToVerify
+    .map(
+      (text, idx) => `
+${idx + 1}. Original OCR: "${text.original_text}"
+   - Bbox Index: ${text.bbox_index}
+   - Location: (${text.x}px, ${text.y}px)
+   - Size: ${text.width}px × ${text.height}px
+   - Current Confidence: ${(text.confidence * 100).toFixed(0)}%`
+    )
+    .join('\n');
+
+  const prompt = `You are an OCR verification expert for Japanese architectural floor plan drawings.
+
+IMAGE PROPERTIES:
+- Width: ${imageWidth}px
+- Height: ${imageHeight}px
+
+TASK: Verify the OCR text detection for ${textsToVerify.length} bounding boxes with low confidence.
+
+For each bounding box below, look at the image and determine:
+1. What text is ACTUALLY in that region?
+2. Is the original OCR correct or incorrect?
+3. If incorrect, what is the correct text?
+
+TEXTS TO VERIFY (${textsToVerify.length} texts):
+${textsDescription}
+
+INSTRUCTIONS:
+
+For EACH text in the list above:
+
+1. **Locate the bounding box region** in the image using the provided coordinates
+2. **Read the text** carefully in that specific region
+3. **Compare** with the original OCR result
+4. **Determine if it changed**:
+   - If the text is the same or very similar → changed: false
+   - If the text is different or significantly corrected → changed: true
+
+IMPORTANT NOTES:
+- For Japanese text, pay attention to full-width vs half-width characters
+- Parentheses matter: "防" vs "(防)" are different
+- Spacing matters: "物入" vs "物 入" are different
+- Numbers with commas: "1820" vs "1,820" are different
+- Be precise and accurate
+
+OUTPUT REQUIREMENTS:
+
+Return a JSON object with this structure:
+{
+  "verified_texts": [
+    {
+      "bbox_index": <number>,        // The bbox_index from input (IMPORTANT!)
+      "original_text": "<string>",   // The original OCR text
+      "verified_text": "<string>",   // The correct text you see in the image
+      "confidence": <number>,        // 0-1 (how confident you are in the verified text)
+      "changed": <boolean>,          // true if text was corrected, false if confirmed as correct
+      "reasoning": "<string>"        // Brief explanation (e.g., "confirmed correct", "corrected spacing", "added parentheses")
+    },
+    ... (one entry for each text)
+  ]
+}
+
+IMPORTANT:
+- Return verification for ALL ${textsToVerify.length} texts in the same order as the input
+- Each entry MUST include the "bbox_index" field matching the input
+- Be honest: if the original OCR was correct, say so (changed: false)
+- If you can't clearly see the text, return the original text with lower confidence
+- Confidence should be high (0.9+) when text is clearly visible
+
+RESPONSE FORMAT:
+Return a valid JSON object with the "verified_texts" array containing all results.`;
+
+  const result = await model.generateContent([imagePart, prompt]);
+
+  const response = result.response;
+  const jsonText = response.text();
+
+  try {
+    const parsedOutput = JSON.parse(jsonText);
+
+    const validatedOutput = BatchVerificationOutputSchema.parse(parsedOutput);
+
+    return validatedOutput.verified_texts;
+  } catch (error) {
+    console.error('Failed to parse batch verification output:', error);
+    console.error('Raw response:', jsonText);
+    throw new Error('Batch text verification failed');
+  }
 }
