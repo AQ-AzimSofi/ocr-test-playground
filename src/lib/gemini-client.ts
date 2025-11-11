@@ -29,7 +29,7 @@ export class GeminiClient {
    */
   async extractText(
     imagePath: string
-  ): Promise<{ text: string; confidence: number }> {
+  ): Promise<{ text: string; confidence?: number }> {
     const model = this.genAI.getGenerativeModel({ model: this.model });
 
     const prompt = `You are a pure OCR system. Extract ALL visible text from this image.
@@ -85,10 +85,8 @@ CORRECT (DO THIS):
     }
 
     // Gemini doesn't provide confidence scores for raw text extraction
-    // Using a default high confidence since it's a vision model
     return {
       text: cleaned,
-      confidence: 0.95,
     };
   }
 
@@ -102,7 +100,7 @@ CORRECT (DO THIS):
       originalText?: string;
       surroundingText?: string;
     }
-  ): Promise<{ text: string; confidence: number }> {
+  ): Promise<{ text: string; confidence?: number }> {
     const model = this.genAI.getGenerativeModel({ model: this.model });
 
     let prompt = `You are a pure OCR system. This is a SMALL REGION cropped from a larger image.
@@ -147,7 +145,7 @@ This may help you understand the text in this region.`;
 
     return {
       text: cleaned.trim(),
-      confidence: 0.95, // Gemini doesn't provide confidence
+      // Gemini doesn't provide confidence scores
     };
   }
 
@@ -160,10 +158,10 @@ This may help you understand the text in this region.`;
       base64: string;
       originalText?: string;
     }>
-  ): Promise<Array<{ text: string; confidence: number }>> {
+  ): Promise<Array<{ text: string; confidence?: number }>> {
     // Process regions in parallel with concurrency limit
     const concurrency = 3; // Gemini rate limits
-    const results: Array<{ text: string; confidence: number }> = [];
+    const results: Array<{ text: string; confidence?: number }> = [];
 
     for (let i = 0; i < regions.length; i += concurrency) {
       const batch = regions.slice(i, i + concurrency);

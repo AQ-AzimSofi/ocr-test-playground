@@ -7,18 +7,17 @@ import {
   accuracyMetrics,
   testRuns,
 } from './db/index.js';
-import { processWithCloudVision } from './processors/cloud-vision-processor.js';
 import { processWithGemini } from './processors/gemini-processor.js';
-import { processWithHybrid } from './processors/hybrid-processor.js';
-import { processWithAzureLayout } from './processors/azure-layout-processor.js';
-import { processWithAzureRead } from './processors/azure-read-processor.js';
 import { processWithCloudVisionGeminiHybrid } from './processors/cloud-vision-gemini-hybrid-processor.js';
 import { processWithAzureReadGeminiHybrid } from './processors/azure-read-gemini-hybrid-processor.js';
+import { processWithAzureLayoutGeminiHybrid } from './processors/azure-layout-gemini-hybrid-processor.js';
 import { processWithGeminiCoordinates } from './processors/gemini-coordinates-processor.js';
 import { processWithGeminiBboxSynthesis } from './processors/gemini-bbox-synthesis-processor.js';
-import { processWithGeminiValidation } from './processors/gemini-validation-processor.js';
-import { processWithRegionClassifier } from './processors/region-classifier-processor.js';
+import { processWithGeminiValidationAzureRead } from './processors/gemini-validation-azure-read-processor.js';
+import { processWithGeminiValidationAzureLayout } from './processors/gemini-validation-azure-layout-processor.js';
+import { processWithGeminiValidationCloudVision } from './processors/gemini-validation-cloud-vision-processor.js';
 import { processWithGeminiGeometric } from './processors/gemini-geometric-processor.js';
+import { processWithGeminiSelfCalibrating } from './processors/gemini-self-calibrating-processor.js';
 import { accuracyCalculatorTool } from './mastra/tools/accuracy-calculator.js';
 import { reportGeneratorTool } from './mastra/tools/report-generator.js';
 import * as fs from 'fs';
@@ -168,30 +167,28 @@ async function runProcessor(
   try {
     let result;
 
-    if (processor === 'cloud-vision') {
-      result = await processWithCloudVision(imagePath, drawingId);
-    } else if (processor === 'gemini') {
+    if (processor === 'gemini') {
       result = await processWithGemini(imagePath, drawingId);
-    } else if (processor === 'hybrid') {
-      result = await processWithHybrid(imagePath, drawingId);
-    } else if (processor === 'azure-layout') {
-      result = await processWithAzureLayout(imagePath, drawingId);
-    } else if (processor === 'azure-read') {
-      result = await processWithAzureRead(imagePath, drawingId);
     } else if (processor === 'cloud-vision-gemini-hybrid') {
       result = await processWithCloudVisionGeminiHybrid(imagePath, drawingId);
     } else if (processor === 'azure-read-gemini-hybrid') {
       result = await processWithAzureReadGeminiHybrid(imagePath, drawingId);
+    } else if (processor === 'azure-layout-gemini-hybrid') {
+      result = await processWithAzureLayoutGeminiHybrid(imagePath, drawingId);
     } else if (processor === 'gemini-coordinates') {
       result = await processWithGeminiCoordinates(imagePath, drawingId);
     } else if (processor === 'gemini-bbox-synthesis') {
       result = await processWithGeminiBboxSynthesis(imagePath, drawingId);
-    } else if (processor === 'gemini-validation') {
-      result = await processWithGeminiValidation(imagePath, drawingId);
-    } else if (processor === 'region-classifier') {
-      result = await processWithRegionClassifier(imagePath, drawingId);
+    } else if (processor === 'gemini-validation-azure-read') {
+      result = await processWithGeminiValidationAzureRead(imagePath, drawingId);
+    } else if (processor === 'gemini-validation-azure-layout') {
+      result = await processWithGeminiValidationAzureLayout(imagePath, drawingId);
+    } else if (processor === 'gemini-validation-cloud-vision') {
+      result = await processWithGeminiValidationCloudVision(imagePath, drawingId);
     } else if (processor === 'gemini-geometric') {
       result = await processWithGeminiGeometric(imagePath, drawingId);
+    } else if (processor === 'gemini-self-calibrating') {
+      result = await processWithGeminiSelfCalibrating(imagePath, drawingId);
     } else {
       throw new Error(`Unknown processor: ${processor}`);
     }
@@ -267,7 +264,31 @@ async function main() {
 
   // Load test drawings
   console.log('Loading test drawings...');
-  const drawings = await loadTestDrawings();
+  let drawings = await loadTestDrawings();
+
+  // Filter by drawing ID if specified
+  if (args.drawing) {
+    console.log(`Filtering for drawing: ${args.drawing}`);
+    drawings = drawings.filter((d) => {
+      const drawingId = d.metadata?.id || d.fileName;
+      return (
+        drawingId === args.drawing ||
+        d.fileName.includes(args.drawing) ||
+        drawingId.includes(args.drawing)
+      );
+    });
+
+    if (drawings.length === 0) {
+      console.error(`\nNo drawing found matching: ${args.drawing}`);
+      console.log('\nAvailable drawings:');
+      const allDrawings = await loadTestDrawings();
+      allDrawings.forEach((d) => {
+        const id = d.metadata?.id || d.fileName;
+        console.log(`  - ${id} (${d.fileName})`);
+      });
+      process.exit(1);
+    }
+  }
 
   if (drawings.length === 0) {
     console.error('\nNo test drawings found!');
@@ -343,17 +364,14 @@ async function main() {
       tools:
         workflow === 'all'
           ? [
-              'cloud-vision',
-              'gemini',
-              'hybrid',
-              'azure-layout',
-              'azure-read',
               'cloud-vision-gemini-hybrid',
               'azure-read-gemini-hybrid',
+              'azure-layout-gemini-hybrid',
               'gemini-coordinates',
-              'gemini-bbox-synthesis',
-              'gemini-validation',
-              'region-classifier',
+              // 'gemini-bbox-synthesis',
+              // 'gemini-validation-azure-read',
+              // 'gemini-validation-azure-layout',
+              // 'gemini-validation-cloud-vision',
               'gemini-geometric',
             ]
           : [workflow],
@@ -384,18 +402,16 @@ async function main() {
     const processorsToRun =
       workflow === 'all'
         ? [
-            'cloud-vision',
-            'gemini',
-            'hybrid',
-            'azure-layout',
-            'azure-read',
             'cloud-vision-gemini-hybrid',
             'azure-read-gemini-hybrid',
+            'azure-layout-gemini-hybrid',
             'gemini-coordinates',
-            'gemini-bbox-synthesis',
-            'gemini-validation',
-            'region-classifier',
-            'gemini-geometric',
+            // 'gemini-bbox-synthesis',
+            // 'gemini-validation-azure-read',
+            // 'gemini-validation-azure-layout',
+            // 'gemini-validation-cloud-vision',
+
+            // 'gemini-geometric',
           ]
         : [workflow];
 

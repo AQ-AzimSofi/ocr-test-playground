@@ -168,11 +168,17 @@ export const reportGeneratorTool = createTool({
 /**
  * Calculate gradient color based on metric value
  * Returns RGB color string for inline styling
+ * Returns gray for undefined/null values (no confidence available)
  */
 function getGradientColor(
-  value: number,
+  value: number | null | undefined,
   metricType: 'cer' | 'accuracy' | 'coverage' | 'time'
 ): string {
+  // Return gray for undefined/null confidence values
+  if (value === null || value === undefined) {
+    return 'rgb(128, 128, 128)'; // Gray #808080
+  }
+
   let normalizedValue: number;
 
   // Normalize value to 0-100 scale based on metric type
@@ -242,9 +248,10 @@ function getContrastTextColor(bgRgb: string): string {
 
 /**
  * Generate inline style string for metric with gradient color
+ * Gray background for undefined/null values (no confidence)
  */
 function getMetricStyle(
-  value: number,
+  value: number | null | undefined,
   metricType: 'cer' | 'accuracy' | 'coverage' | 'time'
 ): string {
   const bgColor = getGradientColor(value, metricType);

@@ -27,6 +27,7 @@ clr.AddReference('RevitAPI')
 clr.AddReference('RevitServices')
 from Autodesk.Revit.DB import *
 from Autodesk.Revit.DB.Architecture import Room
+from Autodesk.Revit.DB.Structure import StructuralType
 from RevitServices.Persistence import DocumentManager
 from RevitServices.Transactions import TransactionManager
 
@@ -53,6 +54,65 @@ stats = {
 
 # Conversion factor
 MM_TO_FEET = 1.0 / 304.8
+
+# ============================================================
+# HELPER FUNCTIONS FOR WALL-HOSTED PLACEMENT
+# ============================================================
+
+def find_nearest_wall(walls, target_point):
+    """Find the nearest wall to a target point."""
+    if not walls:
+        return None
+
+    nearest_wall = None
+    min_distance = float('inf')
+
+    for wall in walls:
+        try:
+            location_curve = wall.Location
+            if location_curve and hasattr(location_curve, 'Curve'):
+                curve = location_curve.Curve
+                # Get the closest point on the wall curve to the target
+                result = curve.Project(target_point)
+                if result:
+                    distance = result.Distance
+                    if distance < min_distance:
+                        min_distance = distance
+                        nearest_wall = wall
+        except:
+            continue
+
+    return nearest_wall
+
+def get_wall_insertion_point(wall, target_point, offset_height=0):
+    """
+    Calculate the insertion point on a wall face for a door/window.
+    Returns (XYZ point, direction vector) for wall-hosted placement.
+    """
+    try:
+        location_curve = wall.Location
+        if not location_curve or not hasattr(location_curve, 'Curve'):
+            return None, None
+
+        curve = location_curve.Curve
+        # Project target point onto the wall curve
+        result = curve.Project(target_point)
+        if not result:
+            return None, None
+
+        # Get the point on the wall curve
+        point_on_curve = result.XYZPoint
+
+        # Add height offset (for windows)
+        insertion_point = XYZ(point_on_curve.X, point_on_curve.Y, point_on_curve.Z + offset_height)
+
+        # Get wall direction (tangent to curve)
+        param = result.Parameter
+        direction = curve.ComputeDerivatives(param, True).BasisX.Normalize()
+
+        return insertion_point, direction
+    except:
+        return None, None
 
 # Validation
 if not json_file_path:
@@ -217,35 +277,54 @@ else:
                     center_mm = coords_mm[0]
                     x_ft = center_mm['x'] * MM_TO_FEET
                     y_ft = center_mm['y'] * MM_TO_FEET
-                    location_point = XYZ(x_ft, y_ft, 0)
+                    target_point = XYZ(x_ft, y_ft, 0)
 
                     properties = door.get('properties', {})
                     width_mm = properties.get('width_mm', 900)
 
-                    new_door = doc.Create.NewFamilyInstance(
-                        location_point,
-                        door_symbol,
-                        level,
-                        StructuralType.NonStructural
-                    )
+                    # Find nearest wall for hosting
+                    host_wall = find_nearest_wall(created_walls, target_point)
 
-                    # Try to set width
-                    try:
-                        width_param = new_door.LookupParameter("Width")
-                        if width_param and not width_param.IsReadOnly:
-                            width_param.Set(width_mm * MM_TO_FEET)
-                    except:
-                        pass
+                    if host_wall:
+                        # Wall-hosted placement
+                        insertion_point, direction = get_wall_insertion_point(host_wall, target_point, 0)
 
-                    created_doors.append(new_door)
-                    stats['doors']['success'] += 1
+                        if insertion_point and direction:
+                            new_door = doc.Create.NewFamilyInstance(
+                                insertion_point,
+                                door_symbol,
+                                host_wall,
+                                level,
+                                StructuralType.NonStructural
+                            )
+
+                            # Try to set width
+                            try:
+                                width_param = new_door.LookupParameter("Width")
+                                if width_param and not width_param.IsReadOnly:
+                                    width_param.Set(width_mm * MM_TO_FEET)
+                            except:
+                                pass
+
+                            created_doors.append(new_door)
+                            stats['doors']['success'] += 1
+                        else:
+                            stats['doors']['failed'] += 1
+                            error_log.append("  Failed door {}: Could not calculate wall insertion point".format(
+                                door.get('id', 'unknown')[:8]
+                            ))
+                    else:
+                        stats['doors']['failed'] += 1
+                        error_log.append("  Failed door {}: No nearby wall found".format(
+                            door.get('id', 'unknown')[:8]
+                        ))
 
                 except Exception as e:
                     stats['doors']['failed'] += 1
                     door_id = door.get('id', 'unknown')[:8]
-                    error_log.append("  Failed door {}: {}".format(door_id, str(e)[:50]))
+                    error_log.append("  Failed door {}: {}".format(door_id, str(e)[:80]))
 
-            error_log.append("Doors: {} created, {} failed (unhosted)".format(
+            error_log.append("Doors: {} created, {} failed".format(
                 stats['doors']['success'], stats['doors']['failed']
             ))
         else:
@@ -276,39 +355,58 @@ else:
                     height_mm = properties.get('height_mm', 1200)
 
                     sill_height_ft = sill_height_mm * MM_TO_FEET
-                    location_point = XYZ(x_ft, y_ft, sill_height_ft)
+                    target_point = XYZ(x_ft, y_ft, 0)
 
-                    new_window = doc.Create.NewFamilyInstance(
-                        location_point,
-                        window_symbol,
-                        level,
-                        StructuralType.NonStructural
-                    )
+                    # Find nearest wall for hosting
+                    host_wall = find_nearest_wall(created_walls, target_point)
 
-                    # Try to set dimensions
-                    try:
-                        width_param = new_window.LookupParameter("Width")
-                        if width_param and not width_param.IsReadOnly:
-                            width_param.Set(width_mm * MM_TO_FEET)
-                    except:
-                        pass
+                    if host_wall:
+                        # Wall-hosted placement with sill height offset
+                        insertion_point, direction = get_wall_insertion_point(host_wall, target_point, sill_height_ft)
 
-                    try:
-                        height_param = new_window.LookupParameter("Height")
-                        if height_param and not height_param.IsReadOnly:
-                            height_param.Set(height_mm * MM_TO_FEET)
-                    except:
-                        pass
+                        if insertion_point and direction:
+                            new_window = doc.Create.NewFamilyInstance(
+                                insertion_point,
+                                window_symbol,
+                                host_wall,
+                                level,
+                                StructuralType.NonStructural
+                            )
 
-                    created_windows.append(new_window)
-                    stats['windows']['success'] += 1
+                            # Try to set dimensions
+                            try:
+                                width_param = new_window.LookupParameter("Width")
+                                if width_param and not width_param.IsReadOnly:
+                                    width_param.Set(width_mm * MM_TO_FEET)
+                            except:
+                                pass
+
+                            try:
+                                height_param = new_window.LookupParameter("Height")
+                                if height_param and not height_param.IsReadOnly:
+                                    height_param.Set(height_mm * MM_TO_FEET)
+                            except:
+                                pass
+
+                            created_windows.append(new_window)
+                            stats['windows']['success'] += 1
+                        else:
+                            stats['windows']['failed'] += 1
+                            error_log.append("  Failed window {}: Could not calculate wall insertion point".format(
+                                window.get('id', 'unknown')[:8]
+                            ))
+                    else:
+                        stats['windows']['failed'] += 1
+                        error_log.append("  Failed window {}: No nearby wall found".format(
+                            window.get('id', 'unknown')[:8]
+                        ))
 
                 except Exception as e:
                     stats['windows']['failed'] += 1
                     window_id = window.get('id', 'unknown')[:8]
-                    error_log.append("  Failed window {}: {}".format(window_id, str(e)[:50]))
+                    error_log.append("  Failed window {}: {}".format(window_id, str(e)[:80]))
 
-            error_log.append("Windows: {} created, {} failed (unhosted)".format(
+            error_log.append("Windows: {} created, {} failed".format(
                 stats['windows']['success'], stats['windows']['failed']
             ))
         else:
@@ -389,14 +487,26 @@ else:
         error_log.insert(0, "Total elements created: {}".format(total_success))
         error_log.insert(0, "Total failed: {}".format(total_failed))
         if wall_type:
-            error_log.insert(0, "Wall type: {}".format(wall_type.Name))
+            try:
+                error_log.insert(0, "Wall type: {}".format(wall_type.Name))
+            except:
+                error_log.insert(0, "Wall type: <unable to read name>")
         if door_symbol:
-            error_log.insert(0, "Door family: {}".format(door_symbol.FamilyName))
+            try:
+                error_log.insert(0, "Door family: {}".format(door_symbol.FamilyName))
+            except:
+                error_log.insert(0, "Door family: <unable to read name>")
         if window_symbol:
-            error_log.insert(0, "Window family: {}".format(window_symbol.FamilyName))
-        error_log.insert(0, "Level: {}".format(level.Name))
+            try:
+                error_log.insert(0, "Window family: {}".format(window_symbol.FamilyName))
+            except:
+                error_log.insert(0, "Window family: <unable to read name>")
+        try:
+            error_log.insert(0, "Level: {}".format(level.Name))
+        except:
+            error_log.insert(0, "Level: <unable to read name>")
         error_log.insert(0, "")
-        error_log.insert(0, "NOTE: Doors/windows created unhosted. Use 'Pick New Host' to attach to walls.")
+        error_log.insert(0, "NOTE: Doors/windows are wall-hosted (attached to nearest walls).")
         error_log.insert(0, "")
 
     except FileNotFoundError:

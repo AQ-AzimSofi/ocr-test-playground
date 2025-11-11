@@ -17,6 +17,7 @@ import clr
 clr.AddReference('RevitAPI')
 clr.AddReference('RevitServices')
 from Autodesk.Revit.DB import *
+from Autodesk.Revit.DB.Structure import StructuralType
 from RevitServices.Persistence import DocumentManager
 from RevitServices.Transactions import TransactionManager
 
@@ -34,6 +35,65 @@ created_doors = []
 error_log = []
 success_count = 0
 failed_count = 0
+
+# ============================================================
+# HELPER FUNCTIONS FOR WALL-HOSTED PLACEMENT
+# ============================================================
+
+def find_nearest_wall(walls, target_point):
+    """Find the nearest wall to a target point."""
+    if not walls:
+        return None
+
+    nearest_wall = None
+    min_distance = float('inf')
+
+    for wall in walls:
+        try:
+            location_curve = wall.Location
+            if location_curve and hasattr(location_curve, 'Curve'):
+                curve = location_curve.Curve
+                # Get the closest point on the wall curve to the target
+                result = curve.Project(target_point)
+                if result:
+                    distance = result.Distance
+                    if distance < min_distance:
+                        min_distance = distance
+                        nearest_wall = wall
+        except:
+            continue
+
+    return nearest_wall
+
+def get_wall_insertion_point(wall, target_point, offset_height=0):
+    """
+    Calculate the insertion point on a wall face for a door.
+    Returns (XYZ point, direction vector) for wall-hosted placement.
+    """
+    try:
+        location_curve = wall.Location
+        if not location_curve or not hasattr(location_curve, 'Curve'):
+            return None, None
+
+        curve = location_curve.Curve
+        # Project target point onto the wall curve
+        result = curve.Project(target_point)
+        if not result:
+            return None, None
+
+        # Get the point on the wall curve
+        point_on_curve = result.XYZPoint
+
+        # Add height offset (for doors, typically 0)
+        insertion_point = XYZ(point_on_curve.X, point_on_curve.Y, point_on_curve.Z + offset_height)
+
+        # Get wall direction (tangent to curve)
+        param = result.Parameter
+        direction = curve.ComputeDerivatives(param, True).BasisX.Normalize()
+
+        return insertion_point, direction
+    except:
+        return None, None
 
 # Validation
 if not json_file_path:
@@ -95,6 +155,14 @@ else:
                 # Conversion factor
                 MM_TO_FEET = 1.0 / 304.8
 
+                # Get existing walls from project for hosting
+                existing_walls = FilteredElementCollector(doc)\
+                    .OfClass(Wall)\
+                    .ToElements()
+
+                wall_list = list(existing_walls)
+                error_log.insert(0, "Found {} existing walls in project for door hosting".format(len(wall_list)))
+
                 # Create doors
                 for door in doors:
                     try:
@@ -112,38 +180,54 @@ else:
                         x_ft = center_mm['x'] * MM_TO_FEET
                         y_ft = center_mm['y'] * MM_TO_FEET
 
-                        # Create location point
-                        location_point = XYZ(x_ft, y_ft, 0)
+                        # Create target point
+                        target_point = XYZ(x_ft, y_ft, 0)
 
                         # Get properties
                         properties = door.get('properties', {})
                         width_mm = properties.get('width_mm', 900)  # Default 900mm
 
-                        # Create door instance
-                        # Note: This creates an unhosted door (not attached to wall)
-                        # User may need to manually associate with wall or use "Edit Family" to host
-                        new_door = doc.Create.NewFamilyInstance(
-                            location_point,
-                            door_symbol,
-                            level,
-                            StructuralType.NonStructural
-                        )
+                        # Find nearest wall for hosting
+                        host_wall = find_nearest_wall(wall_list, target_point)
 
-                        # Try to set width parameter if available
-                        try:
-                            width_param = new_door.LookupParameter("Width")
-                            if width_param and not width_param.IsReadOnly:
-                                width_param.Set(width_mm * MM_TO_FEET)
-                        except:
-                            pass  # Width parameter may not be available
+                        if host_wall:
+                            # Wall-hosted placement
+                            insertion_point, direction = get_wall_insertion_point(host_wall, target_point, 0)
 
-                        created_doors.append(new_door)
-                        success_count += 1
+                            if insertion_point and direction:
+                                new_door = doc.Create.NewFamilyInstance(
+                                    insertion_point,
+                                    door_symbol,
+                                    host_wall,
+                                    level,
+                                    StructuralType.NonStructural
+                                )
+
+                                # Try to set width parameter if available
+                                try:
+                                    width_param = new_door.LookupParameter("Width")
+                                    if width_param and not width_param.IsReadOnly:
+                                        width_param.Set(width_mm * MM_TO_FEET)
+                                except:
+                                    pass  # Width parameter may not be available
+
+                                created_doors.append(new_door)
+                                success_count += 1
+                            else:
+                                failed_count += 1
+                                error_log.append("Failed door {}: Could not calculate wall insertion point".format(
+                                    door.get('id', 'unknown')[:8]
+                                ))
+                        else:
+                            failed_count += 1
+                            error_log.append("Failed door {}: No nearby wall found".format(
+                                door.get('id', 'unknown')[:8]
+                            ))
 
                     except Exception as e:
                         failed_count += 1
                         door_id_short = door.get('id', 'unknown')[:8]
-                        error_log.append("Failed door {}: {}".format(door_id_short, str(e)[:50]))
+                        error_log.append("Failed door {}: {}".format(door_id_short, str(e)[:80]))
 
                 # Commit transaction
                 TransactionManager.Instance.TransactionTaskDone()
@@ -151,7 +235,7 @@ else:
                 # Add success message
                 if door_symbol:
                     error_log.insert(0, "Using door family: {} | Level: {}".format(door_symbol.FamilyName, level.Name))
-                error_log.insert(0, "NOTE: Doors created unhosted. Use 'Pick New Host' to attach to walls if needed.")
+                error_log.insert(0, "NOTE: Doors are wall-hosted (attached to nearest walls).")
 
     except FileNotFoundError:
         error_log.append("ERROR: JSON file not found at: {}".format(json_file_path))

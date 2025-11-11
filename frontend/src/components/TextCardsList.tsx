@@ -52,7 +52,7 @@ export function TextCardsList({
 
   return (
     <div
-      className="space-y-2 max-h-96 overflow-y-auto pr-2"
+      className="space-y-2 max-h-96 overflow-y-auto pr-2 pb-20"
       style={{ scrollbarWidth: 'thin' }}
     >
       {boundingBoxes.length === 0 ? (

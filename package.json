@@ -6,22 +6,36 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "api:dev": "tsx watch src/api/server.ts",
+
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:reset": "tsx scripts/reset-db.ts",
+    "db:fresh": "npm run db:reset && npm run db:migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:drop": "drizzle-kit drop",
+
+
     "test": "tsx src/test-runner.ts --workflow all",
     "test:all": "tsx src/test-runner.ts --workflow all",
+    "test:drawing:clean-heimenzu": "tsx src/test-runner.ts --workflow all --drawing clean-heimenzu",
+    "test:drawing:zumen": "tsx src/test-runner.ts --workflow all --drawing zumen_04b",
+
     "test:cloud-vision": "tsx src/test-runner.ts --workflow cloud-vision",
     "test:gemini": "tsx src/test-runner.ts --workflow gemini",
-    "test:hybrid": "tsx src/test-runner.ts --workflow hybrid",
     "test:azure-layout": "tsx src/test-runner.ts --workflow azure-layout",
     "test:azure-read": "tsx src/test-runner.ts --workflow azure-read",
+
     "test:cloud-vision-gemini-hybrid": "tsx src/test-runner.ts --workflow cloud-vision-gemini-hybrid",
     "test:azure-read-gemini-hybrid": "tsx src/test-runner.ts --workflow azure-read-gemini-hybrid",
     "test:gemini-coordinates": "tsx src/test-runner.ts --workflow gemini-coordinates",
-    "test:gemini-bbox-synthesis": "tsx src/test-runner.ts --workflow gemini-bbox-synthesis",
-    "test:gemini-validation": "tsx src/test-runner.ts --workflow gemini-validation",
-    "test:region-classifier": "tsx src/test-runner.ts --workflow region-classifier",
+    "test:gemini-self-calibrating": "tsx src/test-runner.ts --workflow gemini-self-calibrating",
+
     "test:gemini-geometric": "tsx src/test-runner.ts --workflow gemini-geometric",
+
     "test:revit-pipeline": "tsx src/test-revit-pipeline.ts",
     "test:ai-pipeline": "tsx src/test-ai-pipeline.ts",
+
     "test:experiments": "tsx src/experiments/test-experiments.ts --experiment all",
     "test:exp:template-matching": "tsx src/experiments/test-experiments.ts --experiment template-matching",
     "test:exp:multi-ocr": "tsx src/experiments/test-experiments.ts --experiment multi-ocr-fusion",
@@ -32,13 +46,8 @@
     "test:exp:grid-100x100": "tsx src/experiments/test-experiments.ts --experiment grid-100x100",
     "test:exp:region-detection": "tsx src/experiments/test-experiments.ts --experiment region-detection",
     "test:exp:baseline": "tsx src/experiments/test-experiments.ts --experiment baseline",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:reset": "tsx scripts/reset-db.ts",
-    "db:fresh": "npm run db:reset && npm run db:migrate",
-    "db:studio": "drizzle-kit studio",
-    "db:drop": "drizzle-kit drop",
+
+
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -60,6 +69,7 @@
     "@google-cloud/vision": "^4.3.2",
     "@google/generative-ai": "^0.21.0",
     "@mastra/core": "^0.23.1",
+    "@mastra/mcp": "^0.14.2",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.36.4",

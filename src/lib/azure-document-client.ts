@@ -92,14 +92,36 @@ export class AzureDocumentClient {
    * Normalize bounding box polygon to always have 4 points
    * Azure API sometimes returns only 2 points (diagonal corners)
    * This converts 2-point boxes to proper 4-point rectangles
+   *
+   * Also handles two polygon formats:
+   * - Flat array: [x1, y1, x2, y2, x3, y3, x4, y4]
+   * - Object array: [{x, y}, {x, y}, {x, y}, {x, y}]
    */
   private normalizeBoundingBox(
     polygon: any[]
   ): Array<{ x: number; y: number }> {
-    const points = polygon.map((point: any) => ({
-      x: point.x || 0,
-      y: point.y || 0,
-    }));
+    if (!polygon || polygon.length === 0) {
+      return [];
+    }
+
+    let points: Array<{ x: number; y: number }>;
+
+    // Handle flat array format from Azure [x1, y1, x2, y2, ...]
+    if (typeof polygon[0] === 'number') {
+      points = [];
+      for (let i = 0; i < polygon.length; i += 2) {
+        points.push({
+          x: polygon[i] || 0,
+          y: polygon[i + 1] || 0,
+        });
+      }
+    } else {
+      // Handle object array format [{x, y}, ...]
+      points = polygon.map((point: any) => ({
+        x: point.x || 0,
+        y: point.y || 0,
+      }));
+    }
 
     const inputLength = points.length;
 
@@ -223,7 +245,7 @@ export class AzureDocumentClient {
         lines.push({
           text: line.content || '',
           bounds,
-          confidence: 1.0, // Azure doesn't provide line-level confidence in layout model
+          confidence: undefined, // Azure doesn't provide line-level confidence in layout model
           page: page.pageNumber || 1,
         });
       }

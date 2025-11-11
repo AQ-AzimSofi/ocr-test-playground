@@ -17,6 +17,7 @@ import clr
 clr.AddReference('RevitAPI')
 clr.AddReference('RevitServices')
 from Autodesk.Revit.DB import *
+from Autodesk.Revit.DB.Structure import StructuralType
 from RevitServices.Persistence import DocumentManager
 from RevitServices.Transactions import TransactionManager
 
@@ -33,6 +34,65 @@ created_windows = []
 error_log = []
 success_count = 0
 failed_count = 0
+
+# ============================================================
+# HELPER FUNCTIONS FOR WALL-HOSTED PLACEMENT
+# ============================================================
+
+def find_nearest_wall(walls, target_point):
+    """Find the nearest wall to a target point."""
+    if not walls:
+        return None
+
+    nearest_wall = None
+    min_distance = float('inf')
+
+    for wall in walls:
+        try:
+            location_curve = wall.Location
+            if location_curve and hasattr(location_curve, 'Curve'):
+                curve = location_curve.Curve
+                # Get the closest point on the wall curve to the target
+                result = curve.Project(target_point)
+                if result:
+                    distance = result.Distance
+                    if distance < min_distance:
+                        min_distance = distance
+                        nearest_wall = wall
+        except:
+            continue
+
+    return nearest_wall
+
+def get_wall_insertion_point(wall, target_point, offset_height=0):
+    """
+    Calculate the insertion point on a wall face for a window.
+    Returns (XYZ point, direction vector) for wall-hosted placement.
+    """
+    try:
+        location_curve = wall.Location
+        if not location_curve or not hasattr(location_curve, 'Curve'):
+            return None, None
+
+        curve = location_curve.Curve
+        # Project target point onto the wall curve
+        result = curve.Project(target_point)
+        if not result:
+            return None, None
+
+        # Get the point on the wall curve
+        point_on_curve = result.XYZPoint
+
+        # Add height offset (for windows, typically sill height)
+        insertion_point = XYZ(point_on_curve.X, point_on_curve.Y, point_on_curve.Z + offset_height)
+
+        # Get wall direction (tangent to curve)
+        param = result.Parameter
+        direction = curve.ComputeDerivatives(param, True).BasisX.Normalize()
+
+        return insertion_point, direction
+    except:
+        return None, None
 
 # Validation
 if not json_file_path:
@@ -94,6 +154,14 @@ else:
                 # Conversion factor
                 MM_TO_FEET = 1.0 / 304.8
 
+                # Get existing walls from project for hosting
+                existing_walls = FilteredElementCollector(doc)\
+                    .OfClass(Wall)\
+                    .ToElements()
+
+                wall_list = list(existing_walls)
+                error_log.insert(0, "Found {} existing walls in project for window hosting".format(len(wall_list)))
+
                 # Create windows
                 for window in windows:
                     try:
@@ -117,49 +185,58 @@ else:
                         width_mm = properties.get('width_mm', 1200)  # Default 1200mm
                         height_mm = properties.get('height_mm', 1200)  # Default 1200mm
 
-                        # Create location point (at sill height)
+                        # Create target point
                         sill_height_ft = sill_height_mm * MM_TO_FEET
-                        location_point = XYZ(x_ft, y_ft, sill_height_ft)
+                        target_point = XYZ(x_ft, y_ft, 0)
 
-                        # Create window instance
-                        # Note: This creates an unhosted window (not attached to wall)
-                        # User may need to manually associate with wall
-                        new_window = doc.Create.NewFamilyInstance(
-                            location_point,
-                            window_symbol,
-                            level,
-                            StructuralType.NonStructural
-                        )
+                        # Find nearest wall for hosting
+                        host_wall = find_nearest_wall(wall_list, target_point)
 
-                        # Try to set width and height parameters if available
-                        try:
-                            width_param = new_window.LookupParameter("Width")
-                            if width_param and not width_param.IsReadOnly:
-                                width_param.Set(width_mm * MM_TO_FEET)
-                        except:
-                            pass
+                        if host_wall:
+                            # Wall-hosted placement with sill height offset
+                            insertion_point, direction = get_wall_insertion_point(host_wall, target_point, sill_height_ft)
 
-                        try:
-                            height_param = new_window.LookupParameter("Height")
-                            if height_param and not height_param.IsReadOnly:
-                                height_param.Set(height_mm * MM_TO_FEET)
-                        except:
-                            pass
+                            if insertion_point and direction:
+                                new_window = doc.Create.NewFamilyInstance(
+                                    insertion_point,
+                                    window_symbol,
+                                    host_wall,
+                                    level,
+                                    StructuralType.NonStructural
+                                )
 
-                        try:
-                            sill_param = new_window.LookupParameter("Sill Height")
-                            if sill_param and not sill_param.IsReadOnly:
-                                sill_param.Set(sill_height_ft)
-                        except:
-                            pass
+                                # Try to set width and height parameters if available
+                                try:
+                                    width_param = new_window.LookupParameter("Width")
+                                    if width_param and not width_param.IsReadOnly:
+                                        width_param.Set(width_mm * MM_TO_FEET)
+                                except:
+                                    pass
 
-                        created_windows.append(new_window)
-                        success_count += 1
+                                try:
+                                    height_param = new_window.LookupParameter("Height")
+                                    if height_param and not height_param.IsReadOnly:
+                                        height_param.Set(height_mm * MM_TO_FEET)
+                                except:
+                                    pass
+
+                                created_windows.append(new_window)
+                                success_count += 1
+                            else:
+                                failed_count += 1
+                                error_log.append("Failed window {}: Could not calculate wall insertion point".format(
+                                    window.get('id', 'unknown')[:8]
+                                ))
+                        else:
+                            failed_count += 1
+                            error_log.append("Failed window {}: No nearby wall found".format(
+                                window.get('id', 'unknown')[:8]
+                            ))
 
                     except Exception as e:
                         failed_count += 1
                         window_id_short = window.get('id', 'unknown')[:8]
-                        error_log.append("Failed window {}: {}".format(window_id_short, str(e)[:50]))
+                        error_log.append("Failed window {}: {}".format(window_id_short, str(e)[:80]))
 
                 # Commit transaction
                 TransactionManager.Instance.TransactionTaskDone()
@@ -167,7 +244,7 @@ else:
                 # Add success message
                 if window_symbol:
                     error_log.insert(0, "Using window family: {} | Level: {}".format(window_symbol.FamilyName, level.Name))
-                error_log.insert(0, "NOTE: Windows created unhosted. Use 'Pick New Host' to attach to walls if needed.")
+                error_log.insert(0, "NOTE: Windows are wall-hosted (attached to nearest walls).")
 
     except FileNotFoundError:
         error_log.append("ERROR: JSON file not found at: {}".format(json_file_path))

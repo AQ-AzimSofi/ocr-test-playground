@@ -245,10 +245,10 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     category: 'experimental',
   },
 
-  'gemini-validation': {
-    name: 'gemini-validation',
-    displayName: 'Gemini Validation (Experimental)',
-    shortDescription: 'Uses Gemini as QA reviewer to validate Azure results',
+  'gemini-validation-azure-read': {
+    name: 'gemini-validation-azure-read',
+    displayName: 'Gemini Validation - Azure Read (Experimental)',
+    shortDescription: 'Uses Gemini as QA reviewer to validate Azure Read results',
     fullDescription:
       'Experimental processor that uses Azure Read as baseline, then asks Gemini to act as a quality assurance reviewer to identify missing or incorrect text.',
     howItWorks: [
@@ -297,6 +297,36 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     ],
     bestFor: 'Smart cost optimization with selective AI enhancement',
     cost: '~1.50-1.70 yen per image (depends on low-confidence region count)',
+    bboxAccuracy: 'precise',
+    experimental: true,
+    category: 'experimental',
+  },
+
+  'gemini-self-calibrating': {
+    name: 'gemini-self-calibrating',
+    displayName: 'Gemini Self-Calibrating (Experimental)',
+    shortDescription:
+      'AI-powered coordinate calibration using Cloud Vision as reference',
+    fullDescription:
+      'Advanced hybrid processor that combines Cloud Vision\'s precise coordinates with Gemini\'s superior text detection using AI-powered matching, self-calibration, and spatial reasoning.',
+    howItWorks: [
+      'Runs Gemini coordinates + Cloud Vision in parallel',
+      'AI agent matches texts between both systems',
+      'Learns systematic coordinate offset (self-calibration)',
+      'For matched texts: Uses Cloud Vision coordinates (precise)',
+      'For Gemini-only texts: Uses AI spatial reasoning with Cloud Vision as reference anchors',
+      'Final result: Production-accurate coordinates for ALL detected texts',
+    ],
+    keyFeatures: [
+      'Self-calibrating per image (adapts to Gemini offset)',
+      'AI-powered text matching (semantic understanding)',
+      'Spatial reasoning for coordinate correction',
+      'Captures texts Cloud Vision missed with accurate placement',
+      'Mastra workflow orchestration',
+      'Best of both: Cloud Vision precision + Gemini detection',
+    ],
+    bestFor: 'Maximum text detection with production-accurate coordinates',
+    cost: '~0.25-0.40 yen per image (depends on Gemini-only text count)',
     bboxAccuracy: 'precise',
     experimental: true,
     category: 'experimental',

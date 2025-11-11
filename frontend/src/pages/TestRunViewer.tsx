@@ -36,6 +36,10 @@ export function TestRunViewer() {
     rightBoundingBoxes,
     drawing,
     imageUrl,
+    selectedDrawingIndex,
+    setSelectedDrawingIndex,
+    totalDrawings,
+    allDrawings,
   } = useTestRunData(testRunId);
 
   // UI hook - manages all UI state
@@ -76,10 +80,76 @@ export function TestRunViewer() {
     );
   }
 
-  if (error || !hasData) {
+  // Handle error states with more detailed messages
+  if (error) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-lg text-red-600">Error loading test run data</div>
+        <div className="max-w-md text-center space-y-3">
+          <div className="text-lg font-semibold text-red-600">
+            Error Loading Test Run
+          </div>
+          <div className="text-sm text-gray-600">
+            Failed to fetch test run data from the server.
+          </div>
+          <Link
+            to="/"
+            className="inline-block mt-4 text-blue-600 hover:text-blue-800 text-sm"
+          >
+            ← Back to Test Runs
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle case where test run exists but has no tool results
+  if (!hasData) {
+    const hasComparisons = comparisons && comparisons.length > 0;
+    const hasDrawings = testRun?.drawings && testRun.drawings.length > 0;
+
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="max-w-md text-center space-y-3">
+          <div className="text-lg font-semibold text-yellow-600">
+            Incomplete Test Run Data
+          </div>
+          {hasComparisons && !tools.length ? (
+            <div className="text-sm text-gray-600 space-y-2">
+              <p>
+                This test run exists but contains no tool results for the
+                selected drawing.
+              </p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-left">
+                <div className="font-medium text-yellow-900 text-xs mb-1">
+                  Possible reasons:
+                </div>
+                <ul className="text-xs text-yellow-800 list-disc list-inside space-y-1">
+                  <li>The test run may still be processing</li>
+                  <li>All processors failed for this drawing</li>
+                  <li>The test run data may be corrupted</li>
+                </ul>
+              </div>
+              {hasDrawings && totalDrawings > 1 && (
+                <p className="text-xs text-blue-600">
+                  Try selecting a different drawing above to see if it has results.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="text-sm text-gray-600">
+              <p>No comparison data found for this test run.</p>
+              <p className="text-xs mt-2">
+                The test run may not have completed successfully.
+              </p>
+            </div>
+          )}
+          <Link
+            to="/"
+            className="inline-block mt-4 text-blue-600 hover:text-blue-800 text-sm"
+          >
+            ← Back to Test Runs
+          </Link>
+        </div>
       </div>
     );
   }
@@ -95,6 +165,30 @@ export function TestRunViewer() {
       hoveredSide === 'left' ? leftBoundingBoxes : rightBoundingBoxes;
     hoveredBBox = boxes[hoveredIndex] || null;
   }
+
+  // Render compact dropdown helper
+  const renderCompactDropdown = (
+    value: string | null,
+    onChange: (value: string) => void,
+    label: string
+  ) => (
+    <div className="flex items-center gap-2">
+      <span className="text-xs font-medium text-gray-600 whitespace-nowrap">
+        {label}:
+      </span>
+      <select
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value)}
+        className="text-sm py-1 px-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+      >
+        {tools.map((tool, idx) => (
+          <option key={`${label}-${tool}-${idx}`} value={tool}>
+            {tool}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -122,6 +216,33 @@ export function TestRunViewer() {
               Test run from {formattedDate}
             </p>
           </div>
+
+          {/* Drawing Selector (only shown when multiple drawings) */}
+          {totalDrawings > 1 && (
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                Drawing ({selectedDrawingIndex + 1} of {totalDrawings})
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {allDrawings.map((dwg, index) => (
+                  <button
+                    key={dwg.drawingId}
+                    onClick={() => setSelectedDrawingIndex(index)}
+                    className={`px-4 py-2 rounded-lg border-2 transition-all ${
+                      selectedDrawingIndex === index
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium'
+                        : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="text-sm">{dwg.fileName}</div>
+                    <div className="text-xs text-gray-500">
+                      {dwg.type} • {dwg.quality}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Tool Selectors */}
           <div className="flex gap-8 mb-4">
@@ -201,28 +322,62 @@ export function TestRunViewer() {
           </div>
         </div>
 
-        {/* Centered Collapse/Expand Button */}
-        <div className="flex justify-center py-2">
-          <button
-            onClick={() => setHeaderCollapsed(!headerCollapsed)}
-            className="p-1 hover:bg-gray-100 rounded transition-colors"
-            title={headerCollapsed ? 'Expand header' : 'Collapse header'}
-          >
-            <svg
-              className="w-5 h-5 text-gray-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        {/* Compact Controls Row (visible when collapsed) */}
+        {headerCollapsed && (
+          <div className="flex items-center justify-center gap-4 px-6 py-2">
+            {/* Left Tool Compact Dropdown */}
+            {renderCompactDropdown(leftTool, setLeftTool, 'Left')}
+
+            {/* Collapse/Expand Button */}
+            <button
+              onClick={() => setHeaderCollapsed(!headerCollapsed)}
+              className="p-1 hover:bg-gray-100 rounded transition-colors mx-2"
+              title="Expand header"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d={headerCollapsed ? 'M19 9l-7 7-7-7' : 'M5 15l7-7 7 7'}
-              />
-            </svg>
-          </button>
-        </div>
+              <svg
+                className="w-5 h-5 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            {/* Right Tool Compact Dropdown */}
+            {renderCompactDropdown(rightTool, setRightTool, 'Right')}
+          </div>
+        )}
+
+        {/* Centered Collapse/Expand Button (visible when expanded) */}
+        {!headerCollapsed && (
+          <div className="flex justify-center py-2">
+            <button
+              onClick={() => setHeaderCollapsed(!headerCollapsed)}
+              className="p-1 hover:bg-gray-100 rounded transition-colors"
+              title="Collapse header"
+            >
+              <svg
+                className="w-5 h-5 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 15l7-7 7 7"
+                />
+              </svg>
+            </button>
+          </div>
+        )}
 
         {/* Always-Visible Display Control Toggles */}
         <div className="flex gap-6 px-6 pb-4">
@@ -250,7 +405,7 @@ export function TestRunViewer() {
 
       <div className="flex-1 flex overflow-hidden">
         {/* Split Canvas Area */}
-        <div className="flex-1 flex gap-4 p-6">
+        <div className="flex-1 flex gap-4 p-6 pb-16">
           {/* Left Canvas */}
           <div className="flex-1">
             {leftBoundingBoxes.length > 0 && imageUrl ? (
