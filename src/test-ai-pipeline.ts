@@ -115,11 +115,11 @@ async function main() {
 
       if (result.warnings.length > 0) {
         console.log('Warnings:');
-        result.warnings.forEach((w) => console.log(`  ⚠ ${w}`));
+        result.warnings.forEach((w) => console.log(`  Warning: ${w}`));
         console.log();
       }
 
-      console.log('✓ Pipeline completed successfully!');
+      console.log('Pipeline completed successfully!');
       console.log();
     } else {
       console.error('╔═══════════════════════════════════════════════════════════════╗');

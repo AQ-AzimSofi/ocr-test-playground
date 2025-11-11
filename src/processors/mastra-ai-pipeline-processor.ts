@@ -47,7 +47,6 @@ export interface MastraAIPipelineOptions {
   default_scaling_factor?: number;
   enable_validation?: boolean;
   min_validation_score?: number;
-  // MCP Integration Options
   enable_revit_mcp?: boolean;
   revit_mcp_path?: string; // Path to revit-mcp/build/index.js
   revit_level?: string;
@@ -58,23 +57,19 @@ export interface MastraAIPipelineResult {
   drawing_id: string;
   success: boolean;
 
-  // Agent outputs
   global_analysis?: GlobalAnalysisOutput;
   geometric_analysis?: GeometricAnalysisOutput;
   dimension_analysis?: DimensionAnalysisOutput;
   association_analysis?: AssociationAnalysisOutput;
   validation_result?: ValidationOutput;
 
-  // Transformation data
   scaling_factor?: number;
   scaling_confidence?: number;
   coordinate_transformation_info?: any;
 
-  // Output files
   revit_json_path?: string;
   revit_csv_path?: string;
 
-  // MCP Integration Results
   revit_mcp_enabled?: boolean;
   revit_mcp_available?: boolean;
   revit_mcp_result?: {
@@ -85,7 +80,6 @@ export interface MastraAIPipelineResult {
     errors: Array<{ index: number; error: string }>;
   };
 
-  // Metadata
   processing_time_ms: number;
   errors: string[];
   warnings: string[];
@@ -118,12 +112,10 @@ async function saveRevitCSV(data: any, drawingId: string, outputDir: string): Pr
   const filename = `${drawingId}-revit.csv`;
   const filepath = path.join(outputDir, filename);
 
-  // CSV Header
   const csvLines = [
     'ID,Type,SubType,GeometryType,StartX_mm,StartY_mm,EndX_mm,EndY_mm,Length_mm,Width_mm,Thickness_mm,Height_mm,Level,DimensionTexts,Confidence',
   ];
 
-  // Convert each element to CSV row
   for (const element of data.elements) {
     const coords_mm = element.geometry.coordinates_mm;
     const start = coords_mm[0] || { x: 0, y: 0 };
@@ -186,7 +178,6 @@ export async function processMastraAIPipeline(
   console.log();
 
   try {
-    // STEP 1: Global Analysis
     console.log('[1/7] Running Global Analyzer Agent...');
     const globalAnalysis = await analyzeFloorPlanGlobally(file_path);
     console.log(`  ✓ Detected ${globalAnalysis.dimension_zones.length} dimension zones`);
@@ -195,7 +186,6 @@ export async function processMastraAIPipeline(
     console.log(`  ✓ Complexity: ${globalAnalysis.drawing_metadata.complexity}`);
     console.log();
 
-    // STEP 2: Geometric Detection
     console.log('[2/7] Running Geometric Specialist Agent...');
     const geometricAnalysis = await detectGeometricElements(
       file_path,
@@ -210,7 +200,6 @@ export async function processMastraAIPipeline(
     console.log(`    - Columns: ${geometricAnalysis.detection_summary.columns_count}`);
     console.log();
 
-    // STEP 3: Dimension Extraction
     console.log('[3/7] Running Dimension Specialist Agent...');
     const dimensionAnalysis = await extractDimensionsWithLeaderLines(
       file_path,
@@ -226,7 +215,6 @@ export async function processMastraAIPipeline(
     }
     console.log();
 
-    // STEP 4: Association
     console.log('[4/7] Running Association Agent...');
     const associationAnalysis = await associateDimensionsToElements(
       geometricAnalysis.elements,
@@ -242,17 +230,13 @@ export async function processMastraAIPipeline(
     }
     console.log();
 
-    // STEP 5: Scaling Calculation
     console.log('[5/7] Calculating scaling factor...');
 
-    // Prepare associations for scaling calculation
     const scalingAssociations = associationAnalysis.associations
       .map((assoc) => {
-        // Find the element
         const element = geometricAnalysis.elements.find(
           (e, idx) => `elem_${idx}` === assoc.element_id
         );
-        // Find the dimension
         const dimension = dimensionAnalysis.dimensions.find(
           (d, idx) => `dim_${idx}` === assoc.dimension_id
         );
@@ -261,7 +245,6 @@ export async function processMastraAIPipeline(
           return null;
         }
 
-        // Calculate element length in pixels
         let element_length_px = 0;
         if (element.element_type === 'wall') {
           const wall = element as any;
@@ -301,10 +284,8 @@ export async function processMastraAIPipeline(
     }
     console.log();
 
-    // STEP 6: Coordinate Transformation
     console.log('[6/7] Transforming coordinates...');
 
-    // Transform all element coordinates
     const transformedElements = await Promise.all(
       geometricAnalysis.elements.map(async (element) => {
         let coordinates_px: Array<{ x: number; y: number }> = [];
@@ -343,7 +324,6 @@ export async function processMastraAIPipeline(
     console.log(`  ✓ Transformed ${transformedElements.length} elements to millimeters`);
     console.log();
 
-    // STEP 7: Validation
     let validationResult: ValidationOutput | undefined;
     if (enable_validation) {
       console.log('[7/7] Running Validation Agent...');
@@ -376,7 +356,6 @@ export async function processMastraAIPipeline(
       console.log();
     }
 
-    // STEP 7.5: MCP Integration - Create elements in Revit (if enabled)
     let revitMCPResult;
     let revitMCPAvailable = false;
 
@@ -402,15 +381,12 @@ export async function processMastraAIPipeline(
 
         console.log('\n[7.6/8] Creating elements in Revit via MCP...');
 
-        // Convert transformed elements to GeometricElement format
         const geometricElements: GeometricElement[] = transformedElements.map((element, idx) => {
-          // Find associated dimensions
           const associations = associationAnalysis.associations.filter(
             (a) => a.element_id === `elem_${idx}`
           );
           const dimensionTexts = associations.map((a) => a.dimension_text);
 
-          // Calculate properties based on element type
           let properties: any = {
             confidence: element.confidence,
             dimension_texts: dimensionTexts,
@@ -470,7 +446,6 @@ export async function processMastraAIPipeline(
           } as GeometricElement;
         });
 
-        // Create elements in batch
         revitMCPResult = await revitClient.createElementsBatch(geometricElements, {
           level: revit_level,
           stopOnError: stop_on_error,
@@ -479,9 +454,9 @@ export async function processMastraAIPipeline(
           },
         });
 
-        console.log(`  ✓ Created ${revitMCPResult.successCount}/${revitMCPResult.totalElements} elements`);
+        console.log(`  Created ${revitMCPResult.successCount}/${revitMCPResult.totalElements} elements`);
         if (revitMCPResult.failureCount > 0) {
-          console.log(`  ⚠ ${revitMCPResult.failureCount} elements failed to create`);
+          console.log(`  ${revitMCPResult.failureCount} elements failed to create`);
           revitMCPResult.errors.forEach((err) => {
             console.log(`    - Element ${err.index}: ${err.error}`);
             warnings.push(`MCP: Element ${err.index} failed - ${err.error}`);
@@ -489,13 +464,12 @@ export async function processMastraAIPipeline(
         }
         console.log();
       } else {
-        console.log('  ⚠ Revit MCP server not available - falling back to JSON/CSV export');
+        console.log('  Revit MCP server not available - falling back to JSON/CSV export');
         warnings.push('Revit MCP was enabled but server is not available');
         console.log();
       }
     }
 
-    // STEP 8: Generate Revit outputs (JSON/CSV)
     console.log('[8/8] Generating Revit outputs (JSON/CSV)...');
 
     const revitData = {
@@ -524,13 +498,11 @@ export async function processMastraAIPipeline(
         } : undefined,
       },
       elements: transformedElements.map((element, idx) => {
-        // Find associated dimensions
         const associations = associationAnalysis.associations.filter(
           (a) => a.element_id === `elem_${idx}`
         );
         const dimensionTexts = associations.map((a) => a.dimension_text);
 
-        // Calculate properties based on element type
         let properties: any = {
           confidence: element.confidence,
         };

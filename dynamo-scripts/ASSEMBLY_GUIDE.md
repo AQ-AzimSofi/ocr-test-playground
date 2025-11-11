@@ -151,13 +151,13 @@ Total nodes needed: **9**
 
 1. Go to **Core** → **View** → **Watch**
 2. Connect **Python Script 3** output [1] (success_count) to Watch input
-3. Rename the Watch node to "✓ Walls Created"
+3. Rename the Watch node to "Walls Created"
 
 ### Watch Node 2 - Errors (Optional)
 
 1. Add another Watch node
 2. Connect **Python Script 3** output [3] (errors) to this Watch
-3. Rename to "⚠ Errors"
+3. Rename to "Errors"
 
 **What this does:** Displays how many walls were created and any error messages
 
