@@ -1,3 +1,5 @@
+import { useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { BoundingBox } from '../types/api';
 import { getConfidenceBadgeClass, getConfidenceLabel } from '../utils/colors';
 import { CheckmarkIcon } from './icons';
@@ -8,6 +10,45 @@ interface TooltipProps {
 }
 
 export function Tooltip({ bbox, position }: TooltipProps) {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [adjustedPosition, setAdjustedPosition] = useState({ x: position.x + 10, y: position.y + 10 });
+
+  // Calculate adjusted position to keep tooltip within viewport bounds
+  useLayoutEffect(() => {
+    if (!tooltipRef.current) return;
+
+    const rect = tooltipRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const margin = 10; // Safety margin from viewport edges
+
+    let newX = position.x + 10;
+    let newY = position.y + 10;
+
+    // Check if tooltip would extend past right edge
+    if (newX + rect.width > viewportWidth - margin) {
+      // Flip to left side of cursor
+      newX = position.x - rect.width - 10;
+    }
+
+    // Check if tooltip would extend past bottom edge
+    if (newY + rect.height > viewportHeight - margin) {
+      // Flip to above cursor
+      newY = position.y - rect.height - 10;
+    }
+
+    // Ensure tooltip doesn't go off left edge
+    if (newX < margin) {
+      newX = margin;
+    }
+
+    // Ensure tooltip doesn't go off top edge
+    if (newY < margin) {
+      newY = margin;
+    }
+
+    setAdjustedPosition({ x: newX, y: newY });
+  }, [position.x, position.y]);
   const geminiUpdated = bbox.metadata?.geminiUpdated;
   const confidence = (bbox.confidence ?? 1) * 100;
   const isLowConfidence = (bbox.confidence ?? 1) < 0.85;
@@ -43,12 +84,13 @@ export function Tooltip({ bbox, position }: TooltipProps) {
     };
   }
 
-  return (
+  const tooltipContent = (
     <div
+      ref={tooltipRef}
       className="fixed z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-4 max-w-sm pointer-events-none"
       style={{
-        left: position.x + 10,
-        top: position.y + 10,
+        left: adjustedPosition.x,
+        top: adjustedPosition.y,
       }}
     >
       {/* Text */}
@@ -114,4 +156,7 @@ export function Tooltip({ bbox, position }: TooltipProps) {
       )}
     </div>
   );
+
+  // Render tooltip using portal to bypass parent overflow constraints
+  return createPortal(tooltipContent, document.body);
 }

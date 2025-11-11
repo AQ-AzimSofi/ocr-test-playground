@@ -10,31 +10,23 @@ import type { BoundingBox } from '../types/api';
 import { getConfidenceColor } from '../utils/colors';
 import { findHoveredBBox } from '../utils/geometry';
 
-/**
- * Normalize bounding box to always have at least 4 points
- * Azure API sometimes returns only 2 points (diagonal corners)
- * This converts 2-point boxes to proper 4-point rectangles
- */
 function normalizeBounds(
   bounds: Array<{ x: number; y: number }>
 ): Array<{ x: number; y: number }> {
-  // If we already have 4 or more points, return as-is
   if (bounds.length >= 4) {
     return bounds;
   }
 
-  // If we have exactly 2 points, convert to 4-point rectangle
   if (bounds.length === 2) {
     const [topLeft, bottomRight] = bounds;
     return [
-      topLeft, // Top-left
-      { x: bottomRight.x, y: topLeft.y }, // Top-right
-      bottomRight, // Bottom-right
-      { x: topLeft.x, y: bottomRight.y }, // Bottom-left
+      topLeft,
+      { x: bottomRight.x, y: topLeft.y },
+      bottomRight,
+      { x: topLeft.x, y: bottomRight.y },
     ];
   }
 
-  // If we have 1 or 3 points, return as-is (can't normalize these)
   return bounds;
 }
 
@@ -52,6 +44,8 @@ interface ImageCanvasProps {
   showGeminiIcons?: boolean;
   scrollToBboxIndex?: number | null;
   showFill?: boolean;
+  enablePanning?: boolean;
+  allowZoomOut?: boolean;
 }
 
 export interface ImageCanvasRef {
@@ -76,6 +70,8 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
       showGeminiIcons = true,
       scrollToBboxIndex = null,
       showFill = true,
+      enablePanning = false,
+      allowZoomOut = true,
     },
     ref
   ) {
@@ -86,7 +82,9 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
     const [translateX, setTranslateX] = useState(0);
     const [translateY, setTranslateY] = useState(0);
 
-    // Expose canvas and transform state through ref
+    const [isPanning, setIsPanning] = useState(false);
+    const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null);
+
     useImperativeHandle(
       ref,
       () => ({
@@ -97,7 +95,31 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
       [scale, translateX, translateY]
     );
 
-    // Load image
+    const getCanvasDisplayScale = useCallback(() => {
+      if (!canvasRef.current) return { scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0 };
+
+      const canvas = canvasRef.current;
+      const rect = canvas.getBoundingClientRect();
+
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+
+      if (canvasWidth === 0 || canvasHeight === 0) {
+        return { scaleX: 1, scaleY: 1, offsetX: 0, offsetY: 0 };
+      }
+
+      const scaleX = rect.width / canvasWidth;
+      const scaleY = rect.height / canvasHeight;
+      const displayScale = Math.min(scaleX, scaleY);
+
+      const displayWidth = canvasWidth * displayScale;
+      const displayHeight = canvasHeight * displayScale;
+      const offsetX = (rect.width - displayWidth) / 2;
+      const offsetY = (rect.height - displayHeight) / 2;
+
+      return { scaleX: displayScale, scaleY: displayScale, offsetX, offsetY };
+    }, []);
+
     useEffect(() => {
       const img = new Image();
       img.src = imageUrl;
@@ -106,7 +128,6 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
       };
     }, [imageUrl]);
 
-    // Scroll to bbox when requested
     useEffect(() => {
       if (scrollToBboxIndex === null || scrollToBboxIndex === undefined) return;
       if (!canvasRef.current || !image) return;
@@ -117,7 +138,6 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
       const canvas = canvasRef.current;
       const normalizedBounds = normalizeBounds(bbox.bounds);
 
-      // Calculate bbox center
       const centerX =
         normalizedBounds.reduce((sum, p) => sum + p.x, 0) /
         normalizedBounds.length;
@@ -125,17 +145,14 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
         normalizedBounds.reduce((sum, p) => sum + p.y, 0) /
         normalizedBounds.length;
 
-      // Zoom in a bit (2x zoom) and center on the bbox
       const targetScale = 2.0;
 
-      // Calculate translate to center the bbox in the canvas
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
 
       const newTranslateX = canvasWidth / 2 - centerX * targetScale;
       const newTranslateY = canvasHeight / 2 - centerY * targetScale;
 
-      // Clamp translate values
       const minTranslateX = Math.min(
         0,
         canvasWidth - canvasWidth * targetScale
@@ -159,7 +176,6 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
       setTranslateY(clampedTranslateY);
     }, [scrollToBboxIndex, boundingBoxes, image]);
 
-    // Filter bounding boxes based on criteria
     const filteredBBoxes = boundingBoxes.filter((bbox) => {
       if (showOnlyLowConfidence && (bbox.confidence ?? 1) >= 0.85) return false;
       if (showOnlyGeminiUpdates && !bbox.metadata?.geminiUpdated) return false;
@@ -167,7 +183,6 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
       return true;
     });
 
-    // Draw canvas
     useEffect(() => {
       if (!canvasRef.current || !image) return;
 
@@ -175,14 +190,11 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      // Set canvas size to match image
       canvas.width = image.width;
       canvas.height = image.height;
 
-      // Apply transformation (scale and translate for zoom)
       ctx.setTransform(scale, 0, 0, scale, translateX, translateY);
 
-      // Clear canvas (in transformed space)
       ctx.clearRect(
         -translateX / scale,
         -translateY / scale,
@@ -190,38 +202,16 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
         canvas.height / scale
       );
 
-      // Draw image
       ctx.drawImage(image, 0, 0);
 
-      // Draw bounding boxes
       filteredBBoxes.forEach((bbox, index) => {
         if (!bbox.bounds || bbox.bounds.length === 0) {
-          console.warn('[ImageCanvas] Skipping invalid bbox (no bounds):', {
-            index,
-            text: bbox.text,
-            boundsLength: bbox.bounds?.length ?? 0,
-            confidence: bbox.confidence,
-            metadata: bbox.metadata,
-          });
           return;
         }
 
-        // Normalize bounds (convert 2-point to 4-point if needed)
         const normalizedBounds = normalizeBounds(bbox.bounds);
 
-        // Skip if still invalid after normalization
         if (normalizedBounds.length < 3) {
-          console.warn(
-            '[ImageCanvas] Skipping bbox with insufficient points after normalization:',
-            {
-              index,
-              text: bbox.text,
-              boundsLength: normalizedBounds.length,
-              bounds: normalizedBounds,
-              confidence: bbox.confidence,
-              metadata: bbox.metadata,
-            }
-          );
           return;
         }
 
@@ -229,7 +219,6 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
         const isSelected = index === selectedIndex;
         const confidence = bbox.confidence ?? 1;
 
-        // Begin path
         ctx.beginPath();
         ctx.moveTo(normalizedBounds[0].x, normalizedBounds[0].y);
         for (let i = 1; i < normalizedBounds.length; i++) {
@@ -237,26 +226,20 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
         }
         ctx.closePath();
 
-        // Only render fill and stroke if showFill is true
         if (showFill) {
-          // Fill with confidence color
           const alpha = heatmapMode ? 0.7 : 0.2;
           ctx.fillStyle = getConfidenceColor(confidence, alpha);
           ctx.fill();
 
-          // Stroke - color-coded by processing status
           const geminiUpdated = bbox.metadata?.geminiUpdated;
           const isLowConfidence = confidence < 0.85;
 
           let strokeColor: string;
           if (geminiUpdated && showGeminiIcons) {
-            // Blue for Gemini-corrected (only if showGeminiIcons is true)
             strokeColor = 'rgba(59, 130, 246, 0.9)';
           } else if (isLowConfidence) {
-            // Yellow/orange/red for low confidence (sent to Gemini but not corrected)
             strokeColor = getConfidenceColor(confidence, 0.9);
           } else {
-            // Green for high confidence (not sent to Gemini)
             strokeColor = getConfidenceColor(confidence, 0.9);
           }
 
@@ -264,14 +247,12 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
           ctx.lineWidth = isHovered || isSelected ? 3 : 1.5;
           ctx.stroke();
 
-          // Add badge for Gemini-updated (larger and more visible)
           if (geminiUpdated && !heatmapMode && showGeminiIcons) {
             const x = bbox.bounds[0].x;
             const y = bbox.bounds[0].y;
-            ctx.fillStyle = 'rgba(59, 130, 246, 1)'; // Fully opaque blue
+            ctx.fillStyle = 'rgba(59, 130, 246, 1)';
             ctx.fillRect(x - 3, y - 15, 12, 12);
 
-            // Draw white checkmark path
             ctx.strokeStyle = 'white';
             ctx.lineWidth = 1.5;
             ctx.lineCap = 'round';
@@ -297,56 +278,33 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
       translateY,
     ]);
 
-    // Handle mouse move
-    const handleMouseMove = useCallback(
-      (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!canvasRef.current) return;
-
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-
-        // Convert to canvas coordinates
-        const canvasX = ((e.clientX - rect.left) / rect.width) * canvas.width;
-        const canvasY = ((e.clientY - rect.top) / rect.height) * canvas.height;
-
-        // Convert to world coordinates (accounting for zoom/pan)
-        const x = (canvasX - translateX) / scale;
-        const y = (canvasY - translateY) / scale;
-
-        const index = findHoveredBBox({ x, y }, filteredBBoxes);
-        onHover(index);
-      },
-      [filteredBBoxes, onHover, scale, translateX, translateY]
-    );
-
-    // Handle mouse leave
     const handleMouseLeave = useCallback(() => {
       onHover(null);
     }, [onHover]);
 
-    // Handle click
     const handleClick = useCallback(
       (e: React.MouseEvent<HTMLCanvasElement>) => {
         if (!canvasRef.current) return;
 
         const canvas = canvasRef.current;
         const rect = canvas.getBoundingClientRect();
+        const displayScale = getCanvasDisplayScale();
 
-        // Convert to canvas coordinates
-        const canvasX = ((e.clientX - rect.left) / rect.width) * canvas.width;
-        const canvasY = ((e.clientY - rect.top) / rect.height) * canvas.height;
+        const mouseX = e.clientX - rect.left - displayScale.offsetX;
+        const mouseY = e.clientY - rect.top - displayScale.offsetY;
 
-        // Convert to world coordinates (accounting for zoom/pan)
+        const canvasX = mouseX / displayScale.scaleX;
+        const canvasY = mouseY / displayScale.scaleY;
+
         const x = (canvasX - translateX) / scale;
         const y = (canvasY - translateY) / scale;
 
         const index = findHoveredBBox({ x, y }, filteredBBoxes);
         onSelect(index);
       },
-      [filteredBBoxes, onSelect, scale, translateX, translateY]
+      [filteredBBoxes, onSelect, scale, translateX, translateY, getCanvasDisplayScale]
     );
 
-    // Handle mouse wheel for zooming
     const handleWheel = useCallback(
       (e: React.WheelEvent<HTMLCanvasElement>) => {
         e.preventDefault();
@@ -355,27 +313,25 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
 
         const canvas = canvasRef.current;
         const rect = canvas.getBoundingClientRect();
+        const displayScale = getCanvasDisplayScale();
 
-        // Get mouse position in canvas coordinates
-        const canvasX = ((e.clientX - rect.left) / rect.width) * canvas.width;
-        const canvasY = ((e.clientY - rect.top) / rect.height) * canvas.height;
+        const mouseX = e.clientX - rect.left - displayScale.offsetX;
+        const mouseY = e.clientY - rect.top - displayScale.offsetY;
 
-        // Get mouse position in world coordinates (before zoom)
+        const canvasX = mouseX / displayScale.scaleX;
+        const canvasY = mouseY / displayScale.scaleY;
+
         const worldX = (canvasX - translateX) / scale;
         const worldY = (canvasY - translateY) / scale;
 
-        // Calculate new scale (zoom in/out)
-        const delta = -e.deltaY; // Negative delta = zoom in, positive = zoom out
-        const zoomFactor = 1 + delta * 0.001; // Adjust sensitivity
-        const newScale = Math.max(1.0, Math.min(5, scale * zoomFactor)); // Min: 1.0 (original size), Max: 5.0
+        const delta = -e.deltaY;
+        const zoomFactor = 1 + delta * 0.001;
+        const minZoom = allowZoomOut ? 0.5 : 1.0;
+        const newScale = Math.max(minZoom, Math.min(5, scale * zoomFactor));
 
-        // Calculate new translate to keep mouse position fixed
         let newTranslateX = canvasX - worldX * newScale;
         let newTranslateY = canvasY - worldY * newScale;
 
-        // Clamp translate values to keep image within canvas bounds
-        // When scale = 1.0, translate must be (0, 0)
-        // When scale > 1.0, translate range is [canvas.width - image.width * scale, 0]
         const minTranslateX = Math.min(
           0,
           canvas.width - canvas.width * newScale
@@ -392,15 +348,83 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
         setTranslateX(newTranslateX);
         setTranslateY(newTranslateY);
       },
-      [scale, translateX, translateY]
+      [scale, translateX, translateY, getCanvasDisplayScale]
     );
 
-    // Handle double click to reset zoom
     const handleDoubleClick = useCallback(() => {
       setScale(1);
       setTranslateX(0);
       setTranslateY(0);
     }, []);
+
+    const handleMouseDown = useCallback(
+      (e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (enablePanning && scale > 1) {
+          setIsPanning(true);
+          setPanStart({ x: e.clientX, y: e.clientY });
+          e.preventDefault();
+        }
+      },
+      [enablePanning, scale]
+    );
+
+    const handleMouseUp = useCallback(() => {
+      setIsPanning(false);
+      setPanStart(null);
+    }, []);
+
+    const handleMouseMoveWithPan = useCallback(
+      (e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!canvasRef.current) return;
+
+        if (isPanning && panStart && enablePanning) {
+          const deltaX = e.clientX - panStart.x;
+          const deltaY = e.clientY - panStart.y;
+
+          const canvas = canvasRef.current;
+          let newTranslateX = translateX + deltaX;
+          let newTranslateY = translateY + deltaY;
+
+          const minTranslateX = Math.min(0, canvas.width - canvas.width * scale);
+          const minTranslateY = Math.min(0, canvas.height - canvas.height * scale);
+
+          newTranslateX = Math.max(minTranslateX, Math.min(0, newTranslateX));
+          newTranslateY = Math.max(minTranslateY, Math.min(0, newTranslateY));
+
+          setTranslateX(newTranslateX);
+          setTranslateY(newTranslateY);
+          setPanStart({ x: e.clientX, y: e.clientY });
+          return;
+        }
+
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const displayScale = getCanvasDisplayScale();
+
+        const mouseX = e.clientX - rect.left - displayScale.offsetX;
+        const mouseY = e.clientY - rect.top - displayScale.offsetY;
+
+        const canvasX = mouseX / displayScale.scaleX;
+        const canvasY = mouseY / displayScale.scaleY;
+
+        const x = (canvasX - translateX) / scale;
+        const y = (canvasY - translateY) / scale;
+
+        const index = findHoveredBBox({ x, y }, filteredBBoxes);
+        onHover(index);
+      },
+      [
+        isPanning,
+        panStart,
+        enablePanning,
+        filteredBBoxes,
+        onHover,
+        scale,
+        translateX,
+        translateY,
+        getCanvasDisplayScale,
+      ]
+    );
 
     if (!image) {
       return (
@@ -410,20 +434,28 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
       );
     }
 
+    const cursorStyle = enablePanning && scale > 1
+      ? isPanning
+        ? 'cursor-grabbing'
+        : 'cursor-grab'
+      : 'cursor-crosshair';
+
     return (
       <div
         ref={containerRef}
-        className="relative w-full overflow-auto bg-gray-900 rounded-lg"
+        className="relative w-full h-full overflow-hidden bg-gray-900 rounded-lg flex items-center justify-center"
       >
         <canvas
           ref={canvasRef}
-          onMouseMove={handleMouseMove}
+          onMouseMove={handleMouseMoveWithPan}
           onMouseLeave={handleMouseLeave}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
           onClick={handleClick}
           onWheel={handleWheel}
           onDoubleClick={handleDoubleClick}
-          className="cursor-crosshair"
-          style={{ maxWidth: '100%', height: 'auto' }}
+          className={cursorStyle}
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
         />
       </div>
     );

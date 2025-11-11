@@ -37,35 +37,6 @@ export function useTestRunData(testRunId: string | undefined) {
     currentDrawing.tools.length > 0
   );
 
-  // Debug logging in development
-  if (process.env.NODE_ENV === 'development') {
-    if (drawing) {
-      console.log('[useTestRunData] Current drawing:', {
-        drawingIndex: validDrawingIndex,
-        fileName: drawing.fileName,
-        drawingId: drawing.drawingId,
-        toolsCount: tools.length,
-        tools: tools,
-        hasData,
-      });
-    }
-
-    if (!hasData && drawing) {
-      if (!currentDrawing) {
-        console.warn('[useTestRunData] No comparison data found for drawing', {
-          drawingId: drawing.drawingId,
-          fileName: drawing.fileName,
-          availableComparisons: comparisons?.map(c => c.drawingId),
-        });
-      } else if (!currentDrawing.tools || currentDrawing.tools.length === 0) {
-        console.warn('[useTestRunData] Comparison exists but has no tool data', {
-          drawingId: drawing.drawingId,
-          fileName: drawing.fileName,
-          currentDrawing: currentDrawing,
-        });
-      }
-    }
-  }
 
   useEffect(() => {
     if (tools.length > 0 && !leftTool) {

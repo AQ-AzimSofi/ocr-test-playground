@@ -102,7 +102,7 @@ export function Home() {
       setDeleteModalOpen(false);
       setDeleteTargets([]);
     } catch (error) {
-      console.error('Failed to delete test runs:', error);
+      // Error is handled by React Query mutation
     }
   };
 

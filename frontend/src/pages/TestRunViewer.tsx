@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ImageCanvas, type ImageCanvasRef } from '../components/ImageCanvas';
@@ -8,7 +8,6 @@ import type { BoundingBox } from '../types/api';
 import { CheckmarkIcon, WarningIcon } from '../components/icons';
 import {
   getToolAbbreviation,
-  normalizeBounds,
   calculateBboxScreenPosition,
 } from '../utils/testRunHelpers';
 import { useTestRunData } from '../hooks/useTestRunData';
@@ -17,7 +16,6 @@ import { useTestRunUI } from '../hooks/useTestRunUI';
 export function TestRunViewer() {
   const { testRunId } = useParams<{ testRunId: string }>();
 
-  // Data hook - manages test run data and tool selection
   const {
     testRun,
     comparisons,
@@ -42,13 +40,15 @@ export function TestRunViewer() {
     allDrawings,
   } = useTestRunData(testRunId);
 
-  // UI hook - manages all UI state
   const {
     hoveredIndex,
     hoveredSide,
+    setHoveredIndex,
+    setHoveredSide,
     handleLeftHover,
     handleRightHover,
     selectedIndex,
+    setSelectedIndex,
     handleCanvasSelect,
     mousePos,
     showHighlights,
@@ -67,10 +67,32 @@ export function TestRunViewer() {
     setScrollToBboxIndex,
     fixedTooltipPos,
     setFixedTooltipPos,
+    viewMode,
+    toggleViewMode,
+    isFullscreen,
+    toggleFullscreen,
+    allowZoomOut,
+    setAllowZoomOut,
   } = useTestRunUI();
 
   const leftCanvasRef = useRef<ImageCanvasRef>(null);
   const rightCanvasRef = useRef<ImageCanvasRef>(null);
+
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filterBoundingBoxes = (boxes: BoundingBox[], query: string): BoundingBox[] => {
+    if (!query.trim()) return boxes;
+    const lowerQuery = query.toLowerCase();
+    return boxes.filter(
+      (box) =>
+        box.text.toLowerCase().includes(lowerQuery) ||
+        box.metadata?.originalText?.toLowerCase().includes(lowerQuery)
+    );
+  };
+
+  // Apply filtering to bounding boxes
+  const filteredLeftBoundingBoxes = filterBoundingBoxes(leftBoundingBoxes, searchQuery);
+  const filteredRightBoundingBoxes = filterBoundingBoxes(rightBoundingBoxes, searchQuery);
 
   if (isLoading) {
     return (
@@ -246,10 +268,10 @@ export function TestRunViewer() {
 
           {/* Tool Selectors */}
           <div className="flex gap-8 mb-4">
-            {/* Left Tool */}
-            <div className="flex-1">
+            {/* Left Tool (or Single Tool when in single mode) */}
+            <div className={viewMode === 'single' ? 'w-full max-w-md' : 'flex-1'}>
               <label className="text-sm font-medium text-gray-700 mb-2 block">
-                Left Tool
+                {viewMode === 'single' ? 'Tool' : 'Left Tool'}
               </label>
               <select
                 value={leftTool || ''}
@@ -283,50 +305,80 @@ export function TestRunViewer() {
               )}
             </div>
 
-            {/* Right Tool */}
-            <div className="flex-1">
-              <label className="text-sm font-medium text-gray-700 mb-2 block">
-                Right Tool
-              </label>
-              <select
-                value={rightTool || ''}
-                onChange={(e) => setRightTool(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {tools.map((tool, idx) => (
-                  <option key={`right-${tool}-${idx}`} value={tool}>
-                    {tool}
-                  </option>
-                ))}
-              </select>
-              {rightToolData && (
-                <div className="flex gap-4 mt-2 text-sm text-gray-600">
-                  <span>
-                    {rightToolData.result.processingTime?.toFixed(0) || 0}ms
-                  </span>
-                  <span>
-                    ¥{rightToolData.result.apiCost?.toFixed(2) || '0.00'}
-                  </span>
-                  {rightToolData.accuracy && (
+            {/* Right Tool (only visible in comparison mode) */}
+            {viewMode === 'comparison' && (
+              <div className="flex-1">
+                <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Right Tool
+                </label>
+                <select
+                  value={rightTool || ''}
+                  onChange={(e) => setRightTool(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {tools.map((tool, idx) => (
+                    <option key={`right-${tool}-${idx}`} value={tool}>
+                      {tool}
+                    </option>
+                  ))}
+                </select>
+                {rightToolData && (
+                  <div className="flex gap-4 mt-2 text-sm text-gray-600">
                     <span>
-                      CER:{' '}
-                      {(
-                        rightToolData.accuracy.characterErrorRate * 100
-                      ).toFixed(2)}
-                      %
+                      {rightToolData.result.processingTime?.toFixed(0) || 0}ms
                     </span>
-                  )}
-                </div>
-              )}
-            </div>
+                    <span>
+                      ¥{rightToolData.result.apiCost?.toFixed(2) || '0.00'}
+                    </span>
+                    {rightToolData.accuracy && (
+                      <span>
+                        CER:{' '}
+                        {(
+                          rightToolData.accuracy.characterErrorRate * 100
+                        ).toFixed(2)}
+                        %
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Compact Controls Row (visible when collapsed) */}
         {headerCollapsed && (
           <div className="flex items-center justify-center gap-4 px-6 py-2">
-            {/* Left Tool Compact Dropdown */}
-            {renderCompactDropdown(leftTool, setLeftTool, 'Left')}
+            {/* Back to Test Runs Link */}
+            <Link
+              to="/"
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium whitespace-nowrap"
+            >
+              ← Back to Test Runs
+            </Link>
+
+            {/* Drawing Selector (only shown when multiple drawings) */}
+            {totalDrawings > 1 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-600 whitespace-nowrap">
+                  Drawing:
+                </span>
+                <select
+                  value={selectedDrawingIndex}
+                  onChange={(e) => setSelectedDrawingIndex(Number(e.target.value))}
+                  className="text-sm py-1 px-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                >
+                  {allDrawings.map((dwg, index) => (
+                    <option key={dwg.drawingId} value={index}>
+                      {dwg.fileName} ({index + 1}/{totalDrawings})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Left Tool Compact Dropdown (or Single Tool in single mode) */}
+            {renderCompactDropdown(leftTool, setLeftTool, viewMode === 'single' ? 'Tool' : 'Left')}
 
             {/* Collapse/Expand Button */}
             <button
@@ -349,8 +401,8 @@ export function TestRunViewer() {
               </svg>
             </button>
 
-            {/* Right Tool Compact Dropdown */}
-            {renderCompactDropdown(rightTool, setRightTool, 'Right')}
+            {/* Right Tool Compact Dropdown (only in comparison mode) */}
+            {viewMode === 'comparison' && renderCompactDropdown(rightTool, setRightTool, 'Right')}
           </div>
         )}
 
@@ -380,7 +432,7 @@ export function TestRunViewer() {
         )}
 
         {/* Always-Visible Display Control Toggles */}
-        <div className="flex gap-6 px-6 pb-4">
+        <div className="flex gap-6 px-6 pb-4 items-center">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
@@ -400,137 +452,257 @@ export function TestRunViewer() {
             />
             <span className="text-sm font-medium">Show Gemini</span>
           </label>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={allowZoomOut}
+              onChange={(e) => setAllowZoomOut(e.target.checked)}
+              className="w-4 h-4"
+            />
+            <span className="text-sm font-medium">Allow Zoom Out</span>
+          </label>
+
+          {/* View Mode Toggle */}
+          <button
+            onClick={toggleViewMode}
+            className="ml-auto px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+            title={`Switch to ${viewMode === 'single' ? 'comparison' : 'single'} view`}
+          >
+            {viewMode === 'single' ? (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 4H5a1 1 0 00-1 1v4m0 0l3-3m-3 3l3 3m6-9h4a1 1 0 011 1v4m0 0l-3-3m3 3l-3 3m-6 6H5a1 1 0 01-1-1v-4m0 0l3 3m-3-3l3-3m6 6h4a1 1 0 001-1v-4m0 0l-3 3m3-3l-3-3" />
+                </svg>
+                <span className="text-sm font-medium">Comparison View</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5h16M4 12h16M4 19h16" />
+                </svg>
+                <span className="text-sm font-medium">Single View</span>
+              </>
+            )}
+          </button>
         </div>
       </header>
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Split Canvas Area */}
+        {/* Canvas Area - Conditional rendering based on view mode */}
         <div className="flex-1 flex gap-4 p-6 pb-16">
-          {/* Left Canvas */}
-          <div className="flex-1">
-            {leftBoundingBoxes.length > 0 && imageUrl ? (
-              <ImageCanvas
-                ref={leftCanvasRef}
-                imageUrl={imageUrl}
-                boundingBoxes={leftBoundingBoxes}
-                hoveredIndex={
-                  hoveredSide === 'right'
-                    ? hoveredIndex
-                    : hoveredSide === 'left'
-                      ? hoveredIndex
-                      : null
-                }
-                onHover={handleLeftHover}
-                selectedIndex={selectedIndex}
-                onSelect={handleCanvasSelect}
-                scrollToBboxIndex={
-                  hoveredSide === 'left' ? scrollToBboxIndex : null
-                }
-                showGeminiIcons={showGeminiIndicators}
-                showFill={showHighlights}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full bg-white rounded-lg border border-gray-200">
-                <div className="text-center text-gray-500 max-w-md px-6">
-                  <div className="text-lg font-medium mb-2">
-                    No Bounding Boxes
-                  </div>
-                  <div className="text-sm space-y-2">
-                    {leftTool ? (
-                      <>
-                        <div className="font-medium text-gray-700 flex items-center gap-2">
-                          {(leftTool === 'gemini-2.0-flash' ||
-                            leftTool === 'gemini') && <WarningIcon size={16} />}
-                          {leftTool === 'gemini-2.0-flash' ||
-                          leftTool === 'gemini'
-                            ? 'Gemini API Limitation'
-                            : `No bounding box data for ${leftTool}`}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {leftTool === 'gemini-2.0-flash' ||
-                          leftTool === 'gemini'
-                            ? 'Gemini API does not provide bounding box data. Only text extraction is available.'
-                            : leftToolData
-                              ? 'This tool has result data but no bounding boxes. The test may have been run before bounding box support was added.'
-                              : 'No result data available for this tool in this test run.'}
-                        </div>
-                        <div className="mt-3 text-xs bg-blue-50 border border-blue-200 rounded p-2 text-blue-800">
-                          Check the Debug Info panel below to see which tools
-                          have bounding box data
-                        </div>
-                      </>
-                    ) : (
-                      'Select a tool to view bounding boxes'
-                    )}
+          {viewMode === 'single' ? (
+            /* Single Canvas View */
+            <div className="flex-1 relative">
+              {/* Fullscreen Toggle Button */}
+              {leftBoundingBoxes.length > 0 && imageUrl && (
+                <button
+                  onClick={toggleFullscreen}
+                  className="absolute top-4 right-4 z-10 px-3 py-2 bg-white/90 backdrop-blur-sm border border-gray-300 rounded-lg hover:bg-white transition-all shadow-lg flex items-center gap-2"
+                  title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                >
+                  {isFullscreen ? (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      <span className="text-xs font-medium">Exit Fullscreen</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                      </svg>
+                      <span className="text-xs font-medium">Fullscreen</span>
+                    </>
+                  )}
+                </button>
+              )}
+              {leftBoundingBoxes.length > 0 && imageUrl ? (
+                <ImageCanvas
+                  ref={leftCanvasRef}
+                  imageUrl={imageUrl}
+                  boundingBoxes={leftBoundingBoxes}
+                  hoveredIndex={hoveredIndex}
+                  onHover={handleLeftHover}
+                  selectedIndex={selectedIndex}
+                  onSelect={handleCanvasSelect}
+                  scrollToBboxIndex={scrollToBboxIndex}
+                  showGeminiIcons={showGeminiIndicators}
+                  showFill={showHighlights}
+                  enablePanning={true}
+                  allowZoomOut={allowZoomOut}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full bg-white rounded-lg border border-gray-200">
+                  <div className="text-center text-gray-500 max-w-md px-6">
+                    <div className="text-lg font-medium mb-2">
+                      No Bounding Boxes
+                    </div>
+                    <div className="text-sm space-y-2">
+                      {leftTool ? (
+                        <>
+                          <div className="font-medium text-gray-700 flex items-center gap-2">
+                            {(leftTool === 'gemini-2.0-flash' ||
+                              leftTool === 'gemini') && <WarningIcon size={16} />}
+                            {leftTool === 'gemini-2.0-flash' ||
+                            leftTool === 'gemini'
+                              ? 'Gemini API Limitation'
+                              : `No bounding box data for ${leftTool}`}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {leftTool === 'gemini-2.0-flash' ||
+                            leftTool === 'gemini'
+                              ? 'Gemini API does not provide bounding box data. Only text extraction is available.'
+                              : leftToolData
+                                ? 'This tool has result data but no bounding boxes. The test may have been run before bounding box support was added.'
+                                : 'No result data available for this tool in this test run.'}
+                          </div>
+                          <div className="mt-3 text-xs bg-blue-50 border border-blue-200 rounded p-2 text-blue-800">
+                            Check the Debug Info panel below to see which tools
+                            have bounding box data
+                          </div>
+                        </>
+                      ) : (
+                        'Select a tool to view bounding boxes'
+                      )}
+                    </div>
                   </div>
                 </div>
+              )}
+            </div>
+          ) : (
+            /* Comparison View - Two Canvases Side by Side */
+            <>
+              {/* Left Canvas */}
+              <div className="flex-1">
+                {leftBoundingBoxes.length > 0 && imageUrl ? (
+                  <ImageCanvas
+                    ref={leftCanvasRef}
+                    imageUrl={imageUrl}
+                    boundingBoxes={leftBoundingBoxes}
+                    hoveredIndex={
+                      hoveredSide === 'right'
+                        ? hoveredIndex
+                        : hoveredSide === 'left'
+                          ? hoveredIndex
+                          : null
+                    }
+                    onHover={handleLeftHover}
+                    selectedIndex={selectedIndex}
+                    onSelect={handleCanvasSelect}
+                    scrollToBboxIndex={
+                      hoveredSide === 'left' ? scrollToBboxIndex : null
+                    }
+                    showGeminiIcons={showGeminiIndicators}
+                    showFill={showHighlights}
+                    allowZoomOut={allowZoomOut}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full bg-white rounded-lg border border-gray-200">
+                    <div className="text-center text-gray-500 max-w-md px-6">
+                      <div className="text-lg font-medium mb-2">
+                        No Bounding Boxes
+                      </div>
+                      <div className="text-sm space-y-2">
+                        {leftTool ? (
+                          <>
+                            <div className="font-medium text-gray-700 flex items-center gap-2">
+                              {(leftTool === 'gemini-2.0-flash' ||
+                                leftTool === 'gemini') && <WarningIcon size={16} />}
+                              {leftTool === 'gemini-2.0-flash' ||
+                              leftTool === 'gemini'
+                                ? 'Gemini API Limitation'
+                                : `No bounding box data for ${leftTool}`}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {leftTool === 'gemini-2.0-flash' ||
+                              leftTool === 'gemini'
+                                ? 'Gemini API does not provide bounding box data. Only text extraction is available.'
+                                : leftToolData
+                                  ? 'This tool has result data but no bounding boxes. The test may have been run before bounding box support was added.'
+                                  : 'No result data available for this tool in this test run.'}
+                            </div>
+                            <div className="mt-3 text-xs bg-blue-50 border border-blue-200 rounded p-2 text-blue-800">
+                              Check the Debug Info panel below to see which tools
+                              have bounding box data
+                            </div>
+                          </>
+                        ) : (
+                          'Select a tool to view bounding boxes'
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Right Canvas */}
-          <div className="flex-1">
-            {rightBoundingBoxes.length > 0 && imageUrl ? (
-              <ImageCanvas
-                ref={rightCanvasRef}
-                imageUrl={imageUrl}
-                boundingBoxes={rightBoundingBoxes}
-                hoveredIndex={
-                  hoveredSide === 'left'
-                    ? hoveredIndex
-                    : hoveredSide === 'right'
-                      ? hoveredIndex
-                      : null
-                }
-                onHover={handleRightHover}
-                selectedIndex={selectedIndex}
-                onSelect={handleCanvasSelect}
-                scrollToBboxIndex={
-                  hoveredSide === 'right' ? scrollToBboxIndex : null
-                }
-                showGeminiIcons={showGeminiIndicators}
-                showFill={showHighlights}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full bg-white rounded-lg border border-gray-200">
-                <div className="text-center text-gray-500 max-w-md px-6">
-                  <div className="text-lg font-medium mb-2">
-                    No Bounding Boxes
+              {/* Right Canvas */}
+              <div className="flex-1">
+                {rightBoundingBoxes.length > 0 && imageUrl ? (
+                  <ImageCanvas
+                    ref={rightCanvasRef}
+                    imageUrl={imageUrl}
+                    boundingBoxes={rightBoundingBoxes}
+                    hoveredIndex={
+                      hoveredSide === 'left'
+                        ? hoveredIndex
+                        : hoveredSide === 'right'
+                          ? hoveredIndex
+                          : null
+                    }
+                    onHover={handleRightHover}
+                    selectedIndex={selectedIndex}
+                    onSelect={handleCanvasSelect}
+                    scrollToBboxIndex={
+                      hoveredSide === 'right' ? scrollToBboxIndex : null
+                    }
+                    showGeminiIcons={showGeminiIndicators}
+                    showFill={showHighlights}
+                    allowZoomOut={allowZoomOut}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full bg-white rounded-lg border border-gray-200">
+                    <div className="text-center text-gray-500 max-w-md px-6">
+                      <div className="text-lg font-medium mb-2">
+                        No Bounding Boxes
+                      </div>
+                      <div className="text-sm space-y-2">
+                        {rightTool ? (
+                          <>
+                            <div className="font-medium text-gray-700 flex items-center gap-2">
+                              {(rightTool === 'gemini-2.0-flash' ||
+                                rightTool === 'gemini') && (
+                                <WarningIcon size={16} />
+                              )}
+                              {rightTool === 'gemini-2.0-flash' ||
+                              rightTool === 'gemini'
+                                ? 'Gemini API Limitation'
+                                : `No bounding box data for ${rightTool}`}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {rightTool === 'gemini-2.0-flash' ||
+                              rightTool === 'gemini'
+                                ? 'Gemini API does not provide bounding box data. Only text extraction is available.'
+                                : rightToolData
+                                  ? 'This tool has result data but no bounding boxes. The test may have been run before bounding box support was added.'
+                                  : 'No result data available for this tool in this test run.'}
+                            </div>
+                            <div className="mt-3 text-xs bg-blue-50 border border-blue-200 rounded p-2 text-blue-800">
+                              Check the Debug Info panel below to see which tools
+                              have bounding box data
+                            </div>
+                          </>
+                        ) : (
+                          'Select a tool to view bounding boxes'
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-sm space-y-2">
-                    {rightTool ? (
-                      <>
-                        <div className="font-medium text-gray-700 flex items-center gap-2">
-                          {(rightTool === 'gemini-2.0-flash' ||
-                            rightTool === 'gemini') && (
-                            <WarningIcon size={16} />
-                          )}
-                          {rightTool === 'gemini-2.0-flash' ||
-                          rightTool === 'gemini'
-                            ? 'Gemini API Limitation'
-                            : `No bounding box data for ${rightTool}`}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {rightTool === 'gemini-2.0-flash' ||
-                          rightTool === 'gemini'
-                            ? 'Gemini API does not provide bounding box data. Only text extraction is available.'
-                            : rightToolData
-                              ? 'This tool has result data but no bounding boxes. The test may have been run before bounding box support was added.'
-                              : 'No result data available for this tool in this test run.'}
-                        </div>
-                        <div className="mt-3 text-xs bg-blue-50 border border-blue-200 rounded p-2 text-blue-800">
-                          Check the Debug Info panel below to see which tools
-                          have bounding box data
-                        </div>
-                      </>
-                    ) : (
-                      'Select a tool to view bounding boxes'
-                    )}
-                  </div>
-                </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
 
         {/* Sidebar - Aggregate Stats */}
@@ -628,92 +800,241 @@ export function TestRunViewer() {
               {/* Scrollable Content Area */}
               <div className="flex-1 overflow-auto px-6 py-4">
                 {/* Text Results Tab Content */}
-                {sidebarMainTab === 'text' && leftTool && rightTool && (
+                {sidebarMainTab === 'text' && leftTool && (viewMode === 'single' || rightTool) && (
                   <div>
-                    {/* Tool Selector Tabs with Icons */}
-                    <div className="flex gap-2 mb-4">
-                      <button
-                        onClick={() => setActiveTab('left')}
-                        className={`flex-1 px-3 py-2 rounded-lg transition-all ${
-                          activeTab === 'left'
-                            ? 'bg-blue-600 text-white shadow-md'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                        title={leftTool}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-bold">
-                            {getToolAbbreviation(leftTool)}
-                          </span>
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded-full ${
+                    {viewMode === 'comparison' ? (
+                      /* Comparison Mode: Show tabs for left/right tools */
+                      <>
+                        {/* Tool Selector Tabs with Icons */}
+                        <div className="flex gap-2 mb-4">
+                          <button
+                            onClick={() => setActiveTab('left')}
+                            className={`flex-1 px-3 py-2 rounded-lg transition-all ${
                               activeTab === 'left'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-gray-200 text-gray-600'
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
+                            title={leftTool}
                           >
-                            {leftBoundingBoxes.length}
-                          </span>
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => setActiveTab('right')}
-                        className={`flex-1 px-3 py-2 rounded-lg transition-all ${
-                          activeTab === 'right'
-                            ? 'bg-blue-600 text-white shadow-md'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                        title={rightTool}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-sm font-bold">
-                            {getToolAbbreviation(rightTool)}
-                          </span>
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded-full ${
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-sm font-bold">
+                                {getToolAbbreviation(leftTool)}
+                              </span>
+                              <span
+                                className={`text-xs px-2 py-0.5 rounded-full ${
+                                  activeTab === 'left'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-gray-200 text-gray-600'
+                                }`}
+                              >
+                                {leftBoundingBoxes.length}
+                              </span>
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setActiveTab('right')}
+                            className={`flex-1 px-3 py-2 rounded-lg transition-all ${
                               activeTab === 'right'
-                                ? 'bg-blue-500 text-white'
-                                : 'bg-gray-200 text-gray-600'
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
+                            title={rightTool || ''}
                           >
-                            {rightBoundingBoxes.length}
-                          </span>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-sm font-bold">
+                                {rightTool ? getToolAbbreviation(rightTool) : ''}
+                              </span>
+                              <span
+                                className={`text-xs px-2 py-0.5 rounded-full ${
+                                  activeTab === 'right'
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-gray-200 text-gray-600'
+                                }`}
+                              >
+                                {rightBoundingBoxes.length}
+                              </span>
+                            </div>
+                          </button>
                         </div>
-                      </button>
-                    </div>
 
-                    {/* Text Cards List */}
-                    <TextCardsList
-                      boundingBoxes={
-                        activeTab === 'left'
-                          ? leftBoundingBoxes
-                          : rightBoundingBoxes
-                      }
-                      selectedIndex={selectedIndex}
-                      onCardClick={(index) => {
-                        setSelectedIndex(index);
-                        setHoveredSide(activeTab);
-                        setScrollToBboxIndex(index);
-                        setHoveredIndex(index);
+                        {/* Search Input */}
+                        <div className="mb-4">
+                          <div className="relative">
+                            <svg
+                              className="w-4 h-4 absolute left-3 top-3 text-gray-400 pointer-events-none"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                              />
+                            </svg>
+                            <input
+                              type="text"
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              placeholder="Search text..."
+                              className="w-full px-3 py-2 pl-9 pr-8 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            {searchQuery && (
+                              <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600 transition-colors"
+                                title="Clear search"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {activeTab === 'left'
+                              ? `${filteredLeftBoundingBoxes.length} of ${leftBoundingBoxes.length} items`
+                              : `${filteredRightBoundingBoxes.length} of ${rightBoundingBoxes.length} items`}
+                          </div>
+                        </div>
 
-                        // Calculate and set fixed tooltip position at bbox location
-                        const bbox =
-                          activeTab === 'left'
-                            ? leftBoundingBoxes[index]
-                            : rightBoundingBoxes[index];
-                        const canvasRef =
-                          activeTab === 'left' ? leftCanvasRef : rightCanvasRef;
-                        const screenPos = calculateBboxScreenPosition(
-                          bbox,
-                          canvasRef
-                        );
+                        {/* Text Cards List */}
+                        <TextCardsList
+                          boundingBoxes={
+                            activeTab === 'left'
+                              ? filteredLeftBoundingBoxes
+                              : filteredRightBoundingBoxes
+                          }
+                          selectedIndex={selectedIndex}
+                          onCardClick={(filteredIndex) => {
+                            // Get bbox from filtered array
+                            const filteredBoxes =
+                              activeTab === 'left'
+                                ? filteredLeftBoundingBoxes
+                                : filteredRightBoundingBoxes;
+                            const bbox = filteredBoxes[filteredIndex];
 
-                        if (screenPos) {
-                          setFixedTooltipPos(screenPos);
-                        }
-                      }}
-                      toolName={activeTab === 'left' ? leftTool : rightTool}
-                    />
+                            // Find original index in unfiltered array
+                            const originalBoxes =
+                              activeTab === 'left'
+                                ? leftBoundingBoxes
+                                : rightBoundingBoxes;
+                            const originalIndex = originalBoxes.findIndex(
+                              (b) => b.text === bbox.text && b.bounds === bbox.bounds
+                            );
+
+                            if (originalIndex !== -1) {
+                              setSelectedIndex(originalIndex);
+                              setHoveredSide(activeTab);
+                              setScrollToBboxIndex(originalIndex);
+                              setHoveredIndex(originalIndex);
+
+                              // Calculate and set fixed tooltip position at bbox location
+                              const canvasRef =
+                                activeTab === 'left' ? leftCanvasRef : rightCanvasRef;
+                              const screenPos = calculateBboxScreenPosition(
+                                bbox,
+                                canvasRef
+                              );
+
+                              if (screenPos) {
+                                setFixedTooltipPos(screenPos);
+                              }
+                            }
+                          }}
+                          toolName={activeTab === 'left' ? leftTool : (rightTool || '')}
+                        />
+                      </>
+                    ) : (
+                      /* Single Mode: Show only the selected tool's text */
+                      <>
+                        {/* Tool Name Header */}
+                        <div className="mb-4 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm font-bold text-blue-900">
+                              {leftTool}
+                            </span>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-200 text-blue-800">
+                              {leftBoundingBoxes.length} items
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Search Input */}
+                        <div className="mb-4">
+                          <div className="relative">
+                            <svg
+                              className="w-4 h-4 absolute left-3 top-3 text-gray-400 pointer-events-none"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                              />
+                            </svg>
+                            <input
+                              type="text"
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              placeholder="Search text..."
+                              className="w-full px-3 py-2 pl-9 pr-8 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            {searchQuery && (
+                              <button
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-2 top-2.5 text-gray-400 hover:text-gray-600 transition-colors"
+                                title="Clear search"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1">
+                            {filteredLeftBoundingBoxes.length} of {leftBoundingBoxes.length} items
+                          </div>
+                        </div>
+
+                        {/* Text Cards List */}
+                        <TextCardsList
+                          boundingBoxes={filteredLeftBoundingBoxes}
+                          selectedIndex={selectedIndex}
+                          onCardClick={(filteredIndex) => {
+                            // Get bbox from filtered array
+                            const bbox = filteredLeftBoundingBoxes[filteredIndex];
+
+                            // Find original index in unfiltered array
+                            const originalIndex = leftBoundingBoxes.findIndex(
+                              (b) => b.text === bbox.text && b.bounds === bbox.bounds
+                            );
+
+                            if (originalIndex !== -1) {
+                              setSelectedIndex(originalIndex);
+                              setHoveredSide('left');
+                              setScrollToBboxIndex(originalIndex);
+                              setHoveredIndex(originalIndex);
+
+                              // Calculate and set fixed tooltip position at bbox location
+                              const screenPos = calculateBboxScreenPosition(
+                                bbox,
+                                leftCanvasRef
+                              );
+
+                              if (screenPos) {
+                                setFixedTooltipPos(screenPos);
+                              }
+                            }
+                          }}
+                          toolName={leftTool}
+                        />
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -895,8 +1216,64 @@ export function TestRunViewer() {
         </aside>
       </div>
 
+      {/* Fullscreen Overlay */}
+      {isFullscreen && viewMode === 'single' && (
+        <div className="fixed inset-0 z-50 bg-black/95 flex flex-col">
+          {/* Fullscreen Header */}
+          <div className="flex items-center justify-between px-6 py-4 bg-black/50 backdrop-blur-sm">
+            <div className="text-white">
+              <h2 className="text-lg font-semibold">{leftTool}</h2>
+              <p className="text-sm text-gray-300">{drawing?.fileName}</p>
+            </div>
+            <button
+              onClick={toggleFullscreen}
+              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span className="font-medium">Exit Fullscreen (Esc)</span>
+            </button>
+          </div>
+
+          {/* Fullscreen Canvas */}
+          <div className="flex-1 p-6 overflow-auto">
+            {leftBoundingBoxes.length > 0 && imageUrl ? (
+              <ImageCanvas
+                ref={leftCanvasRef}
+                imageUrl={imageUrl}
+                boundingBoxes={leftBoundingBoxes}
+                hoveredIndex={hoveredIndex}
+                onHover={handleLeftHover}
+                selectedIndex={selectedIndex}
+                onSelect={handleCanvasSelect}
+                scrollToBboxIndex={scrollToBboxIndex}
+                showGeminiIcons={showGeminiIndicators}
+                showFill={showHighlights}
+                enablePanning={true}
+                allowZoomOut={allowZoomOut}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center text-gray-400">
+                  <div className="text-lg font-medium mb-2">No Bounding Boxes</div>
+                  <div className="text-sm">No data available for fullscreen view</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Zoom Indicator */}
+          {leftCanvasRef.current && (
+            <div className="absolute bottom-6 left-6 px-3 py-2 bg-white/10 backdrop-blur-sm rounded-lg text-white text-sm">
+              Zoom: {Math.round((leftCanvasRef.current.getTransform?.()?.scale || 1) * 100)}%
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Tooltip - use fixed position when available, otherwise follow cursor */}
-      {hoveredBBox && (
+      {hoveredBBox && !isFullscreen && (
         <Tooltip bbox={hoveredBBox} position={fixedTooltipPos || mousePos} />
       )}
     </div>

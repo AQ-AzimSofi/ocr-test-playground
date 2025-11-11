@@ -1,8 +1,5 @@
 import { useState, useEffect } from 'react';
 
-/**
- * Custom hook to manage test run viewer UI state
- */
 export function useTestRunUI() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [hoveredSide, setHoveredSide] = useState<'left' | 'right' | null>(null);
@@ -11,13 +8,17 @@ export function useTestRunUI() {
   const [showHighlights, setShowHighlights] = useState(true);
   const [showGeminiIndicators, setShowGeminiIndicators] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [headerCollapsed, setHeaderCollapsed] = useState(false);
+  const [headerCollapsed, setHeaderCollapsed] = useState(true);
   const [sidebarMainTab, setSidebarMainTab] = useState<'text' | 'stats' | 'debug'>('text');
   const [activeTab, setActiveTab] = useState<'left' | 'right'>('left');
   const [scrollToBboxIndex, setScrollToBboxIndex] = useState<number | null>(null);
   const [fixedTooltipPos, setFixedTooltipPos] = useState<{ x: number; y: number } | null>(null);
 
-  // Track mouse position globally
+  const [viewMode, setViewMode] = useState<'single' | 'comparison'>('single');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const [allowZoomOut, setAllowZoomOut] = useState(false);
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       setMousePos({ x: e.clientX, y: e.clientY });
@@ -26,14 +27,22 @@ export function useTestRunUI() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Auto-enable Show Highlights when Show Gemini is checked
   useEffect(() => {
     if (showGeminiIndicators && !showHighlights) {
       setShowHighlights(true);
     }
   }, [showGeminiIndicators, showHighlights]);
 
-  // Handle hover with sync - clear fixed tooltip when hovering canvas
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullscreen]);
+
   const handleLeftHover = (index: number | null) => {
     setHoveredIndex(index);
     setHoveredSide(index !== null ? 'left' : null);
@@ -50,7 +59,6 @@ export function useTestRunUI() {
     }
   };
 
-  // Handle canvas click - clear fixed tooltip when clicking canvas directly
   const handleCanvasSelect = (index: number | null) => {
     setSelectedIndex(index);
     if (fixedTooltipPos) {
@@ -58,30 +66,29 @@ export function useTestRunUI() {
     }
   };
 
+  const toggleViewMode = () => {
+    setViewMode(prev => prev === 'single' ? 'comparison' : 'single');
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(prev => !prev);
+  };
+
   return {
-    // Hover state
     hoveredIndex,
     hoveredSide,
     setHoveredIndex,
     setHoveredSide,
     handleLeftHover,
     handleRightHover,
-
-    // Selection state
     selectedIndex,
     setSelectedIndex,
     handleCanvasSelect,
-
-    // Mouse tracking
     mousePos,
-
-    // Display preferences
     showHighlights,
     setShowHighlights,
     showGeminiIndicators,
     setShowGeminiIndicators,
-
-    // Layout state
     sidebarCollapsed,
     setSidebarCollapsed,
     headerCollapsed,
@@ -90,8 +97,14 @@ export function useTestRunUI() {
     setSidebarMainTab,
     activeTab,
     setActiveTab,
-
-    // Scroll/tooltip state
+    viewMode,
+    setViewMode,
+    toggleViewMode,
+    isFullscreen,
+    setIsFullscreen,
+    toggleFullscreen,
+    allowZoomOut,
+    setAllowZoomOut,
     scrollToBboxIndex,
     setScrollToBboxIndex,
     fixedTooltipPos,
