@@ -31,7 +31,6 @@ export async function processWithAzureReadGeminiHybrid(
   const startTime = Date.now();
 
   try {
-    // Step 1: Run Azure Read to get word-level bounding boxes with confidence
     const azureResult = await azureDocumentClient.analyzeRead(imagePath);
     const azureText = azureResult.content;
 
@@ -39,7 +38,6 @@ export async function processWithAzureReadGeminiHybrid(
       `  Azure Read: ${azureResult.words.length} words, ${azureText.length} chars`
     );
 
-    // Step 2: Separate high/low confidence words
     const LOW_CONFIDENCE_THRESHOLD = 0.85;
 
     const highConfidenceWords: CropRegion[] = [];
@@ -76,7 +74,6 @@ export async function processWithAzureReadGeminiHybrid(
     );
     console.log(`  Average confidence: ${(avgConfidence * 100).toFixed(1)}%`);
 
-    // Step 3: Crop low-confidence words from image
     let croppedWords = [];
     let geminiCorrectedTexts = new Map<number, string>();
     let geminiCost = 0;
@@ -85,9 +82,8 @@ export async function processWithAzureReadGeminiHybrid(
       console.log(
         `  Cropping ${lowConfidenceWords.length} low-confidence words...`
       );
-      croppedWords = await batchCropRegions(imagePath, lowConfidenceWords, 5); // Smaller padding for words
+      croppedWords = await batchCropRegions(imagePath, lowConfidenceWords, 5);
 
-      // Step 4: Send crops to Gemini for re-extraction
       console.log(`  Sending ${croppedWords.length} words to Gemini...`);
 
       const geminiInputs = croppedWords.map((cropped) => ({
@@ -98,7 +94,6 @@ export async function processWithAzureReadGeminiHybrid(
       const geminiResults =
         await geminiClient.batchExtractTextFromRegions(geminiInputs);
 
-      // Step 5: Build map of corrected texts
       croppedWords.forEach((cropped, i) => {
         const geminiText = geminiResults[i].text;
         geminiCorrectedTexts.set(cropped.region.index, geminiText);
@@ -112,7 +107,6 @@ export async function processWithAzureReadGeminiHybrid(
       );
     }
 
-    // Step 6: Merge results - build final text and bounding boxes
     const allWords = azureResult.words.map(
       (word, index): CropRegion => ({
         bounds: word.bounds,
@@ -126,14 +120,12 @@ export async function processWithAzureReadGeminiHybrid(
 
     const processingTime = Date.now() - startTime;
 
-    // Estimate combined cost
     const azureCost = azureDocumentClient.estimateCost(
       azureResult.pages.length,
       'read'
     );
     const estimatedCost = azureCost + geminiCost;
 
-    // Calculate confidence distribution
     const confidenceRanges = {
       excellent: azureResult.words.filter((w) => w.confidence >= 0.95).length,
       good: azureResult.words.filter(

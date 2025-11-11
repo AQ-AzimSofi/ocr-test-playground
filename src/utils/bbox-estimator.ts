@@ -86,11 +86,9 @@ export function calculateAverageCharDimensions(
     const bounds = bbox.bounds;
     if (bounds.length < 4) continue;
 
-    // Calculate bbox width and height
     const width = Math.abs(bounds[1].x - bounds[0].x);
     const height = Math.abs(bounds[2].y - bounds[1].y);
 
-    // Estimate per-character dimensions
     const charWidth = width / bbox.text.length;
     const charHeight = height;
 
@@ -99,7 +97,6 @@ export function calculateAverageCharDimensions(
   }
 
   if (widths.length === 0) {
-    // Default dimensions if no bboxes available
     return {
       avgWidth: 20,
       avgHeight: 30,
@@ -173,13 +170,12 @@ export function estimateBboxFromNeighbors(
   imageHeight: number
 ): BoundingBox {
   if (nearbyBboxes.length === 0) {
-    // No neighbors - place in center with estimated size
     const width = charDimensions.avgWidth * textLength;
     const height = charDimensions.avgHeight;
     const x = (imageWidth - width) / 2;
     const y = (imageHeight - height) / 2;
 
-    return {
+    const bbox = {
       bounds: [
         { x, y },
         { x: x + width, y },
@@ -188,20 +184,20 @@ export function estimateBboxFromNeighbors(
       ],
       confidence: 0.5, // Low confidence for pure estimation
     };
+
+    return validateBboxOrder(bbox);
   }
 
-  // Use nearest neighbor as reference
   const nearest = nearbyBboxes[0];
   const nearestBounds = nearest.bounds;
 
   if (nearestBounds.length < 4) {
-    // Fallback to center placement
     const width = charDimensions.avgWidth * textLength;
     const height = charDimensions.avgHeight;
     const x = (imageWidth - width) / 2;
     const y = (imageHeight - height) / 2;
 
-    return {
+    const bbox = {
       bounds: [
         { x, y },
         { x: x + width, y },
@@ -210,29 +206,55 @@ export function estimateBboxFromNeighbors(
       ],
       confidence: 0.5,
     };
+
+    return validateBboxOrder(bbox);
   }
 
-  // Calculate estimated dimensions
   const width = charDimensions.avgWidth * textLength;
   const height = charDimensions.avgHeight;
 
-  // Get reference position from nearest bbox
   const refCentroid = getBboxCentroid(nearest);
 
-  // Estimate position based on text flow direction
-  // Assume horizontal left-to-right flow by default
+  // FIX: Detect text flow direction based on bbox dimensions
   const nearestWidth = Math.abs(nearestBounds[1].x - nearestBounds[0].x);
+  const nearestHeight = Math.abs(nearestBounds[2].y - nearestBounds[1].y);
 
-  // Place to the right of nearest bbox with some spacing
-  const spacing = charDimensions.avgWidth;
-  const x = nearestBounds[1].x + spacing;
-  const y = nearestBounds[0].y;
+  const isVertical = nearestHeight > nearestWidth * 1.5; // Height significantly larger than width
 
-  // Check if position is out of bounds
-  const finalX = Math.min(x, imageWidth - width);
+  const spacing = isVertical
+    ? charDimensions.avgHeight * 0.5
+    : charDimensions.avgWidth * 0.5;
+
+  let x: number, y: number;
+
+  if (isVertical) {
+    x = nearestBounds[0].x;
+    y = nearestBounds[3].y + spacing;
+
+    const debugEnabled = process.env.DEBUG_BBOX === 'true';
+    if (debugEnabled) {
+      console.log(`  [Bbox Positioning] Detected VERTICAL text flow`);
+      console.log(
+        `     Nearest bbox: width=${nearestWidth.toFixed(0)}px, height=${nearestHeight.toFixed(0)}px`
+      );
+    }
+  } else {
+    x = nearestBounds[1].x + spacing;
+    y = nearestBounds[0].y;
+
+    const debugEnabled = process.env.DEBUG_BBOX === 'true';
+    if (debugEnabled) {
+      console.log(`  [Bbox Positioning] Detected HORIZONTAL text flow`);
+      console.log(
+        `     Nearest bbox: width=${nearestWidth.toFixed(0)}px, height=${nearestHeight.toFixed(0)}px`
+      );
+    }
+  }
+
+  const finalX = Math.min(Math.max(x, 0), imageWidth - width);
   const finalY = Math.min(Math.max(y, 0), imageHeight - height);
 
-  return {
+  const bbox = {
     bounds: [
       { x: finalX, y: finalY },
       { x: finalX + width, y: finalY },
@@ -241,6 +263,8 @@ export function estimateBboxFromNeighbors(
     ],
     confidence: 0.6, // Medium-low confidence for neighbor-based estimation
   };
+
+  return validateBboxOrder(bbox);
 }
 
 /**
@@ -258,11 +282,27 @@ export function synthesizeBboxForText(
   let nearbyBboxes: BoundingBox[] = [];
 
   if (estimatedPosition) {
-    // Find bboxes near the estimated position
     nearbyBboxes = findNearestBboxes(estimatedPosition, allBboxes, 5);
+  } else if (allBboxes.length > 0) {
+    // FIX: Use spatial clustering instead of just taking first 5 bboxes
+    const centroids = allBboxes.map(getBboxCentroid);
+    const avgX =
+      centroids.reduce((sum, c) => sum + c.x, 0) / centroids.length;
+    const avgY =
+      centroids.reduce((sum, c) => sum + c.y, 0) / centroids.length;
+
+    nearbyBboxes = findNearestBboxes({ x: avgX, y: avgY }, allBboxes, 5);
+
+    const debugEnabled = process.env.DEBUG_BBOX === 'true';
+    if (debugEnabled) {
+      console.log(
+        `  [Bbox Synthesis] No position estimate - using centroid-based selection`
+      );
+      console.log(`     Document centroid: (${avgX.toFixed(0)}, ${avgY.toFixed(0)})`);
+      console.log(`     Selected ${nearbyBboxes.length} nearby bboxes`);
+    }
   } else {
-    // Use any available bboxes
-    nearbyBboxes = allBboxes.slice(0, 5);
+    nearbyBboxes = [];
   }
 
   return estimateBboxFromNeighbors(
@@ -290,7 +330,7 @@ export function percentageToBbox(
   const width = (widthPercent / 100) * imageWidth;
   const height = (heightPercent / 100) * imageHeight;
 
-  return {
+  const bbox = {
     bounds: [
       { x, y },
       { x: x + width, y },
@@ -299,6 +339,8 @@ export function percentageToBbox(
     ],
     confidence: 0.7, // Medium confidence for Gemini-provided percentages
   };
+
+  return validateBboxOrder(bbox);
 }
 
 /**
@@ -311,8 +353,7 @@ export function descriptionToApproximatePosition(
 ): { x: number; y: number } | null {
   const desc = description.toLowerCase();
 
-  // Vertical position
-  let y = imageHeight / 2; // default: middle
+  let y = imageHeight / 2;
   if (desc.includes('top')) {
     y = imageHeight * 0.2;
   } else if (desc.includes('bottom')) {
@@ -321,8 +362,7 @@ export function descriptionToApproximatePosition(
     y = imageHeight * 0.5;
   }
 
-  // Horizontal position
-  let x = imageWidth / 2; // default: center
+  let x = imageWidth / 2;
   if (desc.includes('left')) {
     x = imageWidth * 0.2;
   } else if (desc.includes('right')) {
@@ -331,14 +371,47 @@ export function descriptionToApproximatePosition(
     x = imageWidth * 0.5;
   }
 
-  // Check if we found any position keywords
   const hasPositionKeyword = desc.match(/top|bottom|left|right|center|middle/);
 
   if (!hasPositionKeyword) {
-    return null; // Couldn't parse description
+    return null;
   }
 
   return { x, y };
+}
+
+/**
+ * Validate and normalize bbox vertex order
+ * Ensures bboxes always follow [topLeft, topRight, bottomRight, bottomLeft]
+ *
+ * This is critical because different parts of the code assume this ordering.
+ * If vertices are in wrong order, calculations for width, height, and positioning break.
+ */
+export function validateBboxOrder(bbox: BoundingBox): BoundingBox {
+  const bounds = bbox.bounds;
+
+  if (bounds.length !== 4) {
+    console.warn(`Invalid bbox: expected 4 points, got ${bounds.length}`);
+    return bbox;
+  }
+
+  const xs = bounds.map((p) => p.x);
+  const ys = bounds.map((p) => p.y);
+
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  return {
+    ...bbox,
+    bounds: [
+      { x: minX, y: minY },
+      { x: maxX, y: minY },
+      { x: maxX, y: maxY },
+      { x: minX, y: maxY },
+    ],
+  };
 }
 
 /**

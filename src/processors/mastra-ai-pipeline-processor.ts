@@ -21,6 +21,8 @@ import {
 } from '../mastra/agents/validation-agent.js';
 import { coordinateTransformationTool } from '../mastra/tools/coordinate-transformation-tool.js';
 import { scalingCalculatorTool } from '../mastra/tools/scaling-calculator-tool.js';
+import { getRevitMCPClient } from '../mastra/clients/revit-mcp-client.js';
+import type { GeometricElement } from '../types.js';
 import * as fs from 'fs';
 
 /**
@@ -45,6 +47,11 @@ export interface MastraAIPipelineOptions {
   default_scaling_factor?: number;
   enable_validation?: boolean;
   min_validation_score?: number;
+  // MCP Integration Options
+  enable_revit_mcp?: boolean;
+  revit_mcp_path?: string; // Path to revit-mcp/build/index.js
+  revit_level?: string;
+  stop_on_error?: boolean;
 }
 
 export interface MastraAIPipelineResult {
@@ -66,6 +73,17 @@ export interface MastraAIPipelineResult {
   // Output files
   revit_json_path?: string;
   revit_csv_path?: string;
+
+  // MCP Integration Results
+  revit_mcp_enabled?: boolean;
+  revit_mcp_available?: boolean;
+  revit_mcp_result?: {
+    success: boolean;
+    totalElements: number;
+    successCount: number;
+    failureCount: number;
+    errors: Array<{ index: number; error: string }>;
+  };
 
   // Metadata
   processing_time_ms: number;
@@ -156,6 +174,10 @@ export async function processMastraAIPipeline(
     default_scaling_factor = 15.0,
     enable_validation = true,
     min_validation_score = 50,
+    enable_revit_mcp = false,
+    revit_mcp_path,
+    revit_level = 'Level 1',
+    stop_on_error = false,
   } = options;
 
   console.log('\n=== MASTRA AI PIPELINE ===');
@@ -354,8 +376,127 @@ export async function processMastraAIPipeline(
       console.log();
     }
 
-    // STEP 8: Generate Revit outputs
-    console.log('[8/8] Generating Revit outputs...');
+    // STEP 7.5: MCP Integration - Create elements in Revit (if enabled)
+    let revitMCPResult;
+    let revitMCPAvailable = false;
+
+    if (enable_revit_mcp) {
+      console.log('[7.5/8] Checking Revit MCP availability...');
+
+      const revitClient = getRevitMCPClient({
+        mcpPath: revit_mcp_path,
+        autoConnect: true,
+      });
+
+      const revitStatus = await revitClient.getStatus();
+      revitMCPAvailable = revitStatus.isAvailable && revitStatus.isConnected;
+
+      if (revitMCPAvailable) {
+        console.log('  ✓ Revit MCP server is available');
+        console.log(`  ✓ Revit version: ${revitStatus.revitVersion || 'Unknown'}`);
+        console.log(`  ✓ Active document: ${revitStatus.activeDocument || 'Unknown'}`);
+
+        if (revitStatus.projectInfo) {
+          console.log(`  ✓ Available levels: ${revitStatus.projectInfo.levels.join(', ')}`);
+        }
+
+        console.log('\n[7.6/8] Creating elements in Revit via MCP...');
+
+        // Convert transformed elements to GeometricElement format
+        const geometricElements: GeometricElement[] = transformedElements.map((element, idx) => {
+          // Find associated dimensions
+          const associations = associationAnalysis.associations.filter(
+            (a) => a.element_id === `elem_${idx}`
+          );
+          const dimensionTexts = associations.map((a) => a.dimension_text);
+
+          // Calculate properties based on element type
+          let properties: any = {
+            confidence: element.confidence,
+            dimension_texts: dimensionTexts,
+          };
+
+          if (element.element_type === 'wall') {
+            const wall = element as any;
+            const length_mm = Math.sqrt(
+              Math.pow(wall.coordinates_mm[1].x - wall.coordinates_mm[0].x, 2) +
+              Math.pow(wall.coordinates_mm[1].y - wall.coordinates_mm[0].y, 2)
+            );
+
+            properties = {
+              ...properties,
+              subType: wall.wall_type,
+              length_mm: Math.round(length_mm * 100) / 100,
+              thickness_mm: wall.thickness_px ? wall.thickness_px * scalingResult.scaling_factor : (wall.wall_type === 'exterior' ? 200 : 150),
+              height_mm: wall.height_mm || (wall.wall_type === 'exterior' ? 3000 : 2700),
+            };
+          } else if (element.element_type === 'door') {
+            const door = element as any;
+            properties = {
+              ...properties,
+              subType: door.door_type,
+              width_mm: door.width_px * scalingResult.scaling_factor,
+              height_mm: 2000,
+            };
+          } else if (element.element_type === 'window') {
+            const window = element as any;
+            properties = {
+              ...properties,
+              subType: window.window_type,
+              width_mm: window.width_px * scalingResult.scaling_factor,
+              height_mm: window.height_px ? window.height_px * scalingResult.scaling_factor : 1200,
+              sill_height_mm: window.sill_height_mm || 900,
+            };
+          } else if (element.element_type === 'room') {
+            const room = element as any;
+            properties = {
+              ...properties,
+              room_label: room.room_label,
+              room_number: room.room_type,
+            };
+          }
+
+          return {
+            id: `elem_${idx}`,
+            type: element.element_type,
+            geometry: {
+              type: element.element_type === 'wall' ? 'line' : element.element_type === 'room' ? 'polygon' : 'point',
+              coordinates_mm: (element as any).coordinates_mm,
+            },
+            properties,
+            metadata: {
+              confidence: element.confidence,
+            },
+          } as GeometricElement;
+        });
+
+        // Create elements in batch
+        revitMCPResult = await revitClient.createElementsBatch(geometricElements, {
+          level: revit_level,
+          stopOnError: stop_on_error,
+          onProgress: (progress) => {
+            console.log(`  Progress: ${progress.current}/${progress.total} - Creating ${progress.element.type} (${progress.element.id})`);
+          },
+        });
+
+        console.log(`  ✓ Created ${revitMCPResult.successCount}/${revitMCPResult.totalElements} elements`);
+        if (revitMCPResult.failureCount > 0) {
+          console.log(`  ⚠ ${revitMCPResult.failureCount} elements failed to create`);
+          revitMCPResult.errors.forEach((err) => {
+            console.log(`    - Element ${err.index}: ${err.error}`);
+            warnings.push(`MCP: Element ${err.index} failed - ${err.error}`);
+          });
+        }
+        console.log();
+      } else {
+        console.log('  ⚠ Revit MCP server not available - falling back to JSON/CSV export');
+        warnings.push('Revit MCP was enabled but server is not available');
+        console.log();
+      }
+    }
+
+    // STEP 8: Generate Revit outputs (JSON/CSV)
+    console.log('[8/8] Generating Revit outputs (JSON/CSV)...');
 
     const revitData = {
       metadata: {
@@ -493,6 +634,9 @@ export async function processMastraAIPipeline(
       scaling_confidence: scalingResult.confidence,
       revit_json_path: jsonPath,
       revit_csv_path: csvPath,
+      revit_mcp_enabled: enable_revit_mcp,
+      revit_mcp_available: revitMCPAvailable,
+      revit_mcp_result: revitMCPResult,
       processing_time_ms: processingTime,
       errors,
       warnings,

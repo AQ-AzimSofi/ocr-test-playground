@@ -36,7 +36,6 @@ export function parseGeminiCoordinates(response: string): GeminiCoordinate[] {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    // Try to parse the format: TEXT|top|left|width|height
     const parts = trimmed.split('|');
 
     if (parts.length >= 5) {
@@ -46,7 +45,6 @@ export function parseGeminiCoordinates(response: string): GeminiCoordinate[] {
       const width = parseFloat(parts[3]);
       const height = parseFloat(parts[4]);
 
-      // Validate that numbers are reasonable percentages
       if (
         !isNaN(top) &&
         !isNaN(left) &&
@@ -89,7 +87,6 @@ export function parseGeminiValidation(
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim().toLowerCase();
 
-    // Detect section headers
     if (
       line.includes('missing') ||
       line.includes('not found') ||
@@ -109,7 +106,6 @@ export function parseGeminiValidation(
       continue;
     }
 
-    // Skip empty lines
     if (!line) {
       continue;
     }
@@ -126,7 +122,6 @@ export function parseGeminiValidation(
         : line.replace(/^[-*•]\s*/, '').trim();
 
       if (text) {
-        // Try to extract location description
         const locationMatch = line.match(/(?:at|near|in|on|の)\s+([^,.)]+)/i);
         const locationDescription = locationMatch
           ? locationMatch[1].trim()
@@ -142,7 +137,6 @@ export function parseGeminiValidation(
     // - "配肪" → "配筋"
     // - Incorrect: "寸法" (should be "す法") near the ruler
     if (currentSection === 'incorrect') {
-      // Try various formats
       let found = '';
       let shouldBe = '';
       let locationDescription: string | undefined;
@@ -176,7 +170,6 @@ export function parseGeminiValidation(
       }
 
       if (found && shouldBe) {
-        // Try to extract location
         const locationMatch = line.match(/(?:at|near|in|on|の)\s+([^,.)]+)/i);
         locationDescription = locationMatch
           ? locationMatch[1].trim()
@@ -196,7 +189,6 @@ export function parseGeminiValidation(
 export function cleanGeminiCommentary(response: string): string {
   let cleaned = response.trim();
 
-  // Remove common preambles (case-insensitive)
   const preambles = [
     /^here\s+is\s+the\s+extracted\s+text:?\s*/i,
     /^extracted\s+text:?\s*/i,
@@ -212,7 +204,6 @@ export function cleanGeminiCommentary(response: string): string {
     cleaned = cleaned.replace(pattern, '');
   }
 
-  // Remove common postambles
   const postambles = [
     /\s*is\s+this\s+helpful\?$/i,
     /\s*let\s+me\s+know\s+if.*$/i,
@@ -230,13 +221,11 @@ export function cleanGeminiCommentary(response: string): string {
  * Check if Gemini response contains coordinate data
  */
 export function hasCoordinateFormat(response: string): boolean {
-  // Look for pipe-separated format with numbers
   const lines = response.split('\n');
 
   for (const line of lines) {
     const parts = line.split('|');
     if (parts.length >= 5) {
-      // Check if parts 1-4 are numbers
       const numbers = parts.slice(1, 5).map((p) => parseFloat(p.trim()));
       if (numbers.every((n) => !isNaN(n))) {
         return true;
@@ -287,17 +276,13 @@ export function segmentText(
   const tokens = text.split(/\s+/);
 
   for (const token of tokens) {
-    // For Japanese text (mixed with ASCII), treat each character as a word
-    // For pure ASCII, treat whole token as a word
     if (
       /[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf]/.test(
         token
       )
     ) {
-      // Contains Japanese characters - split into individual chars
       segments.push(...token.split(''));
     } else {
-      // ASCII word
       if (token.length > 0) {
         segments.push(token);
       }
@@ -316,7 +301,6 @@ export function extractTextBlocks(
 ): Array<{ text: string; metadata?: any }> {
   const blocks: Array<{ text: string; metadata?: any }> = [];
 
-  // Try to find quoted text blocks
   const quotedPattern = /[「"']([^「"']+)[」"']/g;
   let match;
 
@@ -324,12 +308,10 @@ export function extractTextBlocks(
     blocks.push({ text: match[1] });
   }
 
-  // If no quoted blocks found, split by lines and filter
   if (blocks.length === 0) {
     const lines = response.split('\n');
     for (const line of lines) {
       const trimmed = line.trim();
-      // Skip short lines, section headers, and commentary
       if (
         trimmed.length > 0 &&
         !trimmed.match(

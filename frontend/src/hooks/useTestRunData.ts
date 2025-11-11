@@ -10,18 +10,63 @@ export function useTestRunData(testRunId: string | undefined) {
   const { data, isLoading, error } = useTestRun(testRunId);
   const [leftTool, setLeftTool] = useState<string | null>(null);
   const [rightTool, setRightTool] = useState<string | null>(null);
+  const [selectedDrawingIndex, setSelectedDrawingIndex] = useState<number>(0);
 
-  // Extract comparison data
   const testRun = data?.data?.testRun;
   const comparisons = data?.data?.comparisons;
   const aggregateStats = data?.data?.aggregateStats;
 
-  // Check if data is available
-  const hasData = !!(comparisons && comparisons.length > 0 && comparisons[0].tools);
-  const firstDrawing = hasData ? comparisons[0] : null;
-  const tools = firstDrawing?.tools.map((t) => t.tool) || [];
+  const totalDrawings = testRun?.drawings?.length || 0;
 
-  // Auto-select first two tools when data loads
+  const validDrawingIndex = Math.min(selectedDrawingIndex, totalDrawings - 1);
+
+  const drawing = testRun?.drawings?.[validDrawingIndex];
+
+  const currentDrawing = drawing && comparisons
+    ? comparisons.find(c => c.drawingId === drawing.drawingId)
+    : null;
+
+  const tools = (currentDrawing?.tools && currentDrawing.tools.length > 0)
+    ? currentDrawing.tools.map((t) => t.tool)
+    : [];
+
+  const hasData = !!(
+    drawing &&
+    currentDrawing &&
+    currentDrawing.tools &&
+    currentDrawing.tools.length > 0
+  );
+
+  // Debug logging in development
+  if (process.env.NODE_ENV === 'development') {
+    if (drawing) {
+      console.log('[useTestRunData] Current drawing:', {
+        drawingIndex: validDrawingIndex,
+        fileName: drawing.fileName,
+        drawingId: drawing.drawingId,
+        toolsCount: tools.length,
+        tools: tools,
+        hasData,
+      });
+    }
+
+    if (!hasData && drawing) {
+      if (!currentDrawing) {
+        console.warn('[useTestRunData] No comparison data found for drawing', {
+          drawingId: drawing.drawingId,
+          fileName: drawing.fileName,
+          availableComparisons: comparisons?.map(c => c.drawingId),
+        });
+      } else if (!currentDrawing.tools || currentDrawing.tools.length === 0) {
+        console.warn('[useTestRunData] Comparison exists but has no tool data', {
+          drawingId: drawing.drawingId,
+          fileName: drawing.fileName,
+          currentDrawing: currentDrawing,
+        });
+      }
+    }
+  }
+
   useEffect(() => {
     if (tools.length > 0 && !leftTool) {
       setLeftTool(tools[0]);
@@ -31,18 +76,14 @@ export function useTestRunData(testRunId: string | undefined) {
     }
   }, [tools, leftTool, rightTool]);
 
-  // Get result data for selected tools
-  const leftToolData = firstDrawing?.tools.find((t) => t.tool === leftTool);
-  const rightToolData = firstDrawing?.tools.find((t) => t.tool === rightTool);
+  const leftToolData = currentDrawing?.tools.find((t) => t.tool === leftTool);
+  const rightToolData = currentDrawing?.tools.find((t) => t.tool === rightTool);
 
-  // Get bounding boxes from API response
   const leftBoundingBoxes: BoundingBox[] =
     leftToolData?.result.boundingBoxes || [];
   const rightBoundingBoxes: BoundingBox[] =
     rightToolData?.result.boundingBoxes || [];
 
-  // Get drawing info
-  const drawing = testRun?.drawings?.[0];
   const imageUrl = drawing ? apiClient.getImageURL(drawing.filePath) : '';
 
   return {
@@ -70,5 +111,11 @@ export function useTestRunData(testRunId: string | undefined) {
     // Drawing data
     drawing,
     imageUrl,
+
+    // Drawing navigation
+    selectedDrawingIndex: validDrawingIndex,
+    setSelectedDrawingIndex,
+    totalDrawings,
+    allDrawings: testRun?.drawings || [],
   };
 }

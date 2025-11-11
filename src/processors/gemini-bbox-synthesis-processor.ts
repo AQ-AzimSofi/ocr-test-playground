@@ -22,12 +22,10 @@ export async function processWithGeminiBboxSynthesis(
   const startTime = Date.now();
 
   try {
-    // Get image dimensions
     const metadata = await sharp(imagePath).metadata();
     const imageWidth = metadata.width || 1000;
     const imageHeight = metadata.height || 1000;
 
-    // Run both Gemini and Cloud Vision in parallel
     console.log(`  Running Gemini and Cloud Vision in parallel...`);
     const [geminiResult, cloudVisionBboxes] = await Promise.all([
       geminiClient.extractText(imagePath),
@@ -44,7 +42,6 @@ export async function processWithGeminiBboxSynthesis(
       confidence: bbox.confidence,
     }));
 
-    // Segment Gemini text into matchable units (words/characters)
     const geminiSegments = segmentText(geminiResult.text, 'word');
 
     console.log(
@@ -62,14 +59,11 @@ export async function processWithGeminiBboxSynthesis(
     const unmatchedSegments: string[] = [];
     const matchedSegmentIndices = new Set<number>();
 
-    // First pass: Match Gemini segments to Cloud Vision bboxes
     for (let i = 0; i < geminiSegments.length; i++) {
       const segment = geminiSegments[i];
 
-      // Skip whitespace-only segments
       if (!segment.trim()) continue;
 
-      // Try to find matching bbox
       const match = fuzzyMatchTextToBbox(segment, cvBboxes, 0.6);
 
       if (match) {
@@ -93,18 +87,16 @@ export async function processWithGeminiBboxSynthesis(
     console.log(`  Matched: ${matchedBboxes.length} segments`);
     console.log(`  Unmatched: ${unmatchedSegments.length} segments`);
 
-    // Second pass: Synthesize bboxes for unmatched segments
     if (unmatchedSegments.length > 0 && cvBboxes.length > 0) {
       console.log(`  Synthesizing bboxes for unmatched segments...`);
 
       const charDimensions = calculateAverageCharDimensions(cvBboxes);
 
       for (const unmatchedText of unmatchedSegments) {
-        // Synthesize bbox based on available context
         const synthesizedBbox = synthesizeBboxForText(
           unmatchedText,
           cvBboxes,
-          undefined, // No estimated position
+          undefined,
           imageWidth,
           imageHeight
         );
@@ -124,7 +116,6 @@ export async function processWithGeminiBboxSynthesis(
       console.log(`  Synthesized ${unmatchedSegments.length} bboxes`);
     }
 
-    // If no Cloud Vision bboxes available, create estimated bboxes for all Gemini text
     if (cvBboxes.length === 0 && geminiSegments.length > 0) {
       console.log(
         `  No Cloud Vision bboxes available, estimating all bboxes...`

@@ -15,7 +15,7 @@ export interface BoundingBox {
 export interface CropRegion {
   bounds: BoundingBox[];
   text: string;
-  confidence: number;
+  confidence?: number;
   index: number;
 }
 

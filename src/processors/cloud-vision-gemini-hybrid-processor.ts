@@ -31,7 +31,6 @@ export async function processWithCloudVisionGeminiHybrid(
   const startTime = Date.now();
 
   try {
-    // Step 1: Run Cloud Vision to get all regions with confidence
     const cloudVisionBBoxes =
       await cloudVisionClient.extractTextWithBoundingBoxes(imagePath);
     const cloudVisionText = cloudVisionBBoxes.map((b) => b.text).join('\n');
@@ -40,7 +39,6 @@ export async function processWithCloudVisionGeminiHybrid(
       `  Cloud Vision: ${cloudVisionBBoxes.length} regions, ${cloudVisionText.length} chars`
     );
 
-    // Step 2: Separate high/low confidence regions
     const LOW_CONFIDENCE_THRESHOLD = 0.85;
 
     const highConfidenceRegions: CropRegion[] = [];
@@ -71,7 +69,6 @@ export async function processWithCloudVisionGeminiHybrid(
       `  Low confidence: ${lowConfidenceRegions.length} regions (${lowConfidencePercentage.toFixed(1)}%)`
     );
 
-    // Step 3: Crop low-confidence regions from image
     let croppedRegions = [];
     let geminiCorrectedTexts = new Map<number, string>();
     let geminiCost = 0;
@@ -86,7 +83,6 @@ export async function processWithCloudVisionGeminiHybrid(
         10
       );
 
-      // Step 4: Send crops to Gemini for re-extraction
       console.log(`  Sending ${croppedRegions.length} regions to Gemini...`);
 
       const geminiInputs = croppedRegions.map((cropped) => ({
@@ -97,7 +93,6 @@ export async function processWithCloudVisionGeminiHybrid(
       const geminiResults =
         await geminiClient.batchExtractTextFromRegions(geminiInputs);
 
-      // Step 5: Build map of corrected texts
       croppedRegions.forEach((cropped, i) => {
         const geminiText = geminiResults[i].text;
         geminiCorrectedTexts.set(cropped.region.index, geminiText);
@@ -111,7 +106,6 @@ export async function processWithCloudVisionGeminiHybrid(
       );
     }
 
-    // Step 6: Merge results - build final text and bounding boxes
     const allRegions = cloudVisionBBoxes.map(
       (bbox, index): CropRegion => ({
         bounds: bbox.bounds,
@@ -123,7 +117,6 @@ export async function processWithCloudVisionGeminiHybrid(
 
     const finalText = mergeRegionTexts(allRegions, geminiCorrectedTexts);
 
-    // Calculate average confidence
     const avgConfidence =
       cloudVisionBBoxes.length > 0
         ? cloudVisionBBoxes.reduce(
@@ -134,11 +127,9 @@ export async function processWithCloudVisionGeminiHybrid(
 
     const processingTime = Date.now() - startTime;
 
-    // Estimate combined cost
     const cloudVisionCost = cloudVisionClient.estimateCost(1);
     const estimatedCost = cloudVisionCost + geminiCost;
 
-    // Save to database with enhanced metadata
     const [dbResult] = await db
       .insert(extractionResults)
       .values({

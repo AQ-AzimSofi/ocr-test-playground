@@ -9,13 +9,11 @@ export async function processWithGemini(imagePath: string, drawingId: string) {
   const startTime = Date.now();
 
   try {
-    // Extract text using Gemini
     const result = await geminiClient.extractText(imagePath);
 
     const processingTime = Date.now() - startTime;
     const estimatedCost = geminiClient.estimateCost(1);
 
-    // Save to database (only raw text, no semantic extraction)
     const [dbResult] = await db
       .insert(extractionResults)
       .values({
