@@ -5,6 +5,9 @@ import {
   extractionResults,
   accuracyMetrics,
   testDrawings,
+  toolComparisons,
+  geometricObjects,
+  elementRelationships,
 } from '../../db/index.js';
 import { eq, inArray, desc } from 'drizzle-orm';
 
@@ -241,4 +244,103 @@ export const testRunsRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
   });
+
+  // DELETE /api/test-runs/:id - Delete test run and all related data (except drawings)
+  fastify.delete<{ Params: { id: string } }>(
+    '/:id',
+    async (request, reply) => {
+      try {
+        const { id } = request.params;
+
+        // Get the test run to find which drawings were involved
+        const [testRun] = await db
+          .select()
+          .from(testRuns)
+          .where(eq(testRuns.id, id))
+          .limit(1);
+
+        if (!testRun) {
+          return reply.status(404).send({
+            success: false,
+            error: `Test run not found: ${id}`,
+          });
+        }
+
+        const drawingIds = testRun.drawingIds || [];
+
+        if (drawingIds.length === 0) {
+          // No drawings, just delete the test run
+          await db.delete(testRuns).where(eq(testRuns.id, id));
+          return {
+            success: true,
+            message: 'Test run deleted successfully',
+          };
+        }
+
+        // Get all extraction results for these drawings
+        const results = await db
+          .select()
+          .from(extractionResults)
+          .where(inArray(extractionResults.drawingId, drawingIds));
+
+        const resultIds = results.map((r) => r.id);
+
+        // Delete in order to respect foreign key constraints:
+        if (resultIds.length > 0) {
+          // 1. Delete element relationships (references geometric objects)
+          const geoObjects = await db
+            .select()
+            .from(geometricObjects)
+            .where(inArray(geometricObjects.extractionResultId, resultIds));
+
+          const geoObjectIds = geoObjects.map((g) => g.id);
+
+          if (geoObjectIds.length > 0) {
+            await db
+              .delete(elementRelationships)
+              .where(
+                inArray(elementRelationships.sourceObjectId, geoObjectIds)
+              );
+
+            // 2. Delete geometric objects (references extraction results)
+            await db
+              .delete(geometricObjects)
+              .where(inArray(geometricObjects.extractionResultId, resultIds));
+          }
+
+          // 3. Delete accuracy metrics (references extraction results)
+          await db
+            .delete(accuracyMetrics)
+            .where(inArray(accuracyMetrics.extractionResultId, resultIds));
+
+          // 4. Delete tool comparisons for these drawings
+          await db
+            .delete(toolComparisons)
+            .where(inArray(toolComparisons.drawingId, drawingIds));
+
+          // 5. Delete extraction results
+          await db
+            .delete(extractionResults)
+            .where(inArray(extractionResults.drawingId, drawingIds));
+        }
+
+        // 6. Finally, delete the test run itself
+        await db.delete(testRuns).where(eq(testRuns.id, id));
+
+        fastify.log.info(`Test run ${id} deleted successfully`);
+
+        return {
+          success: true,
+          message: 'Test run and all related data deleted successfully',
+          deletedDrawingIds: drawingIds,
+        };
+      } catch (error) {
+        fastify.log.error(error);
+        reply.status(500).send({
+          success: false,
+          error: 'Failed to delete test run',
+        });
+      }
+    }
+  );
 };

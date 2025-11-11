@@ -7,6 +7,9 @@ import { CheckmarkIcon } from './icons';
 interface TestRunCardProps {
   testRun: TestRun;
   isLatest?: boolean;
+  isSelected?: boolean;
+  onSelect?: (id: string, selected: boolean) => void;
+  onDelete?: (id: string) => void;
 }
 
 const TOOL_COLORS: Record<string, string> = {
@@ -23,7 +26,13 @@ const TOOL_COLORS: Record<string, string> = {
     'bg-gradient-to-r from-teal-100 to-purple-100 text-purple-800 border-purple-300',
 };
 
-export function TestRunCard({ testRun, isLatest = false }: TestRunCardProps) {
+export function TestRunCard({
+  testRun,
+  isLatest = false,
+  isSelected = false,
+  onSelect,
+  onDelete,
+}: TestRunCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const startedAt = new Date(testRun.startedAt);
@@ -35,16 +44,45 @@ export function TestRunCard({ testRun, isLatest = false }: TestRunCardProps) {
   const hasDrawings = (testRun.drawings?.length || 0) > 0;
   const drawingName = testRun.drawings?.[0]?.fileName || 'Unknown drawing';
 
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    onSelect?.(testRun.id, e.target.checked);
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onDelete?.(testRun.id);
+  };
+
   return (
     <Link to={`/test-run/${testRun.id}`}>
       <div
-        className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-200 p-6 cursor-pointer border border-gray-200 hover:border-blue-400"
+        className={`bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-200 p-6 cursor-pointer border ${
+          isSelected
+            ? 'border-blue-500 ring-2 ring-blue-200'
+            : 'border-gray-200 hover:border-blue-400'
+        }`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
+          <div className="flex items-start gap-3 flex-1">
+            {/* Checkbox */}
+            {onSelect && (
+              <div className="pt-1">
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={handleCheckboxChange}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                />
+              </div>
+            )}
+
+            <div className="flex-1">
             <div className="flex items-center gap-2 mb-2 flex-wrap">
               {/* Latest Badge */}
               {isLatest && (
@@ -83,7 +121,31 @@ export function TestRunCard({ testRun, isLatest = false }: TestRunCardProps) {
                 <span>Quality: {testRun.drawings![0].quality}</span>
               </div>
             )}
+            </div>
           </div>
+
+          {/* Delete Button */}
+          {onDelete && (
+            <button
+              onClick={handleDelete}
+              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              title="Delete test run"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Tools Section */}

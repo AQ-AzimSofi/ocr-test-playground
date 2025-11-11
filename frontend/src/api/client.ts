@@ -65,6 +65,17 @@ class APIClient {
     return this.request(`/api/test-runs/${id}`);
   }
 
+  async deleteTestRun(id: string) {
+    return this.request(`/api/test-runs/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async deleteTestRuns(ids: string[]) {
+    // Delete multiple test runs in parallel
+    return Promise.all(ids.map((id) => this.deleteTestRun(id)));
+  }
+
   // Image URL helper
   getImageURL(filePathOrName: string) {
     // If it's a full path, extract the relative path after 'test-drawings/'

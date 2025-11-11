@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
 import type {
   APIResponse,
@@ -55,5 +55,30 @@ export const useTestRun = (id: string | undefined) => {
     queryFn: () =>
       apiClient.getTestRun(id!) as Promise<APIResponse<TestRunDetails>>,
     enabled: !!id,
+  });
+};
+
+// Mutations
+export const useDeleteTestRun = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => apiClient.deleteTestRun(id),
+    onSuccess: () => {
+      // Invalidate test runs query to refetch the list
+      queryClient.invalidateQueries({ queryKey: ['test-runs'] });
+    },
+  });
+};
+
+export const useDeleteTestRuns = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: string[]) => apiClient.deleteTestRuns(ids),
+    onSuccess: () => {
+      // Invalidate test runs query to refetch the list
+      queryClient.invalidateQueries({ queryKey: ['test-runs'] });
+    },
   });
 };
