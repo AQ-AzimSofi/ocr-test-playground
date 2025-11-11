@@ -67,31 +67,26 @@ async function drawGridOverlay(
   imagePath: string,
   gridConfig: GridConfig = DEFAULT_GRID
 ): Promise<{ path: string; width: number; height: number }> {
-  // Load original image
   const image = sharp(imagePath);
   const metadata = await image.metadata();
   const width = metadata.width || 1000;
   const height = metadata.height || 1000;
 
-  // Create grid SVG
   const cellWidth = width / gridConfig.cols;
   const cellHeight = height / gridConfig.rows;
 
   let gridSvg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
 
-  // Draw vertical lines
   for (let i = 0; i <= gridConfig.cols; i++) {
     const x = i * cellWidth;
     gridSvg += `<line x1="${x}" y1="0" x2="${x}" y2="${height}" stroke="rgb(${gridConfig.color.r},${gridConfig.color.g},${gridConfig.color.b})" stroke-width="1" opacity="${gridConfig.opacity}" />`;
   }
 
-  // Draw horizontal lines
   for (let i = 0; i <= gridConfig.rows; i++) {
     const y = i * cellHeight;
     gridSvg += `<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="rgb(${gridConfig.color.r},${gridConfig.color.g},${gridConfig.color.b})" stroke-width="1" opacity="${gridConfig.opacity}" />`;
   }
 
-  // Add column labels (A-Z, AA-AZ, BA-BZ, etc.)
   const fontSize = Math.min(cellWidth, cellHeight) * 0.3;
   for (let i = 0; i < gridConfig.cols; i++) {
     const x = i * cellWidth + cellWidth / 2;
@@ -99,7 +94,6 @@ async function drawGridOverlay(
     gridSvg += `<text x="${x}" y="${fontSize}" text-anchor="middle" fill="rgb(${gridConfig.color.r},${gridConfig.color.g},${gridConfig.color.b})" font-size="${fontSize}" opacity="${gridConfig.opacity * 1.5}">${label}</text>`;
   }
 
-  // Add row labels (1-20)
   for (let i = 0; i < gridConfig.rows; i++) {
     const y = i * cellHeight + cellHeight / 2 + fontSize / 3;
     const label = (i + 1).toString();
@@ -108,7 +102,6 @@ async function drawGridOverlay(
 
   gridSvg += '</svg>';
 
-  // Composite grid over original image
   const gridBuffer = Buffer.from(gridSvg);
   const outputPath = path.join(os.tmpdir(), `grid-overlay-${Date.now()}.png`);
 
@@ -152,7 +145,6 @@ function gridCellToCoordinates(
   const cellWidth = imageWidth / gridConfig.cols;
   const cellHeight = imageHeight / gridConfig.rows;
 
-  // Return center of cell
   return {
     x: col * cellWidth + cellWidth / 2,
     y: row * cellHeight + cellHeight / 2,
@@ -163,22 +155,20 @@ export async function processWithGeminiGridOverlay(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`  🧪 EXPERIMENT: Grid Overlay Processor`);
+  console.log(`  EXPERIMENT: Grid Overlay Processor`);
   const startTime = Date.now();
 
   let gridImagePath: string | null = null;
 
   try {
-    // Create grid overlay
     console.log(
-      `  🎨 Drawing ${DEFAULT_GRID.rows}x${DEFAULT_GRID.cols} grid overlay...`
+      `  Drawing ${DEFAULT_GRID.rows}x${DEFAULT_GRID.cols} grid overlay...`
     );
     const gridImage = await drawGridOverlay(imagePath, DEFAULT_GRID);
     gridImagePath = gridImage.path;
 
-    console.log(`  📐 Grid created: ${gridImage.width}x${gridImage.height}px`);
+    console.log(`  Grid created: ${gridImage.width}x${gridImage.height}px`);
 
-    // Craft prompt for grid-based coordinate extraction
     const gridLabels = Array.from({ length: DEFAULT_GRID.cols }, (_, i) =>
       getColumnLabel(i)
     ).join(', ');
@@ -215,9 +205,8 @@ RULES:
 - Pay special attention to vertical text on the left and right margins
 - NO explanations, NO comments, JUST the formatted data`;
 
-    console.log(`  📡 Sending grid image to Gemini (this may take 30-60s)...`);
+    console.log(`  Sending grid image to Gemini (this may take 30-60s)...`);
 
-    // Add timeout to prevent hanging
     const timeoutMs = 90000; // 90 seconds
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(
@@ -231,10 +220,9 @@ RULES:
       timeoutPromise,
     ])) as string;
 
-    console.log(`  ✅ Gemini response received`);
-    console.log(`  📋 Response preview: ${response.substring(0, 200)}...`);
+    console.log(`  Gemini response received`);
+    console.log(`  Response preview: ${response.substring(0, 200)}...`);
 
-    // Parse response
     const lines = response.split('\n');
     const parsedEntries: Array<{
       text: string;
@@ -266,12 +254,10 @@ RULES:
     }
 
     console.log(
-      `  📊 Parsed ${parsedEntries.length} entries with grid coordinates`
+      `  Parsed ${parsedEntries.length} entries with grid coordinates`
     );
 
-    // Convert to bounding boxes (orientation-aware)
     const boundingBoxes = parsedEntries.map((entry) => {
-      // Estimate bbox size based on text length and orientation
       const charWidth = gridImage.width / DEFAULT_GRID.cols / 5; // Approx 5 chars per cell
       const charHeight = gridImage.height / DEFAULT_GRID.rows / 3;
 
@@ -279,11 +265,9 @@ RULES:
       let height: number;
 
       if (entry.orientation === 'V') {
-        // Vertical text: swap width and height
         width = charHeight * 1.5;
         height = entry.text.length * charWidth;
       } else {
-        // Horizontal text: standard calculation
         width = entry.text.length * charWidth;
         height = charHeight * 1.5;
       }
@@ -309,13 +293,11 @@ RULES:
       };
     });
 
-    // Reconstruct full text
     const fullText = parsedEntries.map((e) => e.text).join('\n');
 
     const processingTime = Date.now() - startTime;
     const geminiCost = geminiClient.estimateCost(1);
 
-    // Save to database
     const [dbResult] = await db
       .insert(extractionResults)
       .values({
@@ -336,7 +318,7 @@ RULES:
       .returning();
 
     console.log(
-      `  ✅ Grid Overlay completed in ${(processingTime / 1000).toFixed(2)}s`
+      `  Grid Overlay completed in ${(processingTime / 1000).toFixed(2)}s`
     );
     console.log(
       `     Extracted ${boundingBoxes.length} text elements with grid references`
@@ -352,16 +334,15 @@ RULES:
       cost: geminiCost,
     };
   } catch (error) {
-    console.error(`  ❌ Grid Overlay failed:`, error);
+    console.error(`  Grid Overlay failed:`, error);
     throw error;
   } finally {
-    // Clean up temporary grid image
     if (gridImagePath && fs.existsSync(gridImagePath)) {
       try {
         fs.unlinkSync(gridImagePath);
       } catch (err) {
         console.warn(
-          `  ⚠️  Could not delete temporary grid image: ${gridImagePath}`
+          `  Could not delete temporary grid image: ${gridImagePath}`
         );
       }
     }

@@ -10,58 +10,35 @@ import {
 } from '../../utils/bbox-estimator.js';
 import { segmentText } from '../../utils/gemini-parser.js';
 
-/**
- * EXPERIMENTAL: Gemini Template Matching Processor
- *
- * Strategy:
- * 1. Gemini extracts all text (superior detection)
- * 2. Cloud Vision provides baseline bboxes
- * 3. Fuzzy match Gemini text to Cloud Vision bboxes
- * 4. For unmatched text: Use spatial search in likely regions
- *
- * NOTE: True template matching would require OpenCV for:
- * - Rendering text as template images
- * - matchTemplate() for pixel-level matching
- * - Scale and rotation invariant matching
- *
- * This implementation uses a hybrid approach:
- * - Fuzzy text matching (fast, no OpenCV needed)
- * - Spatial heuristics for unmatched text
- * - Future: Can be enhanced with OpenCV when available
- */
 export async function processWithGeminiTemplateMatching(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`  🧪 EXPERIMENT: Template Matching Processor`);
+  console.log(`  EXPERIMENT: Template Matching Processor`);
   const startTime = Date.now();
 
   try {
-    // Get image dimensions
     const metadata = await sharp(imagePath).metadata();
     const imageWidth = metadata.width || 1000;
     const imageHeight = metadata.height || 1000;
 
-    // Run Gemini and Cloud Vision in parallel
-    console.log(`  📡 Running Gemini + Cloud Vision in parallel...`);
+    console.log(`  Running Gemini + Cloud Vision in parallel...`);
     const [geminiResult, cloudVisionBboxes] = await Promise.all([
       geminiClient.extractText(imagePath),
       cloudVisionClient.extractTextWithBoundingBoxes(imagePath),
     ]);
 
-    console.log(`  📊 Gemini extracted: ${geminiResult.text.length} chars`);
-    console.log(`  📊 Cloud Vision found: ${cloudVisionBboxes.length} bboxes`);
+    console.log(`  Gemini extracted: ${geminiResult.text.length} chars`);
+    console.log(`  Cloud Vision found: ${cloudVisionBboxes.length} bboxes`);
 
-    // Convert Cloud Vision bboxes to internal format
     const cvBboxes: BoundingBox[] = cloudVisionBboxes.map((bbox) => ({
       bounds: bbox.bounds,
       text: bbox.text,
       confidence: bbox.confidence,
     }));
 
-    // Segment Gemini text for matching
     const geminiSegments = segmentText(geminiResult.text, 'word');
-    console.log(`  🔍 Matching ${geminiSegments.length} Gemini segments...`);
+    console.log(`  Matching ${geminiSegments.length} Gemini segments...`);
 
     const finalBboxes: Array<{
       text: string;
@@ -76,7 +53,6 @@ export async function processWithGeminiTemplateMatching(
       index: number;
     }> = [];
 
-    // Phase 1: Fuzzy match Gemini text to Cloud Vision bboxes
     for (let i = 0; i < geminiSegments.length; i++) {
       const segment = geminiSegments[i];
       if (!segment.trim()) continue;
@@ -100,27 +76,20 @@ export async function processWithGeminiTemplateMatching(
       }
     }
 
-    console.log(`  ✅ Fuzzy matched: ${finalBboxes.length} segments`);
-    console.log(`  ⚠️  Unmatched: ${unmatchedSegments.length} segments`);
+    console.log(`  Fuzzy matched: ${finalBboxes.length} segments`);
+    console.log(`  Unmatched: ${unmatchedSegments.length} segments`);
 
-    // Phase 2: Spatial search for unmatched segments
-    // Use positions of matched text to estimate where unmatched text might be
     if (unmatchedSegments.length > 0 && finalBboxes.length > 0) {
-      console.log(`  🔎 Performing spatial search for unmatched segments...`);
+      console.log(`  Performing spatial search for unmatched segments...`);
 
       const charDimensions = calculateAverageCharDimensions(cvBboxes);
 
       for (const unmatched of unmatchedSegments) {
-        // Strategy: Look for patterns in matched text positions
-        // Find closest matched segments and estimate position
-
         const unmatchedIndex = unmatched.index;
 
-        // Find matched segments before and after this unmatched one
         let beforeMatch: (typeof finalBboxes)[0] | null = null;
         let afterMatch: (typeof finalBboxes)[0] | null = null;
 
-        // Search backwards for closest match
         for (let i = unmatchedIndex - 1; i >= 0; i--) {
           const segment = geminiSegments[i];
           const found = finalBboxes.find((b) => b.text === segment);
@@ -130,7 +99,6 @@ export async function processWithGeminiTemplateMatching(
           }
         }
 
-        // Search forwards for closest match
         for (let i = unmatchedIndex + 1; i < geminiSegments.length; i++) {
           const segment = geminiSegments[i];
           const found = finalBboxes.find((b) => b.text === segment);
@@ -140,11 +108,9 @@ export async function processWithGeminiTemplateMatching(
           }
         }
 
-        // Estimate position based on neighbors
         let estimatedBbox: BoundingBox;
 
         if (beforeMatch && afterMatch) {
-          // Interpolate between before and after
           const beforeCentroid = {
             x: (beforeMatch.bounds[0].x + beforeMatch.bounds[1].x) / 2,
             y: (beforeMatch.bounds[0].y + beforeMatch.bounds[2].y) / 2,
@@ -179,7 +145,6 @@ export async function processWithGeminiTemplateMatching(
             },
           });
         } else if (beforeMatch) {
-          // Extrapolate from before match
           estimatedBbox = synthesizeBboxForText(
             unmatched.text,
             [
@@ -205,7 +170,6 @@ export async function processWithGeminiTemplateMatching(
             },
           });
         } else if (afterMatch) {
-          // Extrapolate from after match
           estimatedBbox = synthesizeBboxForText(
             unmatched.text,
             [
@@ -231,7 +195,6 @@ export async function processWithGeminiTemplateMatching(
             },
           });
         } else {
-          // No neighbors, use general synthesis
           estimatedBbox = synthesizeBboxForText(
             unmatched.text,
             cvBboxes,
@@ -252,10 +215,9 @@ export async function processWithGeminiTemplateMatching(
         }
       }
 
-      console.log(`  ✅ Spatial search completed`);
+      console.log(`  Spatial search completed`);
     }
 
-    // Calculate costs and stats
     const processingTime = Date.now() - startTime;
     const geminiCost = geminiClient.estimateCost(1);
     const cloudVisionCost = cloudVisionClient.estimateCost(1);
@@ -272,7 +234,6 @@ export async function processWithGeminiTemplateMatching(
       estimated: finalBboxes.filter((b) => b.bboxSource === 'estimated').length,
     };
 
-    // Save to database
     const [dbResult] = await db
       .insert(extractionResults)
       .values({
@@ -295,7 +256,7 @@ export async function processWithGeminiTemplateMatching(
       .returning();
 
     console.log(
-      `  ✅ Template Matching completed in ${(processingTime / 1000).toFixed(2)}s`
+      `  Template Matching completed in ${(processingTime / 1000).toFixed(2)}s`
     );
     console.log(`     Generated ${finalBboxes.length} bboxes:`);
     console.log(`       - ${bboxSourceCounts.ocr} from OCR match`);
@@ -317,7 +278,7 @@ export async function processWithGeminiTemplateMatching(
       },
     };
   } catch (error) {
-    console.error(`  ❌ Template Matching failed:`, error);
+    console.error(`  Template Matching failed:`, error);
     throw error;
   }
 }

@@ -27,18 +27,16 @@ export async function processWithGeminiMultiOCRFusion(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`  🧪 EXPERIMENT: Multi-OCR Fusion Processor`);
+  console.log(`  EXPERIMENT: Multi-OCR Fusion Processor`);
   const startTime = Date.now();
 
   try {
-    // Get image dimensions
     const metadata = await sharp(imagePath).metadata();
     const imageWidth = metadata.width || 1000;
     const imageHeight = metadata.height || 1000;
 
-    // Run ALL OCR tools in parallel
     console.log(
-      `  📡 Running Gemini + Cloud Vision + Azure Read + Azure Layout...`
+      `  Running Gemini + Cloud Vision + Azure Read + Azure Layout...`
     );
     const [
       geminiResult,
@@ -52,16 +50,15 @@ export async function processWithGeminiMultiOCRFusion(
       azureDocumentClient.analyzeLayout(imagePath),
     ]);
 
-    console.log(`  📊 Gemini: ${geminiResult.text.length} chars`);
+    console.log(`  Gemini: ${geminiResult.text.length} chars`);
     console.log(
-      `  📊 Cloud Vision: ${cloudVisionBboxes.length} paragraph bboxes`
+      `  Cloud Vision: ${cloudVisionBboxes.length} paragraph bboxes`
     );
-    console.log(`  📊 Azure Read: ${azureReadResult.words.length} word bboxes`);
+    console.log(`  Azure Read: ${azureReadResult.words.length} word bboxes`);
     console.log(
-      `  📊 Azure Layout: ${azureLayoutResult.lines.length} line bboxes`
+      `  Azure Layout: ${azureLayoutResult.lines.length} line bboxes`
     );
 
-    // Convert all bboxes to internal format
     const cvBboxes: BoundingBox[] = cloudVisionBboxes.map((bbox) => ({
       bounds: bbox.bounds,
       text: bbox.text,
@@ -84,17 +81,15 @@ export async function processWithGeminiMultiOCRFusion(
       })
     );
 
-    // Combine all bboxes into one pool
     const allBboxes = [...cvBboxes, ...azureReadBboxes, ...azureLayoutBboxes];
 
     console.log(
-      `  📦 Total bbox pool: ${allBboxes.length} bboxes from 3 sources`
+      `  Total bbox pool: ${allBboxes.length} bboxes from 3 sources`
     );
 
-    // Segment Gemini text for matching
     const geminiSegments = segmentText(geminiResult.text, 'word');
     console.log(
-      `  🔍 Matching ${geminiSegments.length} Gemini segments to bbox pool...`
+      `  Matching ${geminiSegments.length} Gemini segments to bbox pool...`
     );
 
     const finalBboxes: Array<{
@@ -112,7 +107,6 @@ export async function processWithGeminiMultiOCRFusion(
       estimated: 0,
     };
 
-    // Multi-source matching with priority
     for (const segment of geminiSegments) {
       if (!segment.trim()) continue;
 
@@ -122,7 +116,6 @@ export async function processWithGeminiMultiOCRFusion(
         source: 'cloud-vision' | 'azure-read' | 'azure-layout';
       } | null = null;
 
-      // Try Cloud Vision first (paragraph-level, good for context)
       const cvMatch = fuzzyMatchTextToBbox(segment, cvBboxes, 0.65);
       if (cvMatch) {
         bestMatch = {
@@ -132,7 +125,6 @@ export async function processWithGeminiMultiOCRFusion(
         };
       }
 
-      // Try Azure Read (word-level, precise)
       const azureReadMatch = fuzzyMatchTextToBbox(
         segment,
         azureReadBboxes,
@@ -149,7 +141,6 @@ export async function processWithGeminiMultiOCRFusion(
         };
       }
 
-      // Try Azure Layout (line-level)
       const azureLayoutMatch = fuzzyMatchTextToBbox(
         segment,
         azureLayoutBboxes,
@@ -167,7 +158,6 @@ export async function processWithGeminiMultiOCRFusion(
       }
 
       if (bestMatch) {
-        // Found a match in at least one source
         finalBboxes.push({
           text: segment,
           bounds: bestMatch.bbox.bounds,
@@ -181,7 +171,6 @@ export async function processWithGeminiMultiOCRFusion(
           },
         });
 
-        // Map source name to matchStats key
         const sourceKey =
           bestMatch.source === 'cloud-vision'
             ? 'cloudVision'
@@ -190,7 +179,6 @@ export async function processWithGeminiMultiOCRFusion(
               : 'azureLayout';
         matchStats[sourceKey]++;
       } else {
-        // No match in any source - synthesize bbox
         const synthesizedBbox = synthesizeBboxForText(
           segment,
           allBboxes,
@@ -214,13 +202,12 @@ export async function processWithGeminiMultiOCRFusion(
       }
     }
 
-    console.log(`  ✅ Multi-source matching completed:`);
+    console.log(`  Multi-source matching completed:`);
     console.log(`     - ${matchStats.cloudVision} from Cloud Vision`);
     console.log(`     - ${matchStats.azureRead} from Azure Read`);
     console.log(`     - ${matchStats.azureLayout} from Azure Layout`);
     console.log(`     - ${matchStats.estimated} synthesized`);
 
-    // Calculate costs
     const processingTime = Date.now() - startTime;
     const geminiCost = geminiClient.estimateCost(1);
     const cloudVisionCost = cloudVisionClient.estimateCost(1);
@@ -236,7 +223,7 @@ export async function processWithGeminiMultiOCRFusion(
       geminiCost + cloudVisionCost + azureReadCost + azureLayoutCost;
 
     console.log(
-      `  💰 Total cost: ¥${totalCost.toFixed(2)} (Gemini + CV + Azure Read + Azure Layout)`
+      `  Total cost: ¥${totalCost.toFixed(2)} (Gemini + CV + Azure Read + Azure Layout)`
     );
 
     const bboxSourceCounts = {
@@ -244,7 +231,6 @@ export async function processWithGeminiMultiOCRFusion(
       estimated: finalBboxes.filter((b) => b.bboxSource === 'estimated').length,
     };
 
-    // Save to database
     const [dbResult] = await db
       .insert(extractionResults)
       .values({
@@ -271,7 +257,7 @@ export async function processWithGeminiMultiOCRFusion(
       .returning();
 
     console.log(
-      `  ✅ Multi-OCR Fusion completed in ${(processingTime / 1000).toFixed(2)}s`
+      `  Multi-OCR Fusion completed in ${(processingTime / 1000).toFixed(2)}s`
     );
     console.log(
       `     Generated ${finalBboxes.length} bboxes with multi-source fusion`
@@ -291,7 +277,7 @@ export async function processWithGeminiMultiOCRFusion(
       },
     };
   } catch (error) {
-    console.error(`  ❌ Multi-OCR Fusion failed:`, error);
+    console.error(`  Multi-OCR Fusion failed:`, error);
     throw error;
   }
 }

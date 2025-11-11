@@ -52,7 +52,7 @@ async function runExperiment(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`\n▶️  Running ${experiment}...`);
+  console.log(`\nRunning ${experiment}...`);
 
   try {
     let result;
@@ -82,7 +82,7 @@ async function runExperiment(
 
     return result;
   } catch (error) {
-    console.error(`❌ Error running ${experiment}:`, error);
+    console.error(`Error running ${experiment}:`, error);
     throw error;
   }
 }
@@ -94,13 +94,13 @@ async function calculateAccuracy(extractionResultId: string, groundTruth: any) {
     .where(eq(extractionResults.id, extractionResultId));
 
   if (!result || !result.rawText) {
-    console.error('❌ No extraction text found');
+    console.error('No extraction text found');
     return null;
   }
 
   if (!groundTruth?.fullText) {
     console.log(
-      'ℹ️  No ground truth available - skipping accuracy calculation'
+      'No ground truth available - skipping accuracy calculation'
     );
     return null;
   }
@@ -135,7 +135,7 @@ async function calculateAccuracy(extractionResultId: string, groundTruth: any) {
 }
 
 async function main() {
-  console.log('🧪 Experimental OCR Processor Test Runner\n');
+  console.log('Experimental OCR Processor Test Runner\n');
   console.log('Testing Gemini Coordinate Accuracy Experiments\n');
 
   const args = parseArgs();
@@ -144,7 +144,7 @@ async function main() {
   // Load test drawings
   const testDrawingsDir = path.join(process.cwd(), 'test-drawings');
   if (!fs.existsSync(testDrawingsDir)) {
-    console.error('❌ test-drawings directory not found');
+    console.error('test-drawings directory not found');
     process.exit(1);
   }
 
@@ -193,11 +193,11 @@ async function main() {
   scanDir(testDrawingsDir);
 
   if (drawings.length === 0) {
-    console.error('❌ No test drawings found');
+    console.error('No test drawings found');
     process.exit(1);
   }
 
-  console.log(`✅ Found ${drawings.length} test drawing(s)\n`);
+  console.log(`Found ${drawings.length} test drawing(s)\n`);
 
   // Determine which experiments to run
   const availableExperiments = [
@@ -215,7 +215,7 @@ async function main() {
   const experimentsToRun =
     experimentToRun === 'all' ? availableExperiments : [experimentToRun];
 
-  console.log(`📋 Experiments to run: ${experimentsToRun.join(', ')}\n`);
+  console.log(`Experiments to run: ${experimentsToRun.join(', ')}\n`);
 
   // Create test run
   const experimentToolNames = experimentsToRun.map((exp) => {
@@ -248,7 +248,7 @@ async function main() {
     })
     .returning();
 
-  console.log(`📝 Created test run: ${testRun.id}\n`);
+  console.log(`Created test run: ${testRun.id}\n`);
 
   // Run experiments
   const results: Array<{
@@ -264,7 +264,7 @@ async function main() {
     const drawingId = drawing.metadata?.id || drawing.fileName;
 
     console.log(`\n${'='.repeat(80)}`);
-    console.log(`📄 Testing: ${drawing.fileName}`);
+    console.log(`Testing: ${drawing.fileName}`);
     console.log(`${'='.repeat(80)}`);
 
     // Register drawing in database
@@ -288,13 +288,13 @@ async function main() {
           },
         });
     } catch (err) {
-      console.warn('⚠️  Could not register drawing:', err);
+      console.warn('Could not register drawing:', err);
     }
 
     for (const experiment of experimentsToRun) {
       try {
         console.log(`\n${'─'.repeat(80)}`);
-        console.log(`🔬 Experiment: ${experiment}`);
+        console.log(`Experiment: ${experiment}`);
         console.log(`${'─'.repeat(80)}`);
 
         const result = await runExperiment(
@@ -310,7 +310,7 @@ async function main() {
           );
 
           if (accuracy) {
-            console.log(`\n  📊 Accuracy Metrics:`);
+            console.log(`\n  Accuracy Metrics:`);
             const cer = accuracy.characterErrorRate ?? 0;
             const charAcc = accuracy.characterAccuracy ?? 0;
             const coverage = accuracy.characterSetCoverage ?? 0;
@@ -322,7 +322,7 @@ async function main() {
             );
 
             if (accuracy.bboxSourceStats) {
-              console.log(`\n  📍 Bbox Sources:`);
+              console.log(`\n  Bbox Sources:`);
               if (accuracy.bboxSourceStats.ocr) {
                 console.log(`     OCR: ${accuracy.bboxSourceStats.ocr}`);
               }
@@ -372,7 +372,7 @@ async function main() {
           await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 second delay
         }
       } catch (error) {
-        console.error(`❌ Experiment ${experiment} failed:`);
+        console.error(`Experiment ${experiment} failed:`);
         if (error instanceof Error) {
           console.error(`   ${error.message}`);
           if (error.stack) {
@@ -388,7 +388,7 @@ async function main() {
 
   // Summary
   console.log(`\n\n${'='.repeat(80)}`);
-  console.log('📊 EXPERIMENT COMPARISON SUMMARY');
+  console.log('EXPERIMENT COMPARISON SUMMARY');
   console.log(`${'='.repeat(80)}\n`);
 
   if (results.length > 0) {
@@ -450,7 +450,7 @@ async function main() {
 
       const bestCER = best.accuracy.characterErrorRate ?? 0;
       console.log(
-        `🏆 Best CER: ${best.experiment} (${(bestCER * 100).toFixed(2)}%)`
+        `Best CER: ${best.experiment} (${(bestCER * 100).toFixed(2)}%)`
       );
 
       const mostComplete = withAccuracy.reduce((best, r) => {
@@ -461,7 +461,7 @@ async function main() {
 
       const bestCoverage = mostComplete.accuracy.characterSetCoverage ?? 0;
       console.log(
-        `📝 Best Coverage: ${mostComplete.experiment} (${bestCoverage.toFixed(1)}%)`
+        `Best Coverage: ${mostComplete.experiment} (${bestCoverage.toFixed(1)}%)`
       );
     }
   } else {
@@ -573,11 +573,11 @@ async function main() {
       })
       .where(eq(testRuns.id, testRun.id));
 
-    console.log(`\n📊 Updated test run with summary statistics`);
+    console.log(`\nUpdated test run with summary statistics`);
   }
 
-  console.log('\n✅ Experiments complete!\n');
-  console.log(`🔗 View results in frontend:`);
+  console.log('\nExperiments complete!\n');
+  console.log(`View results in frontend:`);
   console.log(`   1. Start API server: npm run api:dev`);
   console.log(`   2. Start frontend: cd frontend && npm run dev`);
   console.log(`   3. Open: http://localhost:5173/test-run/${testRun.id}\n`);
