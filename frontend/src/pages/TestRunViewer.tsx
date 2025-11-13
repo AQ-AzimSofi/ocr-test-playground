@@ -4,14 +4,29 @@ import { format } from 'date-fns';
 import { ImageCanvas, type ImageCanvasRef } from '../components/ImageCanvas';
 import { Tooltip } from '../components/Tooltip';
 import { TextCardsList } from '../components/TextCardsList';
+import { TextEditModal } from '../components/TextEditModal';
+import { SaveConfirmModal } from '../components/SaveConfirmModal';
+import { UnsavedChangesPrompt } from '../components/UnsavedChangesPrompt';
+import { ConfidentialBadge } from '../components/ConfidentialBadge';
+import { VerificationProgress } from '../components/VerificationProgress';
+import { VerificationControls } from '../components/VerificationControls';
+import { MissingTextPanel } from '../components/MissingTextPanel';
 import type { BoundingBox } from '../types/api';
 import { CheckmarkIcon, WarningIcon } from '../components/icons';
 import {
   getToolAbbreviation,
   calculateBboxScreenPosition,
 } from '../utils/testRunHelpers';
+import { filterProcessorsForConfidential } from '../utils/processorInfo';
 import { useTestRunData } from '../hooks/useTestRunData';
 import { useTestRunUI } from '../hooks/useTestRunUI';
+import { useTestRunEditor } from '../hooks/useTestRunEditor';
+import {
+  useVerificationStats,
+  useVerifyBBox,
+  useAddMissingText,
+  useDeleteMissingText,
+} from '../api/queries';
 
 export function TestRunViewer() {
   const { testRunId } = useParams<{ testRunId: string }>();
@@ -79,6 +94,72 @@ export function TestRunViewer() {
   const rightCanvasRef = useRef<ImageCanvasRef>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Check if this is a confidential document
+  const isConfidential = leftToolData?.isConfidential || false;
+
+  // Filter tools for confidential documents
+  const availableTools = isConfidential ? filterProcessorsForConfidential(tools) : tools;
+
+  // Editor hook (only for single view mode with left tool)
+  const editor = useTestRunEditor(
+    viewMode === 'single' ? leftBoundingBoxes : [],
+    viewMode === 'single' ? leftToolData?.result?.id : undefined
+  );
+
+  // Verification hooks (for confidential documents)
+  const resultId = viewMode === 'single' ? leftToolData?.result?.id : undefined;
+  const { data: verificationData } = useVerificationStats(resultId);
+  const verifyBBox = useVerifyBBox();
+  const addMissingText = useAddMissingText();
+  const deleteMissingText = useDeleteMissingText();
+
+  const verificationStats = verificationData?.data;
+
+  // Verification handlers
+  const handleVerifyBBox = (bboxIndex: number, status: 'correct' | 'incorrect') => {
+    if (!resultId) return;
+    verifyBBox.mutate({ resultId, bboxIndex, status });
+  };
+
+  const handleAddMissingText = (text: string, notes?: string) => {
+    if (!resultId) return;
+    addMissingText.mutate({ resultId, text, notes });
+  };
+
+  const handleDeleteMissingText = (missingTextId: string) => {
+    if (!resultId) return;
+    deleteMissingText.mutate({ resultId, missingTextId });
+  };
+
+  // Verification navigation
+  const handleVerificationNavigate = (direction: 'prev' | 'next') => {
+    if (selectedIndex === null) return;
+    const newIndex = direction === 'prev' ? selectedIndex - 1 : selectedIndex + 1;
+    if (newIndex >= 0 && newIndex < leftBoundingBoxes.length) {
+      setSelectedIndex(newIndex);
+      setScrollToBboxIndex(newIndex);
+    }
+  };
+
+  // Wrap handleCanvasSelect to exit resize mode when selecting a different bbox
+  const handleCanvasSelectWithResizeExit = (index: number | null) => {
+    handleCanvasSelect(index);
+    if (editor.isEditMode) {
+      editor.exitResizeMode();
+    }
+  };
+
+  // Get image element for modal preview
+  const [imageElement, setImageElement] = useState<HTMLImageElement | null>(null);
+
+  // Load image element for preview in modals
+  if (imageUrl && !imageElement) {
+    const img = new Image();
+    img.crossOrigin = 'anonymous'; // Enable CORS for canvas export
+    img.src = imageUrl;
+    img.onload = () => setImageElement(img);
+  }
 
   const filterBoundingBoxes = (boxes: BoundingBox[], query: string): BoundingBox[] => {
     if (!query.trim()) return boxes;
@@ -203,7 +284,7 @@ export function TestRunViewer() {
         onChange={(e) => onChange(e.target.value)}
         className="text-sm py-1 px-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
       >
-        {tools.map((tool, idx) => (
+        {availableTools.map((tool, idx) => (
           <option key={`${label}-${tool}-${idx}`} value={tool}>
             {tool}
           </option>
@@ -231,9 +312,12 @@ export function TestRunViewer() {
             >
               ← Back to Test Runs
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {drawing?.fileName || 'Test Run Results'}
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-gray-900">
+                {drawing?.fileName || 'Test Run Results'}
+              </h1>
+              {isConfidential && <ConfidentialBadge size="large" />}
+            </div>
             <p className="text-sm text-gray-500 mt-1">
               Test run from {formattedDate}
             </p>
@@ -463,11 +547,83 @@ export function TestRunViewer() {
             <span className="text-sm font-medium">Allow Zoom Out</span>
           </label>
 
+          {/* Edit Mode Toggle (only in single view) */}
+          {viewMode === 'single' && (
+            <button
+              onClick={editor.toggleEditMode}
+              className={`ml-auto px-4 py-2 border-2 rounded-lg transition-colors flex items-center gap-2 ${
+                editor.isEditMode
+                  ? 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-white border-gray-300 hover:bg-gray-50'
+              }`}
+              title={editor.isEditMode ? 'Exit edit mode' : 'Enter edit mode'}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              <span className="text-sm font-medium">
+                {editor.isEditMode ? 'Edit Mode: ON' : 'Edit Mode'}
+              </span>
+            </button>
+          )}
+
+          {/* Save/Discard Buttons (when edit mode is active with changes) */}
+          {editor.isEditMode && editor.isDirty && (
+            <>
+              <button
+                onClick={editor.handleSaveClick}
+                disabled={editor.isSaving}
+                className="px-4 py-2 bg-green-600 text-white border-2 border-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Save changes"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                  />
+                </svg>
+                <span className="text-sm font-medium">
+                  Save ({editor.changes.length})
+                </span>
+              </button>
+              <button
+                onClick={editor.handleDiscardChanges}
+                disabled={editor.isSaving}
+                className="px-4 py-2 bg-red-600 text-white border-2 border-red-600 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Discard all changes"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+                <span className="text-sm font-medium">Discard</span>
+              </button>
+            </>
+          )}
+
           {/* View Mode Toggle */}
           <button
             onClick={toggleViewMode}
-            className="ml-auto px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
-            title={`Switch to ${viewMode === 'single' ? 'comparison' : 'single'} view`}
+            disabled={editor.isEditMode}
+            className={`px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 ${
+              editor.isEditMode ? 'opacity-50 cursor-not-allowed' : ''
+            } ${viewMode === 'single' ? '' : 'ml-auto'}`}
+            title={
+              editor.isEditMode
+                ? 'Exit edit mode to switch views'
+                : `Switch to ${viewMode === 'single' ? 'comparison' : 'single'} view`
+            }
           >
             {viewMode === 'single' ? (
               <>
@@ -487,6 +643,9 @@ export function TestRunViewer() {
           </button>
         </div>
       </header>
+
+      {/* Unsaved Changes Prompt */}
+      <UnsavedChangesPrompt when={editor.isDirty} />
 
       <div className="flex-1 flex overflow-hidden">
         {/* Canvas Area - Conditional rendering based on view mode */}
@@ -522,16 +681,24 @@ export function TestRunViewer() {
                 <ImageCanvas
                   ref={leftCanvasRef}
                   imageUrl={imageUrl}
-                  boundingBoxes={leftBoundingBoxes}
+                  boundingBoxes={
+                    editor.isEditMode ? editor.currentBBoxes : leftBoundingBoxes
+                  }
                   hoveredIndex={hoveredIndex}
                   onHover={handleLeftHover}
                   selectedIndex={selectedIndex}
-                  onSelect={handleCanvasSelect}
+                  onSelect={handleCanvasSelectWithResizeExit}
                   scrollToBboxIndex={scrollToBboxIndex}
                   showGeminiIcons={showGeminiIndicators}
                   showFill={showHighlights}
-                  enablePanning={true}
+                  enablePanning={!editor.isEditMode}
                   allowZoomOut={allowZoomOut}
+                  isEditMode={editor.isEditMode}
+                  isResizeMode={editor.isResizeMode}
+                  onBBoxMove={editor.modifyBBox}
+                  onBBoxResize={editor.modifyBBox}
+                  onBBoxCreate={editor.handleBBoxCreate}
+                  onBBoxDoubleClick={editor.openEditModal}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full bg-white rounded-lg border border-gray-200">
@@ -774,6 +941,19 @@ export function TestRunViewer() {
                   >
                     Text Results
                   </button>
+                  {/* Verification tab - only for confidential documents in single view */}
+                  {isConfidential && viewMode === 'single' && (
+                    <button
+                      onClick={() => setSidebarMainTab('verification')}
+                      className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+                        sidebarMainTab === 'verification'
+                          ? 'bg-white text-blue-600 border-b-2 border-blue-600'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      Verification
+                    </button>
+                  )}
                   <button
                     onClick={() => setSidebarMainTab('stats')}
                     className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
@@ -1003,14 +1183,24 @@ export function TestRunViewer() {
 
                         {/* Text Cards List */}
                         <TextCardsList
-                          boundingBoxes={filteredLeftBoundingBoxes}
+                          boundingBoxes={
+                            editor.isEditMode
+                              ? filterBoundingBoxes(editor.currentBBoxes, searchQuery)
+                              : filteredLeftBoundingBoxes
+                          }
                           selectedIndex={selectedIndex}
                           onCardClick={(filteredIndex) => {
                             // Get bbox from filtered array
-                            const bbox = filteredLeftBoundingBoxes[filteredIndex];
+                            const displayBoxes = editor.isEditMode
+                              ? filterBoundingBoxes(editor.currentBBoxes, searchQuery)
+                              : filteredLeftBoundingBoxes;
+                            const bbox = displayBoxes[filteredIndex];
 
                             // Find original index in unfiltered array
-                            const originalIndex = leftBoundingBoxes.findIndex(
+                            const unfilteredBoxes = editor.isEditMode
+                              ? editor.currentBBoxes
+                              : leftBoundingBoxes;
+                            const originalIndex = unfilteredBoxes.findIndex(
                               (b) => b.text === bbox.text && b.bounds === bbox.bounds
                             );
 
@@ -1032,9 +1222,67 @@ export function TestRunViewer() {
                             }
                           }}
                           toolName={leftTool}
+                          isEditMode={editor.isEditMode}
+                          resizingBBoxIndex={editor.resizingBBoxIndex}
+                          onEditText={editor.openEditModal}
+                          onApproveBBox={editor.approveBBox}
+                          onDeleteBBox={editor.deleteBBox}
+                          onAdjustBounds={(index) => {
+                            // Select bbox, scroll to it, and toggle resize mode
+                            setSelectedIndex(index);
+                            setScrollToBboxIndex(index);
+                            editor.toggleResizeMode(index);
+                          }}
                         />
                       </>
                     )}
+                  </div>
+                )}
+
+                {/* Verification Tab Content (Confidential Documents Only) */}
+                {sidebarMainTab === 'verification' && isConfidential && verificationStats && (
+                  <div className="space-y-4">
+                    {/* Verification Progress */}
+                    <VerificationProgress
+                      totalBboxes={verificationStats.totalBboxes}
+                      verifiedCount={verificationStats.verifiedCount}
+                      correctCount={verificationStats.correctCount}
+                      incorrectCount={verificationStats.incorrectCount}
+                      missingTextCount={verificationStats.missingTextCount}
+                    />
+
+                    {/* Verification Controls */}
+                    {selectedIndex !== null && selectedIndex < leftBoundingBoxes.length && (
+                      <VerificationControls
+                        currentIndex={selectedIndex}
+                        totalBboxes={leftBoundingBoxes.length}
+                        currentVerificationStatus={
+                          verificationStats.verifications[selectedIndex]?.status
+                        }
+                        onVerify={(status) => handleVerifyBBox(selectedIndex, status)}
+                        onNavigate={handleVerificationNavigate}
+                        disabled={false}
+                      />
+                    )}
+
+                    {/* Missing Text Panel */}
+                    <MissingTextPanel
+                      missingTexts={verificationStats.missingTexts}
+                      onAdd={handleAddMissingText}
+                      onDelete={handleDeleteMissingText}
+                      disabled={false}
+                    />
+
+                    {/* Instructions */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-900">
+                      <h4 className="font-semibold mb-1">How to verify:</h4>
+                      <ul className="space-y-1 text-xs">
+                        <li>• Click a bbox on the canvas or in the Text Results tab</li>
+                        <li>• Press <kbd className="px-1 py-0.5 bg-blue-200 rounded">C</kbd> for correct or <kbd className="px-1 py-0.5 bg-blue-200 rounded">I</kbd> for incorrect</li>
+                        <li>• Use arrow keys (← →) to navigate between bboxes</li>
+                        <li>• Add missing text that the OCR didn't detect</li>
+                      </ul>
+                    </div>
                   </div>
                 )}
 
@@ -1276,6 +1524,28 @@ export function TestRunViewer() {
       {hoveredBBox && !isFullscreen && (
         <Tooltip bbox={hoveredBBox} position={fixedTooltipPos || mousePos} />
       )}
+
+      {/* Edit Modals */}
+      <TextEditModal
+        isOpen={editor.editModalOpen}
+        bbox={
+          editor.editingIndex !== null
+            ? editor.currentBBoxes[editor.editingIndex]
+            : null
+        }
+        imageElement={imageElement}
+        onSave={editor.handleSaveText}
+        onCancel={editor.closeEditModal}
+        onDelete={editor.handleDeleteFromModal}
+      />
+
+      <SaveConfirmModal
+        isOpen={editor.saveModalOpen}
+        changes={editor.changes}
+        onConfirm={editor.handleConfirmSave}
+        onCancel={editor.handleCancelSave}
+        isSaving={editor.isSaving}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { formatDistanceToNow, format } from 'date-fns';
 import type { TestRun } from '../types/api';
 import { CheckmarkIcon } from './icons';
+import { ConfidentialBadge } from './ConfidentialBadge';
 
 interface TestRunCardProps {
   testRun: TestRun;
@@ -102,6 +103,9 @@ export function TestRunCard({
                 {isComplete && <CheckmarkIcon size={12} />}
                 {isComplete ? 'Completed' : 'In Progress'}
               </span>
+
+              {/* Confidential Badge */}
+              {testRun.isConfidential && <ConfidentialBadge size="small" />}
             </div>
 
             {/* Full Timestamp - Prominently Displayed */}

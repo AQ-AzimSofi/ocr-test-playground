@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "api:dev": "tsx watch src/api/server.ts",
-
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -14,28 +13,32 @@
     "db:fresh": "npm run db:reset && npm run db:migrate",
     "db:studio": "drizzle-kit studio",
     "db:drop": "drizzle-kit drop",
-
-
     "test": "tsx src/test-runner.ts --workflow all",
     "test:all": "tsx src/test-runner.ts --workflow all",
     "test:drawing:clean-heimenzu": "tsx src/test-runner.ts --workflow all --drawing clean-heimenzu",
     "test:drawing:zumen": "tsx src/test-runner.ts --workflow all --drawing zumen_04b",
-
     "test:cloud-vision": "tsx src/test-runner.ts --workflow cloud-vision",
     "test:gemini": "tsx src/test-runner.ts --workflow gemini",
     "test:azure-layout": "tsx src/test-runner.ts --workflow azure-layout",
     "test:azure-read": "tsx src/test-runner.ts --workflow azure-read",
-
     "test:cloud-vision-gemini-hybrid": "tsx src/test-runner.ts --workflow cloud-vision-gemini-hybrid",
     "test:azure-read-gemini-hybrid": "tsx src/test-runner.ts --workflow azure-read-gemini-hybrid",
     "test:gemini-coordinates": "tsx src/test-runner.ts --workflow gemini-coordinates",
     "test:gemini-self-calibrating": "tsx src/test-runner.ts --workflow gemini-self-calibrating",
-
     "test:gemini-geometric": "tsx src/test-runner.ts --workflow gemini-geometric",
-
+    "test:roboflow": "tsx src/test-runner.ts --workflow roboflow",
+    "test:hybrid-cv-ai": "tsx src/test-runner.ts --workflow hybrid-cv-ai",
+    "test:confidential": "tsx src/test-runner.ts --workflow confidential-safe --confidential-only",
+    "test:confidential:all": "tsx src/test-runner.ts --workflow confidential-safe --confidential-only",
+    "test:confidential:fast": "tsx src/test-runner.ts --workflow confidential-fast --confidential-only",
+    "test:confidential:azure-read": "tsx src/test-runner.ts --workflow azure-read --confidential-only",
+    "test:confidential:azure-layout": "tsx src/test-runner.ts --workflow azure-layout --confidential-only",
+    "test:confidential:cloud-vision": "tsx src/test-runner.ts --workflow cloud-vision --confidential-only",
+    "test:confidential:document-ai": "tsx src/test-runner.ts --workflow document-ai --confidential-only",
+    "test:document-ai": "tsx src/test-runner.ts --workflow document-ai",
+    "test:baseline-comparison": "tsx src/test-runner.ts --workflow confidential-safe",
     "test:revit-pipeline": "tsx src/test-revit-pipeline.ts",
     "test:ai-pipeline": "tsx src/test-ai-pipeline.ts",
-
     "test:experiments": "tsx src/experiments/test-experiments.ts --experiment all",
     "test:exp:template-matching": "tsx src/experiments/test-experiments.ts --experiment template-matching",
     "test:exp:multi-ocr": "tsx src/experiments/test-experiments.ts --experiment multi-ocr-fusion",
@@ -46,8 +49,6 @@
     "test:exp:grid-100x100": "tsx src/experiments/test-experiments.ts --experiment grid-100x100",
     "test:exp:region-detection": "tsx src/experiments/test-experiments.ts --experiment region-detection",
     "test:exp:baseline": "tsx src/experiments/test-experiments.ts --experiment baseline",
-
-
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -66,6 +67,7 @@
     "@azure/ai-form-recognizer": "^5.0.0",
     "@fastify/cors": "^11.1.0",
     "@fastify/static": "^8.3.0",
+    "@google-cloud/documentai": "^9.5.0",
     "@google-cloud/vision": "^4.3.2",
     "@google/generative-ai": "^0.21.0",
     "@mastra/core": "^0.23.1",
@@ -76,7 +78,9 @@
     "fast-levenshtein": "^3.0.0",
     "fastify": "^5.6.1",
     "jimp": "^0.22.12",
+    "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
+    "pdf2pic": "^3.2.0",
     "postgres": "^3.4.5",
     "recharts": "^3.3.0",
     "sharp": "^0.34.5",

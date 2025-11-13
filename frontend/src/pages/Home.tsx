@@ -10,7 +10,7 @@ export function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCompleted, setFilterCompleted] = useState<
     'all' | 'completed' | 'in-progress'
-  >('all');
+  >('completed');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTargets, setDeleteTargets] = useState<string[]>([]);

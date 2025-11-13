@@ -37,8 +37,16 @@ npm-debug.log*
 # Temporary files
 temp/
 tmp/
+.pdf-temp/
+**/.pdf-temp/
 
 # Test drawings (if you want to keep them out of git)
 # test-drawings/*.pdf
 # test-drawings/*.png
 # test-drawings/*.jpg
+
+# Confidential documents - NEVER commit these
+test-drawings/confidential/
+test-drawings/confidential/**/*
+test-drawings/confidential-temp-excluded/
+test-drawings/confidential-temp-excluded/**/*
