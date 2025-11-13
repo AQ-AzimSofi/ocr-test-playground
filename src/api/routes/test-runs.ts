@@ -10,6 +10,7 @@ import {
   elementRelationships,
 } from '../../db/index.js';
 import { eq, inArray, desc } from 'drizzle-orm';
+import { spawn } from 'child_process';
 
 export const testRunsRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /api/test-runs - List all test runs with enriched data
@@ -251,6 +252,144 @@ export const testRunsRoutes: FastifyPluginAsync = async (fastify) => {
       reply.status(500).send({
         success: false,
         error: 'Failed to fetch test run',
+      });
+    }
+  });
+
+  // POST /api/test-runs/create - Create and execute a new test run
+  fastify.post<{
+    Body: {
+      processors: string[];
+      drawingIds: string[];
+      runName?: string;
+      description?: string;
+    };
+  }>('/create', async (request, reply) => {
+    try {
+      const { processors, drawingIds, runName, description } = request.body;
+
+      // Validation
+      if (!processors || processors.length === 0) {
+        return reply.status(400).send({
+          success: false,
+          error: 'At least one processor must be selected',
+        });
+      }
+
+      if (!drawingIds || drawingIds.length === 0) {
+        return reply.status(400).send({
+          success: false,
+          error: 'At least one drawing must be selected',
+        });
+      }
+
+      // Get drawing details to check for confidential files
+      const drawings = await db
+        .select()
+        .from(testDrawings)
+        .where(inArray(testDrawings.drawingId, drawingIds));
+
+      if (drawings.length === 0) {
+        return reply.status(404).send({
+          success: false,
+          error: 'No valid drawings found with provided IDs',
+        });
+      }
+
+      // Check for confidential files + Gemini processor conflict
+      const hasConfidential = drawings.some((d) => d.isConfidential);
+      const geminiProcessors = [
+        'gemini',
+        'cloud-vision-gemini-hybrid',
+        'azure-read-gemini-hybrid',
+        'azure-layout-gemini-hybrid',
+        'document-ai-gemini-hybrid',
+        'gemini-coordinates',
+        'gemini-geometric',
+        'gemini-self-calibrating',
+        'hybrid-cv-ai',
+      ];
+      const hasGemini = processors.some((p) => geminiProcessors.includes(p));
+
+      if (hasConfidential && hasGemini) {
+        return reply.status(400).send({
+          success: false,
+          error:
+            'Cannot run Gemini-based processors on confidential files. Please use only pure OCR processors (cloud-vision, azure-read, azure-layout, document-ai).',
+        });
+      }
+
+      // Create test run record
+      const defaultName =
+        runName ||
+        `Test Run - ${new Date().toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })}`;
+      const defaultDescription =
+        description ||
+        `Testing ${processors.join(', ')} on ${drawingIds.length} drawing(s)`;
+
+      const [newTestRun] = await db
+        .insert(testRuns)
+        .values({
+          runName: defaultName,
+          description: defaultDescription,
+          drawingIds,
+          tools: processors,
+          summary: {
+            totalDrawings: drawingIds.length,
+            totalExtractions: 0,
+            avgCharacterErrorRateByTool: {},
+          },
+          isActive: true,
+          startedAt: new Date(),
+          status: 'in-progress',
+        })
+        .returning();
+
+      fastify.log.info(
+        `Test run created: ${newTestRun.id} with ${processors.length} processors on ${drawingIds.length} drawings`
+      );
+
+      // Spawn background process to execute the test run
+      fastify.log.info(
+        `Spawning background process for test run ${newTestRun.id}`
+      );
+
+      const child = spawn(
+        'npx',
+        ['tsx', 'src/test-runner.ts', '--test-run-id', newTestRun.id],
+        {
+          detached: true,
+          stdio: 'ignore',
+          cwd: process.cwd(),
+        }
+      );
+
+      child.unref(); // Allow parent process to exit
+
+      fastify.log.info(
+        `Background process started (PID: ${child.pid}) for test run ${newTestRun.id}`
+      );
+
+      return {
+        success: true,
+        data: {
+          testRunId: newTestRun.id,
+          runName: newTestRun.runName,
+          status: 'processing',
+          message:
+            'Test run created and processing started in background. Refresh the page to see results.',
+        },
+      };
+    } catch (error) {
+      fastify.log.error(error);
+      reply.status(500).send({
+        success: false,
+        error: 'Failed to create test run',
       });
     }
   });
