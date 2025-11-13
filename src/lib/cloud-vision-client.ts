@@ -1,5 +1,6 @@
 import vision from '@google-cloud/vision';
 import * as fs from 'fs';
+import { isPdfFile } from '../utils/pdf-converter.js';
 
 /**
  * Google Cloud Vision API client wrapper
@@ -37,8 +38,19 @@ export class CloudVisionClient {
 
   /**
    * Extract text with bounding boxes for precise location tracking
+   * Note: This method only supports image files (PNG, JPEG, etc.)
+   * PDFs must be converted to images first using convertPdfToImages()
    */
   async extractTextWithBoundingBoxes(imagePath: string) {
+    // Validate that the file is an image, not a PDF
+    if (isPdfFile(imagePath)) {
+      throw new Error(
+        'PDF files are not supported by Cloud Vision documentTextDetection API. ' +
+        'PDFs must be converted to images first using the convertPdfToImages() utility from pdf-converter.ts. ' +
+        'The processor should handle this conversion automatically.'
+      );
+    }
+
     const [result] = await this.client.documentTextDetection(imagePath);
     const fullTextAnnotation = result.fullTextAnnotation;
 

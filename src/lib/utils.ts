@@ -16,6 +16,8 @@ export function normalizeText(text: string): string {
  * Returns the minimum number of single-character edits (insertions, deletions, substitutions)
  * needed to change one string into the other
  *
+ * For very large texts (>10,000 chars), uses sampling to reduce memory usage.
+ *
  * source: https://www.sciencedirect.com/topics/computer-science/levenshtein-distance
  * Levenshtein distance is defined as the minimum number of insertions, deletions, or substitutions
  *  required to transform one string into another. It serves as a measure of proximity between two strings.
@@ -27,6 +29,22 @@ export function calculateLevenshteinDistance(
   const len1 = str1.length;
   const len2 = str2.length;
 
+  // Memory optimization for very large texts
+  // Use sampling to reduce O(n²) memory footprint
+  const LARGE_TEXT_THRESHOLD = 10000;
+  const maxLen = Math.max(len1, len2);
+
+  if (maxLen > LARGE_TEXT_THRESHOLD) {
+    // Sample every Nth character to reduce memory usage
+    const samplingRate = Math.ceil(maxLen / LARGE_TEXT_THRESHOLD);
+    return calculateLevenshteinDistanceWithSampling(
+      str1,
+      str2,
+      samplingRate
+    );
+  }
+
+  // Standard algorithm for normal-sized texts
   // Create a 2D array for dynamic programming
   const matrix: number[][] = Array(len1 + 1)
     .fill(null)
@@ -53,6 +71,61 @@ export function calculateLevenshteinDistance(
   }
 
   return matrix[len1][len2];
+}
+
+/**
+ * Calculate Levenshtein distance using sampling for very large texts
+ * Samples every Nth character to reduce memory from O(n²) to O(n²/k²) where k = samplingRate
+ * The result is scaled back up to approximate the full distance
+ */
+function calculateLevenshteinDistanceWithSampling(
+  str1: string,
+  str2: string,
+  samplingRate: number
+): number {
+  // Sample characters
+  const sampled1 = sampleString(str1, samplingRate);
+  const sampled2 = sampleString(str2, samplingRate);
+
+  const len1 = sampled1.length;
+  const len2 = sampled2.length;
+
+  // Use standard algorithm on sampled strings (now much smaller)
+  const matrix: number[][] = Array(len1 + 1)
+    .fill(null)
+    .map(() => Array(len2 + 1).fill(0));
+
+  for (let i = 0; i <= len1; i++) {
+    matrix[i][0] = i;
+  }
+  for (let j = 0; j <= len2; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      const cost = sampled1[i - 1] === sampled2[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+
+  // Scale the distance back up to approximate full text distance
+  return Math.round(matrix[len1][len2] * samplingRate);
+}
+
+/**
+ * Sample a string by taking every Nth character
+ */
+function sampleString(str: string, samplingRate: number): string {
+  let result = '';
+  for (let i = 0; i < str.length; i += samplingRate) {
+    result += str[i];
+  }
+  return result;
 }
 
 /**
@@ -162,6 +235,88 @@ export function calculateExactCharacterCount(
     extractedCount,
     groundTruthCount,
     difference: extractedCount - groundTruthCount,
+  };
+}
+
+/**
+ * Normalize text for order-independent comparison
+ * - Removes all whitespace (spaces, newlines, tabs)
+ * - Converts full-width numbers to half-width (１２３ → 123)
+ * - Converts full-width alphabet to half-width (ＡＢＣ → ABC)
+ * - Normalizes Unicode (NFKC)
+ * - Sorts characters alphabetically
+ *
+ * This allows comparing "first" and "tsrif" as equal (both become "first")
+ * Useful for measuring content completeness regardless of text order
+ */
+export function normalizeForOrderIndependentComparison(text: string): string {
+  // Step 1: Unicode normalization (NFKC) - converts full-width to half-width
+  let normalized = text.normalize('NFKC');
+
+  // Step 2: Remove all whitespace (spaces, tabs, newlines, etc.)
+  normalized = normalized.replace(/\s+/g, '');
+
+  // Step 3: Sort characters alphabetically
+  normalized = normalized.split('').sort().join('');
+
+  return normalized;
+}
+
+/**
+ * Calculate Order-Independent Character Error Rate
+ * Measures content completeness by comparing character frequency regardless of order
+ *
+ * @returns Object with CER, accuracy percentage, and edit distance
+ */
+export function calculateOrderIndependentCER(
+  extracted: string,
+  groundTruth: string
+): {
+  cer: number;
+  accuracy: number;
+  editDistance: number;
+  normalizedExtractedLength: number;
+  normalizedGroundTruthLength: number;
+} {
+  // Normalize both texts for order-independent comparison
+  const normalizedExtracted =
+    normalizeForOrderIndependentComparison(extracted);
+  const normalizedGroundTruth =
+    normalizeForOrderIndependentComparison(groundTruth);
+
+  // Calculate Levenshtein distance on sorted character strings
+  const editDistance = calculateLevenshteinDistance(
+    normalizedExtracted,
+    normalizedGroundTruth
+  );
+
+  // Calculate lengths after normalization
+  const extractedLen = normalizedExtracted.length;
+  const groundTruthLen = normalizedGroundTruth.length;
+  const maxLen = Math.max(extractedLen, groundTruthLen);
+
+  // Handle edge case: both empty
+  if (maxLen === 0) {
+    return {
+      cer: 0,
+      accuracy: 100,
+      editDistance: 0,
+      normalizedExtractedLength: 0,
+      normalizedGroundTruthLength: 0,
+    };
+  }
+
+  // Calculate CER: 1 - (editDistance / max(lengths))
+  // This formula penalizes both missing and extra characters equally
+  const cer = editDistance / maxLen;
+  const accuracy = (1 - cer) * 100;
+
+  return {
+    cer: Math.round(cer * 10000) / 10000, // 4 decimal places
+    accuracy: Math.round(accuracy * 100) / 100, // 2 decimal places
+    editDistance,
+    normalizedExtractedLength: extractedLen,
+    normalizedGroundTruthLength: groundTruthLen,
   };
 }
 
