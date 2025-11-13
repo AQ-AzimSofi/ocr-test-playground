@@ -1,5 +1,12 @@
 import { FastifyPluginAsync } from 'fastify';
-import { db, extractionResults, accuracyMetrics } from '../../db/index.js';
+import {
+  db,
+  extractionResults,
+  accuracyMetrics,
+  bboxVerifications,
+  missingTextEntries,
+  testDrawings,
+} from '../../db/index.js';
 import { eq } from 'drizzle-orm';
 
 export const resultsRoutes: FastifyPluginAsync = async (fastify) => {
@@ -28,6 +35,35 @@ export const resultsRoutes: FastifyPluginAsync = async (fastify) => {
         .where(eq(accuracyMetrics.extractionResultId, id))
         .limit(1);
 
+      // Get verification data
+      const verifications = await db
+        .select()
+        .from(bboxVerifications)
+        .where(eq(bboxVerifications.extractionResultId, id));
+
+      // Get missing text entries
+      const missingTexts = await db
+        .select()
+        .from(missingTextEntries)
+        .where(eq(missingTextEntries.extractionResultId, id));
+
+      // Get drawing info (for confidential status)
+      const [drawing] = await db
+        .select()
+        .from(testDrawings)
+        .where(eq(testDrawings.drawingId, result.drawingId))
+        .limit(1);
+
+      // Create verification map (bboxIndex -> verification)
+      const verificationMap = verifications.reduce((acc, v) => {
+        acc[v.bboxIndex] = {
+          status: v.status,
+          notes: v.notes,
+          verifiedAt: v.verifiedAt,
+        };
+        return acc;
+      }, {} as Record<number, any>);
+
       // Process bounding boxes to ensure proper structure
       const boundingBoxes = result.boundingBoxes || [];
       const processedBoundingBoxes = boundingBoxes.map(
@@ -41,6 +77,8 @@ export const resultsRoutes: FastifyPluginAsync = async (fastify) => {
                 y: typeof point.y === 'number' ? point.y : 0,
               }))
             : [],
+          // Add verification status if exists
+          verification: verificationMap[index] || null,
         })
       );
 
@@ -60,6 +98,11 @@ export const resultsRoutes: FastifyPluginAsync = async (fastify) => {
         }, {}),
       };
 
+      // Calculate verification statistics
+      const verifiedCount = verifications.length;
+      const correctCount = verifications.filter((v) => v.status === 'correct').length;
+      const incorrectCount = verifications.filter((v) => v.status === 'incorrect').length;
+
       return {
         success: true,
         data: {
@@ -67,6 +110,18 @@ export const resultsRoutes: FastifyPluginAsync = async (fastify) => {
           boundingBoxes: processedBoundingBoxes,
           accuracy: accuracy || null,
           stats: bboxStats,
+          isConfidential: drawing?.isConfidential || false,
+          verification: {
+            totalBboxes: processedBoundingBoxes.length,
+            verifiedCount,
+            correctCount,
+            incorrectCount,
+            missingTextCount: missingTexts.length,
+            verificationProgress:
+              processedBoundingBoxes.length > 0
+                ? (verifiedCount / processedBoundingBoxes.length) * 100
+                : 0,
+          },
         },
       };
     } catch (error) {
@@ -151,4 +206,95 @@ export const resultsRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   );
+
+  // PATCH /api/results/:id/corrections - Apply bbox corrections
+  fastify.patch<{
+    Params: { id: string };
+    Body: { corrections: any[] };
+  }>('/:id/corrections', async (request, reply) => {
+    try {
+      const { id } = request.params;
+      const { corrections } = request.body;
+
+      if (!Array.isArray(corrections)) {
+        return reply.status(400).send({
+          success: false,
+          error: 'Corrections must be an array',
+        });
+      }
+
+      // Fetch current result
+      const [currentResult] = await db
+        .select()
+        .from(extractionResults)
+        .where(eq(extractionResults.id, id))
+        .limit(1);
+
+      if (!currentResult) {
+        return reply.status(404).send({
+          success: false,
+          error: `Result not found: ${id}`,
+        });
+      }
+
+      // Apply corrections to bounding boxes
+      let updatedBBoxes = [...(currentResult.boundingBoxes || [])];
+
+      for (const correction of corrections) {
+        const { type, bbox, originalBbox } = correction;
+
+        if (type === 'add') {
+          // Add new bbox
+          updatedBBoxes.push(bbox);
+        } else if (type === 'modify') {
+          // Find and update bbox
+          const index = updatedBBoxes.findIndex(
+            (b: any) =>
+              b.text === originalBbox?.text &&
+              JSON.stringify(b.bounds) === JSON.stringify(originalBbox?.bounds)
+          );
+          if (index !== -1) {
+            updatedBBoxes[index] = bbox;
+          }
+        } else if (type === 'delete') {
+          // Remove bbox
+          updatedBBoxes = updatedBBoxes.filter(
+            (b: any) =>
+              !(
+                b.text === bbox.text &&
+                JSON.stringify(b.bounds) === JSON.stringify(bbox.bounds)
+              )
+          );
+        }
+      }
+
+      // Update result in database
+      await db
+        .update(extractionResults)
+        .set({
+          boundingBoxes: updatedBBoxes,
+        })
+        .where(eq(extractionResults.id, id));
+
+      // Fetch updated result
+      const [updatedResult] = await db
+        .select()
+        .from(extractionResults)
+        .where(eq(extractionResults.id, id))
+        .limit(1);
+
+      return {
+        success: true,
+        data: {
+          result: updatedResult,
+        },
+      };
+    } catch (error) {
+      fastify.log.error(error);
+      reply.status(500).send({
+        success: false,
+        error: 'Failed to apply corrections',
+      });
+    }
+  });
 };

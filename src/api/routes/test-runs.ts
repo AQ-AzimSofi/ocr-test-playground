@@ -40,6 +40,9 @@ export const testRunsRoutes: FastifyPluginAsync = async (fastify) => {
             toolCounts[tool] = results.filter((r) => r.tool === tool).length;
           });
 
+          // Check if any drawings are confidential
+          const hasConfidential = drawings.some((d) => d.isConfidential);
+
           return {
             ...run,
             drawings: drawings.map((d) => ({
@@ -48,8 +51,10 @@ export const testRunsRoutes: FastifyPluginAsync = async (fastify) => {
               filePath: d.filePath,
               type: d.type,
               quality: d.quality,
+              isConfidential: d.isConfidential || false,
             })),
             toolCounts,
+            isConfidential: hasConfidential,
           };
         })
       );
@@ -218,6 +223,9 @@ export const testRunsRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
 
+      // Check if any drawings are confidential
+      const hasConfidential = drawings.some((d) => d.isConfidential);
+
       return {
         success: true,
         data: {
@@ -229,7 +237,9 @@ export const testRunsRoutes: FastifyPluginAsync = async (fastify) => {
               filePath: d.filePath,
               type: d.type,
               quality: d.quality,
+              isConfidential: d.isConfidential || false,
             })),
+            isConfidential: hasConfidential,
           },
           comparisons,
           aggregateStats,
