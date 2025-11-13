@@ -8,9 +8,16 @@ export interface BoundingBox {
     geminiUpdated?: boolean;
     originalText?: string;
     updateReason?: string;
-    source?: 'azure-read' | 'cloud-vision' | 'gemini';
+    source?: 'azure-read' | 'cloud-vision' | 'gemini' | 'manual';
     granularity?: 'word' | 'paragraph';
+    verified?: boolean; // User has verified/approved this bbox
   };
+  // Manual verification status (from verification system)
+  verification?: {
+    status: 'correct' | 'incorrect' | 'unverified';
+    notes?: string | null;
+    verifiedAt: string;
+  } | null;
 }
 
 export interface ExtractionResult {
@@ -33,6 +40,7 @@ export interface Drawing {
   type: string;
   quality: string;
   source: string;
+  isConfidential: boolean; // Confidential PDFs cannot use Gemini processors
   groundTruth: {
     fullText?: string;
     fullTextFile?: string;
@@ -58,6 +66,15 @@ export interface ResultWithDetails extends ExtractionResult {
     geminiUpdated: number;
     lowConfidence: number;
     bySource: Record<string, number>;
+  };
+  isConfidential: boolean;
+  verification: {
+    totalBboxes: number;
+    verifiedCount: number;
+    correctCount: number;
+    incorrectCount: number;
+    missingTextCount: number;
+    verificationProgress: number; // Percentage
   };
 }
 
@@ -94,8 +111,10 @@ export interface TestRun {
     filePath: string;
     type: string;
     quality: string;
+    isConfidential: boolean;
   }>;
   toolCounts?: Record<string, number>;
+  isConfidential?: boolean; // True if any drawing in the run is confidential
 }
 
 export interface TestRunDetails {
@@ -137,4 +156,80 @@ export interface APIResponse<T> {
   success: boolean;
   data: T;
   error?: string;
+}
+
+// Edit mode types
+export type BBoxChangeType = 'add' | 'modify' | 'delete';
+
+export interface BBoxCorrection {
+  type: BBoxChangeType;
+  bbox: BoundingBox;
+  originalBbox?: BoundingBox; // For modify/delete operations
+}
+
+export interface SaveCorrectionsRequest {
+  resultId: string;
+  corrections: BBoxCorrection[];
+}
+
+export interface SaveCorrectionsResponse {
+  success: boolean;
+  result: ExtractionResult;
+}
+
+// Verification types for confidential documents
+export interface BBoxVerification {
+  bboxIndex: number;
+  status: 'correct' | 'incorrect' | 'unverified';
+  notes?: string;
+}
+
+export interface MissingTextEntry {
+  id: string;
+  text: string;
+  estimatedLocation?: {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    page?: number;
+  };
+  notes?: string | null;
+  addedAt: string;
+}
+
+export interface VerificationStats {
+  totalBboxes: number;
+  verifiedCount: number;
+  unverifiedCount: number;
+  correctCount: number;
+  incorrectCount: number;
+  missingTextCount: number;
+  verificationProgress: number; // Percentage
+  correctRate: number; // Percentage
+  incorrectRate: number; // Percentage
+  verifications: Record<number, {
+    status: 'correct' | 'incorrect' | 'unverified';
+    notes?: string | null;
+    verifiedAt: string;
+  }>;
+  missingTexts: MissingTextEntry[];
+}
+
+export interface VerifyBBoxRequest {
+  bboxIndex: number;
+  status: 'correct' | 'incorrect' | 'unverified';
+  notes?: string;
+}
+
+export interface AddMissingTextRequest {
+  text: string;
+  estimatedLocation?: {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    page?: number;
+  };
+  notes?: string;
 }
