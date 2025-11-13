@@ -115,6 +115,31 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     category: 'core',
   },
 
+  'document-ai': {
+    name: 'document-ai',
+    displayName: 'Document AI',
+    shortDescription: 'Advanced word-level OCR with structure analysis',
+    fullDescription:
+      'Google Cloud Document AI provides advanced OCR with word-level precision, confidence scores, and document structure analysis. Safe for confidential documents (no AI training on data).',
+    howItWorks: [
+      'Sends image to Google Document AI processor',
+      'Analyzes document structure and layout',
+      'Extracts text at word-level with confidence',
+      'Returns word-level bounding boxes with page context',
+    ],
+    keyFeatures: [
+      'Word-level precision',
+      'High accuracy for technical drawings',
+      'Structure-aware processing',
+      'Confidence scores per word',
+      'Safe for confidential data',
+    ],
+    bestFor: 'Technical documents and drawings requiring high precision',
+    cost: '~0.225 yen per page',
+    bboxAccuracy: 'precise',
+    category: 'core',
+  },
+
   hybrid: {
     name: 'hybrid',
     displayName: 'Hybrid (Legacy)',
@@ -188,6 +213,33 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     bestFor: 'Budget-conscious projects needing high accuracy',
     cost: '~0.225-0.40 yen per image (depends on low-confidence word count)',
     bboxAccuracy: 'precise',
+    category: 'hybrid',
+  },
+
+  'document-ai-gemini-hybrid': {
+    name: 'document-ai-gemini-hybrid',
+    displayName: 'Document AI + Gemini Hybrid',
+    shortDescription: 'Advanced hybrid with Document AI validation workflow',
+    fullDescription:
+      'Uses Google Document AI for word-level OCR with confidence scores, then Gemini validates results and finds missing or incorrect text. Combines Document AI\'s structure analysis with Gemini\'s intelligence.',
+    howItWorks: [
+      'Document AI extracts text at word-level with confidence',
+      'Gemini validates ALL results (quality assurance mode)',
+      'Gemini identifies missing text and incorrect text',
+      'Crops problem regions and re-processes with Gemini',
+      'Synthesizes bounding boxes for Gemini-found text',
+      'Merges results: Document AI precision + Gemini validation',
+    ],
+    keyFeatures: [
+      'Word-level precision from Document AI',
+      'Systematic QA validation by Gemini',
+      'Better structure detection than Cloud Vision',
+      'Form parsing and table detection capabilities',
+      'Only processes regions needing correction',
+    ],
+    bestFor: 'Complex documents requiring advanced structure analysis',
+    cost: '~0.25-0.50 yen per image (depends on validation issues)',
+    bboxAccuracy: 'mixed',
     category: 'hybrid',
   },
 
@@ -331,6 +383,88 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     experimental: true,
     category: 'experimental',
   },
+
+  'gemini-geometric': {
+    name: 'gemini-geometric',
+    displayName: 'Gemini Geometric',
+    shortDescription: 'AI-powered floor plan analysis with wall and room detection',
+    fullDescription:
+      'Uses Google Gemini 2.5 Flash to analyze floor plans and detect geometric objects like walls, doors, windows, and rooms with their spatial relationships.',
+    howItWorks: [
+      'Sends floor plan image to Gemini 2.5 Flash',
+      'AI analyzes architectural elements and spatial layout',
+      'Detects walls (exterior/interior), doors, windows, and rooms',
+      'Provides bounding boxes and labels for each object',
+      'Identifies room types and dimensions',
+    ],
+    keyFeatures: [
+      'Understands architectural context',
+      'Detects parallel wall pairs (wall thickness)',
+      'Identifies room labels and types',
+      'Provides structured JSON output',
+      'Single API call for complete analysis',
+    ],
+    bestFor: 'Floor plan analysis requiring wall and room detection',
+    cost: '~1.50 yen per floor plan',
+    bboxAccuracy: 'approximate',
+    category: 'experimental',
+    experimental: true,
+  },
+
+  'roboflow': {
+    name: 'roboflow',
+    displayName: 'Roboflow Wall Detector',
+    shortDescription: 'Pre-trained computer vision models for wall and room detection',
+    fullDescription:
+      'Uses pre-trained models from Roboflow Universe specialized in floor plan analysis. Combines wall detection and room detection models for comprehensive floor plan understanding.',
+    howItWorks: [
+      'Sends image to Roboflow API',
+      'Uses floor-plan-kaaow/floor-plan_-room-detection model for rooms',
+      'Uses floorplanproject-ngpdl/wall-floorplan model for walls',
+      'Returns bounding boxes with class labels and confidence scores',
+      'Fast computer vision-based detection',
+    ],
+    keyFeatures: [
+      'Pre-trained on floor plan datasets',
+      'Fast inference speed',
+      'Precise bounding boxes from CV models',
+      'Confidence scores for each detection',
+      'No AI reasoning overhead',
+    ],
+    bestFor: 'Fast, cost-effective floor plan object detection',
+    cost: 'Free tier available, paid plans from $0.0005 per prediction',
+    bboxAccuracy: 'precise',
+    category: 'experimental',
+    experimental: true,
+  },
+
+  'hybrid-cv-ai': {
+    name: 'hybrid-cv-ai',
+    displayName: 'Hybrid CV + AI Detector',
+    shortDescription: 'OpenCV line detection enhanced with Gemini classification',
+    fullDescription:
+      'Two-stage hybrid approach: Stage 1 uses computer vision (OpenCV-style) to detect lines, walls, and rooms. Stage 2 uses Gemini AI to classify and label detected objects for enhanced accuracy.',
+    howItWorks: [
+      'Stage 1: OpenCV detects lines, wall pairs, and room regions',
+      'Identifies parallel lines as potential walls',
+      'Uses flood fill to detect enclosed room areas',
+      'Stage 2: Gemini classifies each detected object',
+      'AI labels wall types (exterior/interior/partition)',
+      'AI identifies room labels and types',
+    ],
+    keyFeatures: [
+      'Combines speed of CV with intelligence of AI',
+      'Precise geometric detection from OpenCV',
+      'Semantic understanding from Gemini',
+      'Two-stage pipeline for best of both worlds',
+      'Cost-optimized (CV does heavy lifting, AI refines)',
+    ],
+    bestFor: 'High-accuracy floor plan analysis with cost optimization',
+    cost: '~0.50-1.00 yen per floor plan (depends on objects detected)',
+    bboxAccuracy: 'precise',
+    category: 'experimental',
+    experimental: true,
+  },
 };
 
 /**
@@ -372,4 +506,47 @@ export function getProcessorDisplayLabel(processorName: string): string {
   if (info.experimental) label += ' (Experimental)';
 
   return label;
+}
+
+/**
+ * Check if a processor uses Gemini AI
+ * Confidential documents cannot use Gemini processors
+ */
+export function isGeminiProcessor(processorName: string): boolean {
+  const geminiProcessors = [
+    'gemini',
+    'cloud-vision-gemini-hybrid',
+    'azure-read-gemini-hybrid',
+    'azure-layout-gemini-hybrid',
+    'document-ai-gemini-hybrid',
+    'gemini-coordinates',
+    'gemini-bbox-synthesis',
+    'gemini-validation-azure-read',
+    'gemini-validation-azure-layout',
+    'gemini-validation-cloud-vision',
+    'gemini-geometric',
+    'gemini-self-calibrating',
+    'hybrid-cv-ai', // Uses Gemini for classification
+  ];
+  return geminiProcessors.includes(processorName);
+}
+
+/**
+ * Get processors that are safe for confidential documents
+ * (Pure OCR processors only - no Gemini)
+ */
+export function getConfidentialSafeProcessors(): ProcessorInfo[] {
+  return Object.entries(processorMetadata)
+    .filter(([name]) => !isGeminiProcessor(name))
+    .map(([, info]) => info);
+}
+
+/**
+ * Filter processor list for confidential documents
+ * Returns only processors that don't use Gemini
+ */
+export function filterProcessorsForConfidential(
+  processorNames: string[]
+): string[] {
+  return processorNames.filter((name) => !isGeminiProcessor(name));
 }
