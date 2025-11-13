@@ -26,7 +26,6 @@
     "test:gemini-coordinates": "tsx src/test-runner.ts --workflow gemini-coordinates",
     "test:gemini-self-calibrating": "tsx src/test-runner.ts --workflow gemini-self-calibrating",
     "test:gemini-geometric": "tsx src/test-runner.ts --workflow gemini-geometric",
-    "test:roboflow": "tsx src/test-runner.ts --workflow roboflow",
     "test:hybrid-cv-ai": "tsx src/test-runner.ts --workflow hybrid-cv-ai",
     "test:confidential": "tsx src/test-runner.ts --workflow confidential-safe --confidential-only",
     "test:confidential:all": "tsx src/test-runner.ts --workflow confidential-safe --confidential-only",
@@ -49,6 +48,7 @@
     "test:exp:grid-100x100": "tsx src/experiments/test-experiments.ts --experiment grid-100x100",
     "test:exp:region-detection": "tsx src/experiments/test-experiments.ts --experiment region-detection",
     "test:exp:baseline": "tsx src/experiments/test-experiments.ts --experiment baseline",
+    "test:run-id": "tsx src/test-runner.ts --test-run-id",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

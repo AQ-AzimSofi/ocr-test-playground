@@ -34,6 +34,7 @@ interface CliArgs {
   drawing?: string;
   output?: string;
   confidentialOnly?: boolean;
+  testRunId?: string;
 }
 
 /**
@@ -81,6 +82,9 @@ function parseArgs(): CliArgs {
       i++;
     } else if (arg === '--output' && args[i + 1]) {
       result.output = args[i + 1];
+      i++;
+    } else if (arg === '--test-run-id' && args[i + 1]) {
+      result.testRunId = args[i + 1];
       i++;
     } else if (arg === '--confidential-only') {
       result.confidentialOnly = true;
@@ -460,42 +464,74 @@ async function main() {
   }
   console.log('');
 
-  const [testRun] = await db
-    .insert(testRuns)
-    .values({
-      runName: `Test Run ${new Date().toISOString()}`,
-      description: `Testing workflow: ${workflow}`,
-      drawingIds: drawings.map((d) => d.metadata?.id || d.fileName),
-      tools:
-        workflow === 'confidential-safe'
-          ? ['cloud-vision', 'azure-read', 'azure-layout', 'document-ai']
-          : workflow === 'all'
-          ? [
-              'cloud-vision',
-              'azure-read',
-              'azure-layout',
-              'cloud-vision-gemini-hybrid',
-              'azure-read-gemini-hybrid',
-              'azure-layout-gemini-hybrid',
-              'document-ai-gemini-hybrid',
-              'gemini-coordinates',
-              'gemini-geometric',
-              'gemini-self-calibrating',
-              'hybrid-cv-ai',
-            ]
-          : [workflow],
-      summary: {
-        totalDrawings: drawings.length,
-        totalExtractions: 0,
-        avgCharacterErrorRateByTool: {},
-        avgCharacterAccuracyByTool: {},
-        avgProcessingTimeByTool: {},
-        totalCostByTool: {},
-        recommendedTool: '',
-        notes: '',
-      },
-    })
-    .returning();
+  // Load or create test run
+  let testRun: any;
+
+  if (args.testRunId) {
+    // Load existing test run
+    console.log(`Loading existing test run: ${args.testRunId}`);
+    const [existingRun] = await db
+      .select()
+      .from(testRuns)
+      .where(eq(testRuns.id, args.testRunId))
+      .limit(1);
+
+    if (!existingRun) {
+      console.error(`Test run not found: ${args.testRunId}`);
+      process.exit(1);
+    }
+
+    testRun = existingRun;
+    console.log(`  Name: ${testRun.runName}`);
+    console.log(`  Processors: ${testRun.tools?.join(', ')}`);
+    console.log(`  Drawings: ${testRun.drawingIds?.length}`);
+    console.log('');
+
+    // Override workflow and drawings with test run's configuration
+    workflow = testRun.tools?.length === 1 ? testRun.tools[0] : 'custom';
+    // Filter drawings to only those in the test run
+    drawings = drawings.filter((d) =>
+      testRun.drawingIds?.includes(d.metadata?.id || d.fileName)
+    );
+  } else {
+    // Create new test run
+    [testRun] = await db
+      .insert(testRuns)
+      .values({
+        runName: `Test Run ${new Date().toISOString()}`,
+        description: `Testing workflow: ${workflow}`,
+        drawingIds: drawings.map((d) => d.metadata?.id || d.fileName),
+        tools:
+          workflow === 'confidential-safe'
+            ? ['cloud-vision', 'azure-read', 'azure-layout', 'document-ai']
+            : workflow === 'all'
+            ? [
+                'cloud-vision',
+                'azure-read',
+                'azure-layout',
+                'cloud-vision-gemini-hybrid',
+                'azure-read-gemini-hybrid',
+                'azure-layout-gemini-hybrid',
+                'document-ai-gemini-hybrid',
+                'gemini-coordinates',
+                'gemini-geometric',
+                'gemini-self-calibrating',
+                'hybrid-cv-ai',
+              ]
+            : [workflow],
+        summary: {
+          totalDrawings: drawings.length,
+          totalExtractions: 0,
+          avgCharacterErrorRateByTool: {},
+          avgCharacterAccuracyByTool: {},
+          avgProcessingTimeByTool: {},
+          totalCostByTool: {},
+          recommendedTool: '',
+          notes: '',
+        },
+      })
+      .returning();
+  }
 
   const testResults: any[] = [];
 
@@ -508,7 +544,9 @@ async function main() {
     console.log(`${'='.repeat(60)}`);
 
     let processorsToRun =
-      workflow === 'confidential-safe'
+      args.testRunId
+        ? testRun.tools || []
+        : workflow === 'confidential-safe'
         ? ['cloud-vision', 'azure-read', 'azure-layout', 'document-ai']
         : workflow === 'confidential-fast'
         ? ['azure-read', 'azure-layout', 'document-ai']

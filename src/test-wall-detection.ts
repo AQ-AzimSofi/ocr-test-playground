@@ -2,7 +2,6 @@
 
 import * as dotenv from 'dotenv';
 import { processWithGeminiGeometric } from './processors/gemini-geometric-processor.js';
-import { processWithRoboflow } from './processors/roboflow-wall-detector-processor.js';
 import { processWithHybridDetector } from './processors/hybrid-wall-detector-processor.js';
 import { db, testRuns, testDrawings } from './db/index.js';
 import { eq } from 'drizzle-orm';
@@ -75,9 +74,9 @@ async function testWallDetection(drawingName: string) {
     .insert(testRuns)
     .values({
       runName: `Wall Detection Test - ${drawingName}`,
-      description: 'Comparing wall detection approaches: Gemini Geometric, Roboflow, Hybrid CV+AI',
+      description: 'Comparing wall detection approaches: Gemini Geometric, Hybrid CV+AI',
       drawingIds: [drawing.drawingId],
-      tools: ['gemini-geometric', 'roboflow', 'hybrid-cv-ai'],
+      tools: ['gemini-geometric', 'hybrid-cv-ai'],
       summary: {
         totalDrawings: 1,
         totalExtractions: 0,
@@ -115,49 +114,9 @@ async function testWallDetection(drawingName: string) {
     });
   }
 
-  // Test 2: Roboflow (if API key is available)
+  // Test 2: Hybrid OpenCV + Gemini
   console.log('\n' + '-'.repeat(80));
-  console.log('TEST 2: Roboflow Pre-trained Models');
-  console.log('-'.repeat(80));
-  if (process.env.ROBOFLOW_API_KEY) {
-    try {
-      const result = await processWithRoboflow(imagePath, drawing.drawingId, 'both');
-      results.push({
-        approach: 'Roboflow',
-        success: result.success,
-        objectCount: result.objectCount,
-        processingTime: result.processingTime,
-        cost: result.cost,
-      });
-    } catch (error) {
-      console.error('Failed:', error);
-      results.push({
-        approach: 'Roboflow',
-        success: false,
-        objectCount: 0,
-        processingTime: 0,
-        cost: 0,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  } else {
-    console.warn('ROBOFLOW_API_KEY not set - skipping Roboflow test');
-    console.log(
-      'Get your API key from https://roboflow.com/ and add it to .env.development'
-    );
-    results.push({
-      approach: 'Roboflow',
-      success: false,
-      objectCount: 0,
-      processingTime: 0,
-      cost: 0,
-      error: 'API key not configured',
-    });
-  }
-
-  // Test 3: Hybrid OpenCV + Gemini
-  console.log('\n' + '-'.repeat(80));
-  console.log('TEST 3: Hybrid OpenCV + Gemini');
+  console.log('TEST 2: Hybrid OpenCV + Gemini');
   console.log('-'.repeat(80));
   try {
     const result = await processWithHybridDetector(imagePath, drawing.drawingId);
