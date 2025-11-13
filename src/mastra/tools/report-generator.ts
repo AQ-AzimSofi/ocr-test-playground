@@ -20,14 +20,24 @@ export const reportGeneratorTool = createTool({
         tool: z.string(),
         metrics: z.object({
           characterErrorRate: z.number(),
+          orderIndependentCER: z.number().optional(),
+          orderIndependentAccuracy: z.number().optional(),
           characterAccuracy: z.number(),
           characterSetCoverage: z.number(),
           exactCharCountMatch: z.boolean(),
           extractedCharCount: z.number(),
           groundTruthCharCount: z.number(),
+          editDistance: z.number().optional(),
+          orderIndependentEditDistance: z.number().optional(),
           processingTimeMs: z.number(),
           apiCost: z.number(),
         }),
+        orderIndependentCharAnalysis: z.object({
+          missingCharacters: z.record(z.number()),
+          extraCharacters: z.record(z.number()),
+          missingTotal: z.number(),
+          extraTotal: z.number(),
+        }).optional(),
       })
     ),
     outputPath: z.string().optional(),
@@ -55,6 +65,8 @@ export const reportGeneratorTool = createTool({
       string,
       {
         avgCER: number;
+        avgOrderIndependentCER: number;
+        avgOrderIndependentAccuracy: number;
         avgCharacterAccuracy: number;
         avgCharacterSetCoverage: number;
         avgProcessingTime: number;
@@ -67,6 +79,8 @@ export const reportGeneratorTool = createTool({
       if (!toolStats[result.tool]) {
         toolStats[result.tool] = {
           avgCER: 0,
+          avgOrderIndependentCER: 0,
+          avgOrderIndependentAccuracy: 0,
           avgCharacterAccuracy: 0,
           avgCharacterSetCoverage: 0,
           avgProcessingTime: 0,
@@ -78,6 +92,10 @@ export const reportGeneratorTool = createTool({
       const stats = toolStats[result.tool];
 
       stats.avgCER += result.metrics.characterErrorRate;
+      stats.avgOrderIndependentCER +=
+        result.metrics.orderIndependentCER || 0;
+      stats.avgOrderIndependentAccuracy +=
+        result.metrics.orderIndependentAccuracy || 0;
       stats.avgCharacterAccuracy += result.metrics.characterAccuracy;
       stats.avgCharacterSetCoverage += result.metrics.characterSetCoverage;
       stats.avgProcessingTime += result.metrics.processingTimeMs;
@@ -89,6 +107,10 @@ export const reportGeneratorTool = createTool({
     for (const tool in toolStats) {
       const stats = toolStats[tool];
       stats.avgCER = stats.avgCER / stats.testCount;
+      stats.avgOrderIndependentCER =
+        stats.avgOrderIndependentCER / stats.testCount;
+      stats.avgOrderIndependentAccuracy =
+        stats.avgOrderIndependentAccuracy / stats.testCount;
       stats.avgCharacterAccuracy = stats.avgCharacterAccuracy / stats.testCount;
       stats.avgCharacterSetCoverage =
         stats.avgCharacterSetCoverage / stats.testCount;
@@ -358,10 +380,15 @@ function generateHTMLReport(
   <div class="info-box">
     <h3>About Character-Level OCR Metrics</h3>
     <ul>
-      <li><strong>Character Error Rate (CER):</strong> Industry-standard metric. Lower is better (0.0 = perfect)</li>
+      <li><strong>Position-Sensitive CER:</strong> Industry-standard metric that considers character order. Lower is better (0.0 = perfect)</li>
+      <li><strong>Order-Independent CER:</strong> Measures content completeness ignoring text order (full-width normalized, whitespace removed, characters sorted). Lower is better (0.0 = perfect)</li>
+      <li><strong>Order-Independent Accuracy:</strong> Content accuracy percentage ignoring order. Higher is better (0-100%)</li>
       <li><strong>Character Accuracy:</strong> Position-based accuracy. Higher is better (0-100%)</li>
       <li><strong>Character Set Coverage:</strong> Percentage of unique characters found. Higher is better (0-100%)</li>
+      <li><strong>Edit Distance:</strong> Number of insertions, deletions, or substitutions needed to transform extracted text to ground truth (Levenshtein distance). Lower is better.</li>
+      <li><strong>Order-Independent Edit Distance:</strong> Edit distance after sorting characters (ignores order). Shows content completeness regardless of sequence. Lower is better.</li>
     </ul>
+    <p><em>Note: Order-independent metrics treat "first second" and "second first" as equal, useful for comparing content completeness.</em></p>
   </div>
 
   <div class="summary">
@@ -380,9 +407,11 @@ function generateHTMLReport(
     <thead>
       <tr>
         <th>Tool</th>
-        <th>Avg CER</th>
-        <th>Avg Char Accuracy</th>
-        <th>Avg Char Set Coverage</th>
+        <th>Position-Sensitive CER</th>
+        <th>Order-Independent CER</th>
+        <th>Order-Independent Accuracy</th>
+        <th>Char Accuracy</th>
+        <th>Char Set Coverage</th>
         <th>Avg Processing Time</th>
         <th>Total Cost</th>
         <th>Tests</th>
@@ -401,6 +430,8 @@ function generateHTMLReport(
         <tr>
           <td><strong>${tool}</strong></td>
           <td><span class="metric" style="${getMetricStyle(stats.avgCER, 'cer')}">${(stats.avgCER * 100).toFixed(2)}%</span></td>
+          <td><span class="metric" style="${getMetricStyle(stats.avgOrderIndependentCER, 'cer')}">${(stats.avgOrderIndependentCER * 100).toFixed(2)}%</span></td>
+          <td><span class="metric" style="${getMetricStyle(stats.avgOrderIndependentAccuracy, 'accuracy')}">${stats.avgOrderIndependentAccuracy.toFixed(1)}%</span></td>
           <td><span class="metric" style="${getMetricStyle(stats.avgCharacterAccuracy, 'accuracy')}">${stats.avgCharacterAccuracy.toFixed(1)}%</span></td>
           <td><span class="metric" style="${getMetricStyle(stats.avgCharacterSetCoverage, 'coverage')}">${stats.avgCharacterSetCoverage.toFixed(1)}%</span></td>
           <td><span class="metric" style="${getMetricStyle(normalizedTime, 'time')}">${formatTime(stats.avgProcessingTime)}</span></td>
@@ -419,10 +450,14 @@ function generateHTMLReport(
       <tr>
         <th>Drawing ID</th>
         <th>Tool</th>
-        <th>CER</th>
+        <th>Position-Sensitive CER</th>
+        <th>Order-Independent CER</th>
+        <th>Order-Independent Accuracy</th>
         <th>Char Accuracy</th>
         <th>Char Set Coverage</th>
         <th>Char Count</th>
+        <th>Edit Distance</th>
+        <th>Order-Indep. Edit Dist.</th>
         <th>Processing Time</th>
         <th>Cost</th>
       </tr>
@@ -441,9 +476,13 @@ function generateHTMLReport(
           <td>${result.drawingId}</td>
           <td>${result.tool}</td>
           <td><span class="metric" style="${getMetricStyle(result.metrics.characterErrorRate, 'cer')}">${(result.metrics.characterErrorRate * 100).toFixed(2)}%</span></td>
+          <td><span class="metric" style="${getMetricStyle(result.metrics.orderIndependentCER || null, 'cer')}">${result.metrics.orderIndependentCER ? (result.metrics.orderIndependentCER * 100).toFixed(2) + '%' : 'N/A'}</span></td>
+          <td><span class="metric" style="${getMetricStyle(result.metrics.orderIndependentAccuracy || null, 'accuracy')}">${result.metrics.orderIndependentAccuracy ? result.metrics.orderIndependentAccuracy.toFixed(1) + '%' : 'N/A'}</span></td>
           <td><span class="metric" style="${getMetricStyle(result.metrics.characterAccuracy, 'accuracy')}">${result.metrics.characterAccuracy.toFixed(1)}%</span></td>
           <td><span class="metric" style="${getMetricStyle(result.metrics.characterSetCoverage, 'coverage')}">${result.metrics.characterSetCoverage.toFixed(1)}%</span></td>
           <td class="char-count">${result.metrics.extractedCharCount}/${result.metrics.groundTruthCharCount} ${result.metrics.exactCharCountMatch ? 'match' : 'mismatch'}</td>
+          <td>${result.metrics.editDistance !== undefined ? result.metrics.editDistance : 'N/A'}</td>
+          <td>${result.metrics.orderIndependentEditDistance !== undefined ? result.metrics.orderIndependentEditDistance : 'N/A'}</td>
           <td><span class="metric" style="${getMetricStyle(normalizedTime, 'time')}">${formatTime(result.metrics.processingTimeMs)}</span></td>
           <td>${formatCost(result.metrics.apiCost)}</td>
         </tr>
@@ -452,7 +491,97 @@ function generateHTMLReport(
         .join('')}
     </tbody>
   </table>
+
+  <h2>Character Differences by Drawing</h2>
+  <p>Order-independent character frequency analysis showing which specific characters each processor missed or added extra.</p>
+  ${generateCharacterDifferencesSection(testResults)}
+
 </body>
 </html>
   `.trim();
+}
+
+/**
+ * Generate character differences section grouped by drawing
+ */
+function generateCharacterDifferencesSection(testResults: any[]): string {
+  // Group results by drawing
+  const byDrawing = new Map<string, any[]>();
+  for (const result of testResults) {
+    if (!byDrawing.has(result.drawingId)) {
+      byDrawing.set(result.drawingId, []);
+    }
+    byDrawing.get(result.drawingId)!.push(result);
+  }
+
+  if (byDrawing.size === 0) {
+    return '<p>No character difference data available.</p>';
+  }
+
+  let html = '';
+  for (const [drawingId, results] of byDrawing) {
+    html += `
+    <div style="background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      <h3 style="margin-top: 0; color: #2196F3;">Drawing: ${drawingId}</h3>
+      <table style="box-shadow: none; margin-bottom: 0;">
+        <thead>
+          <tr>
+            <th>Tool</th>
+            <th>Missing Characters</th>
+            <th>Extra Characters</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${results
+            .map((result) => {
+              const analysis = result.orderIndependentCharAnalysis;
+              if (!analysis) {
+                return `
+                <tr>
+                  <td>${result.tool}</td>
+                  <td colspan="2" style="text-align: center; color: #999;">No data available</td>
+                </tr>
+                `;
+              }
+
+              // Format missing characters
+              let missingHtml = '';
+              if (analysis.missingTotal > 0) {
+                const missingList = Object.entries(analysis.missingCharacters)
+                  .sort((a: any, b: any) => b[1] - a[1])
+                  .map(([char, count]: any) => `<span style="background: #ffebee; padding: 2px 6px; margin: 2px; border-radius: 3px; font-family: monospace;">'${char}'×${count}</span>`)
+                  .join(' ');
+                missingHtml = `${missingList} <strong>(${analysis.missingTotal} total)</strong>`;
+              } else {
+                missingHtml = '<span style="color: #4CAF50;">✓ None</span>';
+              }
+
+              // Format extra characters
+              let extraHtml = '';
+              if (analysis.extraTotal > 0) {
+                const extraList = Object.entries(analysis.extraCharacters)
+                  .sort((a: any, b: any) => b[1] - a[1])
+                  .map(([char, count]: any) => `<span style="background: #fff3e0; padding: 2px 6px; margin: 2px; border-radius: 3px; font-family: monospace;">'${char}'×${count}</span>`)
+                  .join(' ');
+                extraHtml = `${extraList} <strong>(${analysis.extraTotal} total)</strong>`;
+              } else {
+                extraHtml = '<span style="color: #4CAF50;">✓ None</span>';
+              }
+
+              return `
+              <tr>
+                <td><strong>${result.tool}</strong></td>
+                <td>${missingHtml}</td>
+                <td>${extraHtml}</td>
+              </tr>
+              `;
+            })
+            .join('')}
+        </tbody>
+      </table>
+    </div>
+    `;
+  }
+
+  return html;
 }
