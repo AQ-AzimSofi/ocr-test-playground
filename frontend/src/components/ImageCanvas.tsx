@@ -9,6 +9,18 @@ import {
 import type { BoundingBox } from '../types/api';
 import { getConfidenceColor } from '../utils/colors';
 import { findHoveredBBox } from '../utils/geometry';
+import {
+  getResizeHandles,
+  getHandleAtPoint,
+  moveBBox,
+  resizeBBox,
+  createBBoxFromRect,
+  clampBBoxToImage,
+  getCursorForHandle,
+  drawHandle,
+  isPointInBBox,
+  type HandleType,
+} from '../utils/bboxEditor';
 
 function normalizeBounds(
   bounds: Array<{ x: number; y: number }>
@@ -46,6 +58,13 @@ interface ImageCanvasProps {
   showFill?: boolean;
   enablePanning?: boolean;
   allowZoomOut?: boolean;
+  // Edit mode props
+  isEditMode?: boolean;
+  isResizeMode?: boolean;
+  onBBoxMove?: (index: number, newBBox: BoundingBox) => void;
+  onBBoxResize?: (index: number, newBBox: BoundingBox) => void;
+  onBBoxCreate?: (newBBox: BoundingBox) => void;
+  onBBoxDoubleClick?: (index: number) => void;
 }
 
 export interface ImageCanvasRef {
@@ -72,6 +91,12 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
       showFill = true,
       enablePanning = false,
       allowZoomOut = true,
+      isEditMode = false,
+      isResizeMode = false,
+      onBBoxMove,
+      onBBoxResize,
+      onBBoxCreate,
+      onBBoxDoubleClick,
     },
     ref
   ) {
@@ -84,6 +109,16 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
 
     const [isPanning, setIsPanning] = useState(false);
     const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null);
+
+    // Edit mode state
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [drawStart, setDrawStart] = useState<{ x: number; y: number } | null>(null);
+    const [drawCurrent, setDrawCurrent] = useState<{ x: number; y: number } | null>(null);
+    const [isDraggingBBox, setIsDraggingBBox] = useState(false);
+    const [draggedBBoxIndex, setDraggedBBoxIndex] = useState<number | null>(null);
+    const [dragOffset, setDragOffset] = useState<{ x: number; y: number } | null>(null);
+    const [resizingHandle, setResizingHandle] = useState<HandleType | null>(null);
+    const [hoveredHandle, setHoveredHandle] = useState<HandleType | null>(null);
 
     useImperativeHandle(
       ref,
@@ -265,6 +300,41 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
           }
         }
       });
+
+      // Draw resize handles only in resize mode
+      if (isEditMode && isResizeMode && selectedIndex !== null && filteredBBoxes[selectedIndex]) {
+        const selectedBBox = filteredBBoxes[selectedIndex];
+        const handles = getResizeHandles(selectedBBox, scale);
+
+        handles.forEach((handle) => {
+          const isHovered = hoveredHandle === handle.type;
+          drawHandle(ctx, handle, scale, translateX, translateY, isHovered);
+        });
+      }
+
+      // Draw new bbox being created
+      if (isEditMode && isDrawing && drawStart && drawCurrent) {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+        ctx.strokeStyle = '#3b82f6';
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+
+        const startX = drawStart.x * scale + translateX;
+        const startY = drawStart.y * scale + translateY;
+        const currentX = drawCurrent.x * scale + translateX;
+        const currentY = drawCurrent.y * scale + translateY;
+
+        const width = currentX - startX;
+        const height = currentY - startY;
+
+        ctx.fillRect(startX, startY, width, height);
+        ctx.strokeRect(startX, startY, width, height);
+
+        ctx.restore();
+      }
     }, [
       image,
       filteredBBoxes,
@@ -276,6 +346,12 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
       scale,
       translateX,
       translateY,
+      isEditMode,
+      isResizeMode,
+      hoveredHandle,
+      isDrawing,
+      drawStart,
+      drawCurrent,
     ]);
 
     const handleMouseLeave = useCallback(() => {
@@ -285,6 +361,12 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
     const handleClick = useCallback(
       (e: React.MouseEvent<HTMLCanvasElement>) => {
         if (!canvasRef.current) return;
+
+        // Handle double-click for text editing
+        if (e.detail === 2 && isEditMode && onBBoxDoubleClick && selectedIndex !== null) {
+          onBBoxDoubleClick(selectedIndex);
+          return;
+        }
 
         const canvas = canvasRef.current;
         const rect = canvas.getBoundingClientRect();
@@ -302,11 +384,21 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
         const index = findHoveredBBox({ x, y }, filteredBBoxes);
         onSelect(index);
       },
-      [filteredBBoxes, onSelect, scale, translateX, translateY, getCanvasDisplayScale]
+      [
+        filteredBBoxes,
+        onSelect,
+        scale,
+        translateX,
+        translateY,
+        getCanvasDisplayScale,
+        isEditMode,
+        onBBoxDoubleClick,
+        selectedIndex,
+      ]
     );
 
     const handleWheel = useCallback(
-      (e: React.WheelEvent<HTMLCanvasElement>) => {
+      (e: WheelEvent) => {
         e.preventDefault();
 
         if (!canvasRef.current) return;
@@ -348,8 +440,20 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
         setTranslateX(newTranslateX);
         setTranslateY(newTranslateY);
       },
-      [scale, translateX, translateY, getCanvasDisplayScale]
+      [scale, translateX, translateY, getCanvasDisplayScale, allowZoomOut]
     );
+
+    // Register non-passive wheel event listener to prevent default scroll behavior
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      canvas.addEventListener('wheel', handleWheel, { passive: false });
+
+      return () => {
+        canvas.removeEventListener('wheel', handleWheel);
+      };
+    }, [handleWheel]);
 
     const handleDoubleClick = useCallback(() => {
       setScale(1);
@@ -359,29 +463,212 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
 
     const handleMouseDown = useCallback(
       (e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!canvasRef.current || !image) return;
+
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const displayScale = getCanvasDisplayScale();
+
+        const mouseX = e.clientX - rect.left - displayScale.offsetX;
+        const mouseY = e.clientY - rect.top - displayScale.offsetY;
+
+        const canvasX = mouseX / displayScale.scaleX;
+        const canvasY = mouseY / displayScale.scaleY;
+
+        const x = (canvasX - translateX) / scale;
+        const y = (canvasY - translateY) / scale;
+
+        // Edit mode operations
+        if (isEditMode) {
+          // Check if clicking on a resize handle
+          if (selectedIndex !== null && filteredBBoxes[selectedIndex]) {
+            const selectedBBox = filteredBBoxes[selectedIndex];
+            const handles = getResizeHandles(selectedBBox, scale);
+            const handle = getHandleAtPoint(handles, x, y, scale);
+
+            if (handle) {
+              setResizingHandle(handle.type);
+              e.preventDefault();
+              return;
+            }
+          }
+
+          // Check if clicking on a bbox to drag it
+          const clickedIndex = findHoveredBBox({ x, y }, filteredBBoxes);
+          if (clickedIndex !== null) {
+            const bbox = filteredBBoxes[clickedIndex];
+            setIsDraggingBBox(true);
+            setDraggedBBoxIndex(clickedIndex);
+            // Calculate offset from bbox top-left corner
+            const minX = Math.min(...bbox.bounds.map((p) => p.x));
+            const minY = Math.min(...bbox.bounds.map((p) => p.y));
+            setDragOffset({ x: x - minX, y: y - minY });
+            e.preventDefault();
+            return;
+          }
+
+          // Start drawing new bbox
+          setIsDrawing(true);
+          setDrawStart({ x, y });
+          setDrawCurrent({ x, y });
+          e.preventDefault();
+          return;
+        }
+
+        // Default panning behavior
         if (enablePanning && scale > 1) {
           setIsPanning(true);
           setPanStart({ x: e.clientX, y: e.clientY });
           e.preventDefault();
         }
       },
-      [enablePanning, scale]
+      [
+        enablePanning,
+        scale,
+        isEditMode,
+        selectedIndex,
+        filteredBBoxes,
+        translateX,
+        translateY,
+        getCanvasDisplayScale,
+        image,
+      ]
     );
 
     const handleMouseUp = useCallback(() => {
+      if (!image) return;
+
+      // Finish drawing new bbox
+      if (isDrawing && drawStart && drawCurrent && onBBoxCreate) {
+        const minX = Math.min(drawStart.x, drawCurrent.x);
+        const maxX = Math.max(drawStart.x, drawCurrent.x);
+        const minY = Math.min(drawStart.y, drawCurrent.y);
+        const maxY = Math.max(drawStart.y, drawCurrent.y);
+
+        // Only create if bbox has minimum size
+        if (maxX - minX > 10 && maxY - minY > 10) {
+          const newBBox = createBBoxFromRect(
+            minX,
+            minY,
+            maxX,
+            maxY,
+            '', // Empty text, will be filled via modal
+            undefined
+          );
+          const clampedBBox = clampBBoxToImage(newBBox, image.width, image.height);
+          onBBoxCreate(clampedBBox);
+        }
+      }
+
+      // Reset all edit states
+      setIsDrawing(false);
+      setDrawStart(null);
+      setDrawCurrent(null);
+      setIsDraggingBBox(false);
+      setDraggedBBoxIndex(null);
+      setDragOffset(null);
+      setResizingHandle(null);
+
+      // Reset panning
       setIsPanning(false);
       setPanStart(null);
-    }, []);
+    }, [
+      isDrawing,
+      drawStart,
+      drawCurrent,
+      onBBoxCreate,
+      image,
+    ]);
 
     const handleMouseMoveWithPan = useCallback(
       (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!canvasRef.current) return;
+        if (!canvasRef.current || !image) return;
 
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const displayScale = getCanvasDisplayScale();
+
+        const mouseX = e.clientX - rect.left - displayScale.offsetX;
+        const mouseY = e.clientY - rect.top - displayScale.offsetY;
+
+        const canvasX = mouseX / displayScale.scaleX;
+        const canvasY = mouseY / displayScale.scaleY;
+
+        const x = (canvasX - translateX) / scale;
+        const y = (canvasY - translateY) / scale;
+
+        // Handle edit mode operations
+        if (isEditMode) {
+          // Update drawing rect
+          if (isDrawing && drawStart) {
+            setDrawCurrent({ x, y });
+            return;
+          }
+
+          // Drag bbox
+          if (isDraggingBBox && draggedBBoxIndex !== null && dragOffset && onBBoxMove) {
+            const bbox = filteredBBoxes[draggedBBoxIndex];
+            if (bbox) {
+              const currentMinX = Math.min(...bbox.bounds.map((p) => p.x));
+              const currentMinY = Math.min(...bbox.bounds.map((p) => p.y));
+              const newMinX = x - dragOffset.x;
+              const newMinY = y - dragOffset.y;
+              const deltaX = newMinX - currentMinX;
+              const deltaY = newMinY - currentMinY;
+
+              const movedBBox = moveBBox(bbox, deltaX, deltaY);
+              const clampedBBox = clampBBoxToImage(movedBBox, image.width, image.height);
+              onBBoxMove(draggedBBoxIndex, clampedBBox);
+            }
+            return;
+          }
+
+          // Resize bbox
+          if (resizingHandle && selectedIndex !== null && onBBoxResize) {
+            const bbox = filteredBBoxes[selectedIndex];
+            if (bbox) {
+              const resizedBBox = resizeBBox(bbox, resizingHandle, x, y);
+              const clampedBBox = clampBBoxToImage(resizedBBox, image.width, image.height);
+              onBBoxResize(selectedIndex, clampedBBox);
+            }
+            return;
+          }
+
+          // Detect hovered handle
+          if (selectedIndex !== null && filteredBBoxes[selectedIndex]) {
+            const selectedBBox = filteredBBoxes[selectedIndex];
+            const handles = getResizeHandles(selectedBBox, scale);
+            const handle = getHandleAtPoint(handles, x, y, scale);
+            setHoveredHandle(handle ? handle.type : null);
+
+            // Update cursor
+            if (handle && canvasRef.current) {
+              canvasRef.current.style.cursor = getCursorForHandle(handle.type);
+              return;
+            }
+          }
+
+          // Check if hovering over a bbox (for move cursor)
+          const hoveredBBoxIndex = findHoveredBBox({ x, y }, filteredBBoxes);
+          if (hoveredBBoxIndex !== null && canvasRef.current) {
+            canvasRef.current.style.cursor = 'move';
+            onHover(hoveredBBoxIndex);
+            return;
+          }
+
+          // Default cursor in edit mode
+          if (canvasRef.current) {
+            canvasRef.current.style.cursor = 'crosshair';
+          }
+          onHover(null);
+          return;
+        }
+
+        // Handle panning
         if (isPanning && panStart && enablePanning) {
           const deltaX = e.clientX - panStart.x;
           const deltaY = e.clientY - panStart.y;
 
-          const canvas = canvasRef.current;
           let newTranslateX = translateX + deltaX;
           let newTranslateY = translateY + deltaY;
 
@@ -397,19 +684,7 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
           return;
         }
 
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        const displayScale = getCanvasDisplayScale();
-
-        const mouseX = e.clientX - rect.left - displayScale.offsetX;
-        const mouseY = e.clientY - rect.top - displayScale.offsetY;
-
-        const canvasX = mouseX / displayScale.scaleX;
-        const canvasY = mouseY / displayScale.scaleY;
-
-        const x = (canvasX - translateX) / scale;
-        const y = (canvasY - translateY) / scale;
-
+        // Default hover detection
         const index = findHoveredBBox({ x, y }, filteredBBoxes);
         onHover(index);
       },
@@ -423,6 +698,17 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
         translateX,
         translateY,
         getCanvasDisplayScale,
+        isEditMode,
+        isDrawing,
+        drawStart,
+        isDraggingBBox,
+        draggedBBoxIndex,
+        dragOffset,
+        onBBoxMove,
+        resizingHandle,
+        selectedIndex,
+        onBBoxResize,
+        image,
       ]
     );
 
@@ -452,7 +738,6 @@ export const ImageCanvas = forwardRef<ImageCanvasRef, ImageCanvasProps>(
           onMouseDown={handleMouseDown}
           onMouseUp={handleMouseUp}
           onClick={handleClick}
-          onWheel={handleWheel}
           onDoubleClick={handleDoubleClick}
           className={cursorStyle}
           style={{ width: '100%', height: '100%', objectFit: 'contain' }}
