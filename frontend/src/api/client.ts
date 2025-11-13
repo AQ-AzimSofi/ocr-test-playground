@@ -17,7 +17,7 @@ class APIClient {
       const response = await fetch(url, {
         ...options,
         headers: {
-          'Content-Type': 'application/json',
+          ...(options?.body && { 'Content-Type': 'application/json' }),
           ...options?.headers,
         },
       });
@@ -56,6 +56,13 @@ class APIClient {
     return this.request(`/api/results/${id}/bbox-summary`);
   }
 
+  async saveCorrections(resultId: string, corrections: any) {
+    return this.request(`/api/results/${resultId}/corrections`, {
+      method: 'PATCH',
+      body: JSON.stringify({ corrections }),
+    });
+  }
+
   // Test runs endpoints
   async getTestRuns() {
     return this.request('/api/test-runs');
@@ -74,6 +81,45 @@ class APIClient {
   async deleteTestRuns(ids: string[]) {
     // Delete multiple test runs in parallel
     return Promise.all(ids.map((id) => this.deleteTestRun(id)));
+  }
+
+  // Verification endpoints (for confidential documents)
+  async verifyBBox(resultId: string, data: {
+    bboxIndex: number;
+    status: 'correct' | 'incorrect' | 'unverified';
+    notes?: string;
+  }) {
+    return this.request(`/api/verification/${resultId}/verify-bbox`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async addMissingText(resultId: string, data: {
+    text: string;
+    estimatedLocation?: {
+      x?: number;
+      y?: number;
+      width?: number;
+      height?: number;
+      page?: number;
+    };
+    notes?: string;
+  }) {
+    return this.request(`/api/verification/${resultId}/missing-text`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getVerificationStats(resultId: string) {
+    return this.request(`/api/verification/${resultId}/stats`);
+  }
+
+  async deleteMissingText(resultId: string, missingTextId: string) {
+    return this.request(`/api/verification/${resultId}/missing-text/${missingTextId}`, {
+      method: 'DELETE',
+    });
   }
 
   // Image URL helper
