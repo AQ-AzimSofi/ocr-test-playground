@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useTestRun } from '../api/queries';
 import { apiClient } from '../api/client';
 import type { BoundingBox } from '../types/api';
@@ -26,9 +26,12 @@ export function useTestRunData(testRunId: string | undefined) {
     ? comparisons.find(c => c.drawingId === drawing.drawingId)
     : null;
 
-  const tools = (currentDrawing?.tools && currentDrawing.tools.length > 0)
-    ? currentDrawing.tools.map((t) => t.tool)
-    : [];
+  // Memoize tools array to prevent recreating on every render
+  const tools = useMemo(() => {
+    return (currentDrawing?.tools && currentDrawing.tools.length > 0)
+      ? currentDrawing.tools.map((t) => t.tool)
+      : [];
+  }, [currentDrawing?.tools]);
 
   const hasData = !!(
     drawing &&
@@ -50,10 +53,15 @@ export function useTestRunData(testRunId: string | undefined) {
   const leftToolData = currentDrawing?.tools.find((t) => t.tool === leftTool);
   const rightToolData = currentDrawing?.tools.find((t) => t.tool === rightTool);
 
-  const leftBoundingBoxes: BoundingBox[] =
-    leftToolData?.result.boundingBoxes || [];
-  const rightBoundingBoxes: BoundingBox[] =
-    rightToolData?.result.boundingBoxes || [];
+  // Memoize bounding boxes to maintain stable references and prevent infinite loops
+  const leftBoundingBoxes: BoundingBox[] = useMemo(
+    () => leftToolData?.result.boundingBoxes || [],
+    [leftToolData?.result.boundingBoxes]
+  );
+  const rightBoundingBoxes: BoundingBox[] = useMemo(
+    () => rightToolData?.result.boundingBoxes || [],
+    [rightToolData?.result.boundingBoxes]
+  );
 
   const imageUrl = drawing ? apiClient.getImageURL(drawing.filePath) : '';
 

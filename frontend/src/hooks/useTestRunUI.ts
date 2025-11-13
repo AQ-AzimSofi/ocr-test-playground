@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export function useTestRunUI() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -19,12 +19,42 @@ export function useTestRunUI() {
 
   const [allowZoomOut, setAllowZoomOut] = useState(false);
 
+  // Throttle mouse position updates to prevent excessive re-renders
+  const rafIdRef = useRef<number | null>(null);
+  const lastUpdateRef = useRef<number>(0);
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
+      const now = Date.now();
+
+      // Throttle to max 60fps (16ms between updates)
+      if (now - lastUpdateRef.current < 16) {
+        // Cancel any pending update
+        if (rafIdRef.current !== null) {
+          cancelAnimationFrame(rafIdRef.current);
+        }
+
+        // Schedule update for next frame
+        rafIdRef.current = requestAnimationFrame(() => {
+          lastUpdateRef.current = Date.now();
+          setMousePos({ x: e.clientX, y: e.clientY });
+          rafIdRef.current = null;
+        });
+      } else {
+        // Update immediately if enough time has passed
+        lastUpdateRef.current = now;
+        setMousePos({ x: e.clientX, y: e.clientY });
+      }
     };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { BoundingBox } from '../types/api';
 
 export type BBoxChange = {
@@ -19,12 +19,23 @@ export function useEditMode(initialBBoxes: BoundingBox[]) {
   const [changes, setChanges] = useState<Map<string, BBoxChange>>(new Map());
   const [currentBBoxes, setCurrentBBoxes] = useState<BoundingBox[]>(initialBBoxes);
 
-  // Update current bboxes when initial data changes
+  // Track refs to detect actual changes and avoid infinite loops
+  const changesRef = useRef<Map<string, BBoxChange>>(changes);
+  const currentBBoxesRef = useRef<BoundingBox[]>(currentBBoxes);
+
+  // Keep refs in sync with state
   useEffect(() => {
-    if (changes.size === 0) {
+    changesRef.current = changes;
+    currentBBoxesRef.current = currentBBoxes;
+  }, [changes, currentBBoxes]);
+
+  // Update current bboxes when initial data changes (only if no local changes exist)
+  useEffect(() => {
+    // Only sync if there are no pending changes and arrays are actually different
+    if (changesRef.current.size === 0 && currentBBoxesRef.current !== initialBBoxes) {
       setCurrentBBoxes(initialBBoxes);
     }
-  }, [initialBBoxes, changes.size]);
+  }, [initialBBoxes]);
 
   const isDirty = changes.size > 0;
 
@@ -39,75 +50,86 @@ export function useEditMode(initialBBoxes: BoundingBox[]) {
 
   const addBBox = useCallback((bbox: BoundingBox) => {
     const id = getBBoxId(bbox);
-    const newChanges = new Map(changes);
 
-    newChanges.set(id, {
-      type: 'add',
-      bbox,
-    });
-
-    setChanges(newChanges);
-    setCurrentBBoxes((prev) => [...prev, bbox]);
-  }, [changes, getBBoxId]);
-
-  const modifyBBox = useCallback((index: number, newBBox: BoundingBox) => {
-    const originalBbox = initialBBoxes[index];
-    const currentBbox = currentBBoxes[index];
-
-    if (!currentBbox) return;
-
-    const id = getBBoxId(currentBbox);
-    const newChanges = new Map(changes);
-
-    // Check if this was a newly added bbox
-    const existingChange = newChanges.get(id);
-    if (existingChange && existingChange.type === 'add') {
-      // Update the added bbox
+    setChanges((prevChanges) => {
+      const newChanges = new Map(prevChanges);
       newChanges.set(id, {
         type: 'add',
-        bbox: newBBox,
+        bbox,
       });
-    } else {
-      // Mark as modified
-      newChanges.set(id, {
-        type: 'modify',
-        bbox: newBBox,
-        originalBbox,
-      });
-    }
+      return newChanges;
+    });
 
-    setChanges(newChanges);
+    setCurrentBBoxes((prev) => [...prev, bbox]);
+  }, [getBBoxId]);
+
+  const modifyBBox = useCallback((index: number, newBBox: BoundingBox) => {
     setCurrentBBoxes((prev) => {
+      const currentBbox = prev[index];
+      if (!currentBbox) return prev;
+
+      const id = getBBoxId(currentBbox);
+      const originalBbox = initialBBoxes[index];
+
+      setChanges((prevChanges) => {
+        const newChanges = new Map(prevChanges);
+
+        // Check if this was a newly added bbox
+        const existingChange = newChanges.get(id);
+        if (existingChange && existingChange.type === 'add') {
+          // Update the added bbox
+          newChanges.set(id, {
+            type: 'add',
+            bbox: newBBox,
+          });
+        } else {
+          // Mark as modified
+          newChanges.set(id, {
+            type: 'modify',
+            bbox: newBBox,
+            originalBbox,
+          });
+        }
+
+        return newChanges;
+      });
+
       const updated = [...prev];
       updated[index] = newBBox;
       return updated;
     });
-  }, [initialBBoxes, currentBBoxes, changes, getBBoxId]);
+  }, [initialBBoxes, getBBoxId]);
 
   const deleteBBox = useCallback((index: number) => {
-    const bbox = currentBBoxes[index];
-    if (!bbox) return;
+    setCurrentBBoxes((prev) => {
+      const bbox = prev[index];
+      if (!bbox) return prev;
 
-    const id = getBBoxId(bbox);
-    const newChanges = new Map(changes);
+      const id = getBBoxId(bbox);
 
-    // Check if this was a newly added bbox
-    const existingChange = newChanges.get(id);
-    if (existingChange && existingChange.type === 'add') {
-      // Just remove it from changes
-      newChanges.delete(id);
-    } else {
-      // Mark as deleted
-      newChanges.set(id, {
-        type: 'delete',
-        bbox,
-        originalBbox: initialBBoxes[index],
+      setChanges((prevChanges) => {
+        const newChanges = new Map(prevChanges);
+
+        // Check if this was a newly added bbox
+        const existingChange = newChanges.get(id);
+        if (existingChange && existingChange.type === 'add') {
+          // Just remove it from changes
+          newChanges.delete(id);
+        } else {
+          // Mark as deleted
+          newChanges.set(id, {
+            type: 'delete',
+            bbox,
+            originalBbox: initialBBoxes[index],
+          });
+        }
+
+        return newChanges;
       });
-    }
 
-    setChanges(newChanges);
-    setCurrentBBoxes((prev) => prev.filter((_, i) => i !== index));
-  }, [currentBBoxes, initialBBoxes, changes, getBBoxId]);
+      return prev.filter((_, i) => i !== index);
+    });
+  }, [initialBBoxes, getBBoxId]);
 
   const approveBBox = useCallback((index: number) => {
     const bbox = currentBBoxes[index];

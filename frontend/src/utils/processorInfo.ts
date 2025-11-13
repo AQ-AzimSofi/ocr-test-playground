@@ -411,33 +411,6 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
     experimental: true,
   },
 
-  'roboflow': {
-    name: 'roboflow',
-    displayName: 'Roboflow Wall Detector',
-    shortDescription: 'Pre-trained computer vision models for wall and room detection',
-    fullDescription:
-      'Uses pre-trained models from Roboflow Universe specialized in floor plan analysis. Combines wall detection and room detection models for comprehensive floor plan understanding.',
-    howItWorks: [
-      'Sends image to Roboflow API',
-      'Uses floor-plan-kaaow/floor-plan_-room-detection model for rooms',
-      'Uses floorplanproject-ngpdl/wall-floorplan model for walls',
-      'Returns bounding boxes with class labels and confidence scores',
-      'Fast computer vision-based detection',
-    ],
-    keyFeatures: [
-      'Pre-trained on floor plan datasets',
-      'Fast inference speed',
-      'Precise bounding boxes from CV models',
-      'Confidence scores for each detection',
-      'No AI reasoning overhead',
-    ],
-    bestFor: 'Fast, cost-effective floor plan object detection',
-    cost: 'Free tier available, paid plans from $0.0005 per prediction',
-    bboxAccuracy: 'precise',
-    category: 'experimental',
-    experimental: true,
-  },
-
   'hybrid-cv-ai': {
     name: 'hybrid-cv-ai',
     displayName: 'Hybrid CV + AI Detector',
