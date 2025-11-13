@@ -1,16 +1,18 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTestRuns, useDeleteTestRun, useDeleteTestRuns } from '../api/queries';
 import { TestRunCard } from '../components/TestRunCard';
 import { ConfirmDeleteModal } from '../components/ConfirmDeleteModal';
 
 export function Home() {
+  const navigate = useNavigate();
   const { data, isLoading, error } = useTestRuns();
   const deleteTestRun = useDeleteTestRun();
   const deleteTestRuns = useDeleteTestRuns();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCompleted, setFilterCompleted] = useState<
     'all' | 'completed' | 'in-progress'
-  >('completed');
+  >('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteTargets, setDeleteTargets] = useState<string[]>([]);
@@ -120,9 +122,30 @@ export function Home() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-8 py-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            OCR Test Runs
-          </h1>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-3xl font-bold text-gray-900">
+              OCR Test Runs
+            </h1>
+            <button
+              onClick={() => navigate('/run-tests')}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Run New Test
+            </button>
+          </div>
           <p className="text-gray-600">
             View and compare OCR test results chronologically. Click a test run
             to see detailed results.

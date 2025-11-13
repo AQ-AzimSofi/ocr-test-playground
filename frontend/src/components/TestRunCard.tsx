@@ -14,17 +14,32 @@ interface TestRunCardProps {
 }
 
 const TOOL_COLORS: Record<string, string> = {
+  // Pure OCR Processors
   'cloud-vision': 'bg-blue-100 text-blue-800 border-blue-300',
-  'gemini-2.0-flash': 'bg-purple-100 text-purple-800 border-purple-300',
-  gemini: 'bg-purple-100 text-purple-800 border-purple-300',
-  hybrid:
-    'bg-gradient-to-r from-blue-100 to-purple-100 text-purple-800 border-purple-300',
   'azure-layout': 'bg-cyan-100 text-cyan-800 border-cyan-300',
   'azure-read': 'bg-teal-100 text-teal-800 border-teal-300',
+  'document-ai': 'bg-green-100 text-green-800 border-green-300',
+
+  // AI-Only Processors
+  'gemini-2.0-flash': 'bg-purple-100 text-purple-800 border-purple-300',
+  gemini: 'bg-purple-100 text-purple-800 border-purple-300',
+  'gemini-geometric': 'bg-violet-100 text-violet-800 border-violet-300',
+  'gemini-coordinates': 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-300',
+  'gemini-self-calibrating': 'bg-pink-100 text-pink-800 border-pink-300',
+
+  // Hybrid Processors
+  hybrid:
+    'bg-gradient-to-r from-blue-100 to-purple-100 text-purple-800 border-purple-300',
   'cloud-vision-gemini-hybrid':
     'bg-gradient-to-r from-blue-100 to-purple-100 text-indigo-800 border-indigo-300',
   'azure-read-gemini-hybrid':
     'bg-gradient-to-r from-teal-100 to-purple-100 text-purple-800 border-purple-300',
+  'azure-layout-gemini-hybrid':
+    'bg-gradient-to-r from-cyan-100 to-purple-100 text-cyan-800 border-cyan-300',
+  'document-ai-gemini-hybrid':
+    'bg-gradient-to-r from-green-100 to-purple-100 text-green-800 border-green-300',
+  'hybrid-cv-ai':
+    'bg-gradient-to-r from-orange-100 to-purple-100 text-orange-800 border-orange-300',
 };
 
 export function TestRunCard({

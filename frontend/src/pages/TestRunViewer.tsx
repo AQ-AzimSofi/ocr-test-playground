@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { ImageCanvas, type ImageCanvasRef } from '../components/ImageCanvas';
@@ -101,9 +101,15 @@ export function TestRunViewer() {
   // Filter tools for confidential documents
   const availableTools = isConfidential ? filterProcessorsForConfidential(tools) : tools;
 
+  // Memoize editor initial bboxes to maintain stable reference
+  const editorInitialBBoxes = useMemo(
+    () => (viewMode === 'single' ? leftBoundingBoxes : []),
+    [viewMode, leftBoundingBoxes]
+  );
+
   // Editor hook (only for single view mode with left tool)
   const editor = useTestRunEditor(
-    viewMode === 'single' ? leftBoundingBoxes : [],
+    editorInitialBBoxes,
     viewMode === 'single' ? leftToolData?.result?.id : undefined
   );
 

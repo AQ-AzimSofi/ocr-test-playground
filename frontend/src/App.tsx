@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Home } from './pages/Home';
+import { RunTests } from './pages/RunTests';
 import { TestRunViewer } from './pages/TestRunViewer';
 import { DrawingViewer } from './pages/DrawingViewer';
 import { Comparison } from './pages/Comparison';
@@ -10,6 +11,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/run-tests" element={<RunTests />} />
 
         {/* Test Run Routes (New Primary Navigation) */}
         <Route path="/test-run/:testRunId" element={<TestRunViewer />} />
