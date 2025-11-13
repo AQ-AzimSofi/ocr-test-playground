@@ -15,7 +15,7 @@ import { processWithGeminiGridOverlay40x40 } from './gemini-coords/gemini-grid-o
 import { processWithGeminiGridOverlay80x80 } from './gemini-coords/gemini-grid-overlay-80x80.js';
 import { processWithGeminiGridOverlay100x100 } from './gemini-coords/gemini-grid-overlay-100x100.js';
 import { processWithGeminiRegionDetection } from './gemini-coords/gemini-region-detection-processor.js';
-import { processWithGeminiBboxSynthesis } from '../processors/gemini-bbox-synthesis-processor.js';
+import { processWithGeminiBboxSynthesis } from '../processors/old/gemini-bbox-synthesis-processor.js';
 import { accuracyCalculatorTool } from '../mastra/tools/accuracy-calculator.js';
 import * as fs from 'fs';
 import * as path from 'path';

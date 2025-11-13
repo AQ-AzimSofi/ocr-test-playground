@@ -7,17 +7,19 @@ import {
   accuracyMetrics,
   testRuns,
 } from './db/index.js';
-import { processWithGemini } from './processors/gemini-processor.js';
+import { processWithGemini } from './processors/old/gemini-processor.js';
+import { processWithCloudVision } from './processors/cloud-vision-processor.js';
+import { processWithAzureRead } from './processors/azure-read-processor.js';
+import { processWithAzureLayout } from './processors/azure-layout-processor.js';
+import { processWithDocumentAI } from './processors/document-ai-processor.js';
 import { processWithCloudVisionGeminiHybrid } from './processors/cloud-vision-gemini-hybrid-processor.js';
 import { processWithAzureReadGeminiHybrid } from './processors/azure-read-gemini-hybrid-processor.js';
 import { processWithAzureLayoutGeminiHybrid } from './processors/azure-layout-gemini-hybrid-processor.js';
+import { processWithDocumentAIGeminiHybrid } from './processors/document-ai-gemini-hybrid-processor.js';
 import { processWithGeminiCoordinates } from './processors/gemini-coordinates-processor.js';
-import { processWithGeminiBboxSynthesis } from './processors/gemini-bbox-synthesis-processor.js';
-import { processWithGeminiValidationAzureRead } from './processors/gemini-validation-azure-read-processor.js';
-import { processWithGeminiValidationAzureLayout } from './processors/gemini-validation-azure-layout-processor.js';
-import { processWithGeminiValidationCloudVision } from './processors/gemini-validation-cloud-vision-processor.js';
 import { processWithGeminiGeometric } from './processors/gemini-geometric-processor.js';
 import { processWithGeminiSelfCalibrating } from './processors/gemini-self-calibrating-processor.js';
+import { processWithHybridDetector } from './processors/hybrid-wall-detector-processor.js';
 import { accuracyCalculatorTool } from './mastra/tools/accuracy-calculator.js';
 import { reportGeneratorTool } from './mastra/tools/report-generator.js';
 import * as fs from 'fs';
@@ -31,6 +33,38 @@ interface CliArgs {
   workflow?: string;
   drawing?: string;
   output?: string;
+  confidentialOnly?: boolean;
+}
+
+/**
+ * Check if a processor uses Gemini AI
+ */
+function isGeminiProcessor(processor: string): boolean {
+  const geminiProcessors = [
+    'gemini',
+    'cloud-vision-gemini-hybrid',
+    'azure-read-gemini-hybrid',
+    'azure-layout-gemini-hybrid',
+    'document-ai-gemini-hybrid',
+    'gemini-coordinates',
+    'gemini-geometric',
+    'gemini-self-calibrating',
+    'hybrid-cv-ai',
+  ];
+  return geminiProcessors.includes(processor);
+}
+
+/**
+ * Check if a file path is in the confidential directory
+ * Files in these directories cannot be processed with Gemini AI processors
+ */
+function isConfidentialFile(filePath: string): boolean {
+  return (
+    filePath.includes('/confidential/') ||
+    filePath.includes('\\confidential\\') ||
+    filePath.includes('/confidential-temp-excluded/') ||
+    filePath.includes('\\confidential-temp-excluded\\')
+  );
 }
 
 function parseArgs(): CliArgs {
@@ -48,6 +82,8 @@ function parseArgs(): CliArgs {
     } else if (arg === '--output' && args[i + 1]) {
       result.output = args[i + 1];
       i++;
+    } else if (arg === '--confidential-only') {
+      result.confidentialOnly = true;
     }
   }
 
@@ -92,7 +128,10 @@ function loadGroundTruthText(metadata: any, metadataDir: string): any {
   return metadata;
 }
 
-async function loadTestDrawings() {
+async function loadTestDrawings(
+  includeConfidential: boolean = false,
+  confidentialOnly: boolean = false
+) {
   const drawingsDir = path.join(process.cwd(), 'test-drawings');
 
   if (!fs.existsSync(drawingsDir)) {
@@ -115,14 +154,34 @@ async function loadTestDrawings() {
 
       for (const imageFile of imageFiles) {
         const filePath = path.join(subDir, imageFile);
+
+        // Filter confidential files based on test mode
+        const isConfidential = isConfidentialFile(filePath);
+        if (!includeConfidential && isConfidential) {
+          continue; // Skip confidential files for regular tests
+        }
+        if (confidentialOnly && !isConfidential) {
+          continue; // Skip non-confidential files for confidential-only tests
+        }
+
         const baseName = imageFile.replace(/\.(png|jpg|jpeg|pdf)$/, '');
         const metadataPath = path.join(subDir, `${baseName}-metadata.json`);
+        const txtPath = path.join(subDir, `${baseName}.txt`);
 
         let metadata = null;
         if (fs.existsSync(metadataPath)) {
           metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
           // Load ground truth from external file if specified
           metadata = loadGroundTruthText(metadata, subDir);
+        } else if (fs.existsSync(txtPath)) {
+          // Auto-detect ground truth from .txt file with same base name
+          const fullText = fs.readFileSync(txtPath, 'utf-8');
+          metadata = {
+            groundTruth: {
+              fullText,
+            },
+          };
+          console.log(`  Loaded ground truth from: ./${baseName}.txt`);
         }
 
         drawings.push({
@@ -136,14 +195,34 @@ async function loadTestDrawings() {
     ) {
       // Image in root test-drawings directory
       const filePath = path.join(drawingsDir, file.name);
+
+      // Filter confidential files based on test mode
+      const isConfidential = isConfidentialFile(filePath);
+      if (!includeConfidential && isConfidential) {
+        continue; // Skip confidential files for regular tests
+      }
+      if (confidentialOnly && !isConfidential) {
+        continue; // Skip non-confidential files for confidential-only tests
+      }
+
       const baseName = file.name.replace(/\.(png|jpg|jpeg|pdf)$/, '');
       const metadataPath = path.join(drawingsDir, `${baseName}-metadata.json`);
+      const txtPath = path.join(drawingsDir, `${baseName}.txt`);
 
       let metadata = null;
       if (fs.existsSync(metadataPath)) {
         metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
         // Load ground truth from external file if specified
         metadata = loadGroundTruthText(metadata, drawingsDir);
+      } else if (fs.existsSync(txtPath)) {
+        // Auto-detect ground truth from .txt file with same base name
+        const fullText = fs.readFileSync(txtPath, 'utf-8');
+        metadata = {
+          groundTruth: {
+            fullText,
+          },
+        };
+        console.log(`  Loaded ground truth from: ./${baseName}.txt`);
       }
 
       drawings.push({
@@ -169,26 +248,30 @@ async function runProcessor(
 
     if (processor === 'gemini') {
       result = await processWithGemini(imagePath, drawingId);
+    } else if (processor === 'cloud-vision') {
+      result = await processWithCloudVision(imagePath, drawingId);
+    } else if (processor === 'azure-read') {
+      result = await processWithAzureRead(imagePath, drawingId);
+    } else if (processor === 'azure-layout') {
+      result = await processWithAzureLayout(imagePath, drawingId);
+    } else if (processor === 'document-ai') {
+      result = await processWithDocumentAI(imagePath, drawingId);
     } else if (processor === 'cloud-vision-gemini-hybrid') {
       result = await processWithCloudVisionGeminiHybrid(imagePath, drawingId);
     } else if (processor === 'azure-read-gemini-hybrid') {
       result = await processWithAzureReadGeminiHybrid(imagePath, drawingId);
     } else if (processor === 'azure-layout-gemini-hybrid') {
       result = await processWithAzureLayoutGeminiHybrid(imagePath, drawingId);
+    } else if (processor === 'document-ai-gemini-hybrid') {
+      result = await processWithDocumentAIGeminiHybrid(imagePath, drawingId);
     } else if (processor === 'gemini-coordinates') {
       result = await processWithGeminiCoordinates(imagePath, drawingId);
-    } else if (processor === 'gemini-bbox-synthesis') {
-      result = await processWithGeminiBboxSynthesis(imagePath, drawingId);
-    } else if (processor === 'gemini-validation-azure-read') {
-      result = await processWithGeminiValidationAzureRead(imagePath, drawingId);
-    } else if (processor === 'gemini-validation-azure-layout') {
-      result = await processWithGeminiValidationAzureLayout(imagePath, drawingId);
-    } else if (processor === 'gemini-validation-cloud-vision') {
-      result = await processWithGeminiValidationCloudVision(imagePath, drawingId);
     } else if (processor === 'gemini-geometric') {
       result = await processWithGeminiGeometric(imagePath, drawingId);
     } else if (processor === 'gemini-self-calibrating') {
       result = await processWithGeminiSelfCalibrating(imagePath, drawingId);
+    } else if (processor === 'hybrid-cv-ai') {
+      result = await processWithHybridDetector(imagePath, drawingId);
     } else {
       throw new Error(`Unknown processor: ${processor}`);
     }
@@ -219,7 +302,15 @@ async function calculateAccuracy(extractionResultId: string, groundTruth: any) {
     return null;
   }
 
-  // Calculate accuracy using character-level comparison
+  // Detect large texts and log memory-efficient mode
+  const extractedLength = result.rawText.length;
+  const groundTruthLength = groundTruth.fullText.length;
+  const maxLength = Math.max(extractedLength, groundTruthLength);
+
+  if (maxLength > 10000) {
+    console.log(`  [INFO] Large document detected (${maxLength.toLocaleString()} chars) - using memory-efficient analysis`);
+  }
+
   const accuracyResult = await accuracyCalculatorTool.execute({
     context: {
       extractedText: result.rawText,
@@ -229,22 +320,27 @@ async function calculateAccuracy(extractionResultId: string, groundTruth: any) {
     },
   });
 
-  // Save accuracy metrics
   await db.insert(accuracyMetrics).values({
     extractionResultId,
     drawingId: result.drawingId,
     tool: result.tool,
     characterErrorRate: accuracyResult.characterErrorRate,
+    orderIndependentCer: accuracyResult.orderIndependentCER,
+    orderIndependentAccuracy: accuracyResult.orderIndependentAccuracy,
+    orderIndependentEditDistance: accuracyResult.orderIndependentEditDistance,
     characterAccuracy: accuracyResult.characterAccuracy,
     characterSetCoverage: accuracyResult.characterSetCoverage,
     extractedCharCount: accuracyResult.extractedCharCount,
     groundTruthCharCount: accuracyResult.groundTruthCharCount,
     exactCharCountMatch: accuracyResult.exactCharCountMatch,
     charCountDifference: accuracyResult.charCountDifference,
+    normalizedExtractedLength: accuracyResult.normalizedExtractedLength,
+    normalizedGroundTruthLength: accuracyResult.normalizedGroundTruthLength,
     editDistance: accuracyResult.editDistance,
     avgConfidenceScore: accuracyResult.avgConfidenceScore,
     bboxSourceStats: accuracyResult.bboxSourceStats,
     breakdown: accuracyResult.breakdown,
+    orderIndependentCharAnalysis: accuracyResult.orderIndependentCharAnalysis,
   });
 
   return accuracyResult;
@@ -262,9 +358,10 @@ async function main() {
     fs.mkdirSync(outputPath, { recursive: true });
   }
 
-  // Load test drawings
   console.log('Loading test drawings...');
-  let drawings = await loadTestDrawings();
+  const includeConfidential = args.confidentialOnly === true;
+  const confidentialOnly = args.confidentialOnly === true;
+  let drawings = await loadTestDrawings(includeConfidential, confidentialOnly);
 
   // Filter by drawing ID if specified
   if (args.drawing) {
@@ -281,7 +378,7 @@ async function main() {
     if (drawings.length === 0) {
       console.error(`\nNo drawing found matching: ${args.drawing}`);
       console.log('\nAvailable drawings:');
-      const allDrawings = await loadTestDrawings();
+      const allDrawings = await loadTestDrawings(includeConfidential, confidentialOnly);
       allDrawings.forEach((d) => {
         const id = d.metadata?.id || d.fileName;
         console.log(`  - ${id} (${d.fileName})`);
@@ -318,12 +415,19 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Found ${drawings.length} test drawing(s)\n`);
+  console.log(
+    `Found ${drawings.length} test drawing(s)${args.confidentialOnly ? ' (confidential only)' : ''}\n`
+  );
 
   // Register drawings in database before processing
   console.log('Registering drawings in database...');
   for (const drawing of drawings) {
     const drawingId = drawing.metadata?.id || drawing.fileName;
+    const isConfidential = isConfidentialFile(drawing.filePath);
+
+    if (isConfidential) {
+      console.log(`  [CONFIDENTIAL] ${drawingId}`);
+    }
 
     try {
       await db
@@ -335,6 +439,7 @@ async function main() {
           type: drawing.metadata?.type || 'unknown',
           quality: drawing.metadata?.quality || 'medium',
           source: drawing.metadata?.source || 'uploaded',
+          isConfidential,
           groundTruth: drawing.metadata?.groundTruth || {},
           metadata: drawing.metadata || {},
         })
@@ -343,6 +448,7 @@ async function main() {
           set: {
             fileName: drawing.fileName,
             filePath: drawing.filePath,
+            isConfidential,
             groundTruth: drawing.metadata?.groundTruth || {},
             metadata: drawing.metadata || {},
           },
@@ -354,7 +460,6 @@ async function main() {
   }
   console.log('');
 
-  // Create test run
   const [testRun] = await db
     .insert(testRuns)
     .values({
@@ -362,17 +467,21 @@ async function main() {
       description: `Testing workflow: ${workflow}`,
       drawingIds: drawings.map((d) => d.metadata?.id || d.fileName),
       tools:
-        workflow === 'all'
+        workflow === 'confidential-safe'
+          ? ['cloud-vision', 'azure-read', 'azure-layout', 'document-ai']
+          : workflow === 'all'
           ? [
+              'cloud-vision',
+              'azure-read',
+              'azure-layout',
               'cloud-vision-gemini-hybrid',
               'azure-read-gemini-hybrid',
               'azure-layout-gemini-hybrid',
+              'document-ai-gemini-hybrid',
               'gemini-coordinates',
-              // 'gemini-bbox-synthesis',
-              // 'gemini-validation-azure-read',
-              // 'gemini-validation-azure-layout',
-              // 'gemini-validation-cloud-vision',
               'gemini-geometric',
+              'gemini-self-calibrating',
+              'hybrid-cv-ai',
             ]
           : [workflow],
       summary: {
@@ -390,7 +499,6 @@ async function main() {
 
   const testResults: any[] = [];
 
-  // Run workflows on each drawing
   for (const drawing of drawings) {
     const drawingId = drawing.metadata?.id || drawing.fileName;
     const groundTruth = drawing.metadata?.groundTruth;
@@ -399,32 +507,61 @@ async function main() {
     console.log(`Processing: ${drawing.fileName}`);
     console.log(`${'='.repeat(60)}`);
 
-    const processorsToRun =
-      workflow === 'all'
+    let processorsToRun =
+      workflow === 'confidential-safe'
+        ? ['cloud-vision', 'azure-read', 'azure-layout', 'document-ai']
+        : workflow === 'confidential-fast'
+        ? ['azure-read', 'azure-layout', 'document-ai']
+        : workflow === 'all'
         ? [
+            'cloud-vision',
+            'azure-read',
+            'azure-layout',
             'cloud-vision-gemini-hybrid',
             'azure-read-gemini-hybrid',
             'azure-layout-gemini-hybrid',
+            'document-ai-gemini-hybrid',
             'gemini-coordinates',
-            // 'gemini-bbox-synthesis',
-            // 'gemini-validation-azure-read',
-            // 'gemini-validation-azure-layout',
-            // 'gemini-validation-cloud-vision',
-
-            // 'gemini-geometric',
+            'gemini-geometric',
+            'gemini-self-calibrating',
+            'hybrid-cv-ai',
           ]
         : [workflow];
 
+    // CONFIDENTIAL FILE PROTECTION: Block Gemini processors (safety check)
+    const isConfidential = isConfidentialFile(drawing.filePath);
+    if (isConfidential) {
+      if (!args.confidentialOnly) {
+        console.warn(
+          `  [WARNING] Confidential file found in regular test run: ${drawingId}`
+        );
+        console.warn(`  This file should have been filtered out during loading.`);
+      }
+
+      const originalCount = processorsToRun.length;
+      processorsToRun = processorsToRun.filter(p => !isGeminiProcessor(p));
+      const blockedCount = originalCount - processorsToRun.length;
+
+      if (blockedCount > 0) {
+        console.log(`  [CONFIDENTIAL] Blocked ${blockedCount} Gemini processor(s)`);
+      }
+
+      if (processorsToRun.length === 0) {
+        console.error(`\n  [ERROR] Cannot run Gemini processors on confidential files!`);
+        console.error(`  This file is in the 'confidential/' directory.`);
+        console.error(`  Use pure OCR processors instead: --workflow azure-read | azure-layout | cloud-vision`);
+        continue; // Skip this drawing
+      }
+    }
+
     for (const processor of processorsToRun) {
       try {
-        // Run processor
         const result = await runProcessor(
           processor,
           drawing.filePath,
           drawingId
         );
 
-        // Calculate accuracy if ground truth is available
         if (groundTruth && result.extractionResultId) {
           console.log('  Calculating accuracy...');
           const accuracy = await calculateAccuracy(
@@ -450,6 +587,28 @@ async function main() {
             );
             console.log(`     Edit Distance: ${accuracy.editDistance}`);
 
+            // Display order-independent character analysis
+            const charAnalysis = accuracy.orderIndependentCharAnalysis;
+            if (charAnalysis.missingTotal > 0 || charAnalysis.extraTotal > 0) {
+              console.log(`\n  Order-Independent Character Analysis:`);
+
+              if (charAnalysis.missingTotal > 0) {
+                const missingList = Object.entries(charAnalysis.missingCharacters)
+                  .sort((a, b) => b[1] - a[1]) // Sort by count descending
+                  .map(([char, count]) => `'${char}'×${count}`)
+                  .join(', ');
+                console.log(`     Missing: ${missingList} (${charAnalysis.missingTotal} chars)`);
+              }
+
+              if (charAnalysis.extraTotal > 0) {
+                const extraList = Object.entries(charAnalysis.extraCharacters)
+                  .sort((a, b) => b[1] - a[1]) // Sort by count descending
+                  .map(([char, count]) => `'${char}'×${count}`)
+                  .join(', ');
+                console.log(`     Extra: ${extraList} (${charAnalysis.extraTotal} chars)`);
+              }
+            }
+
             // Fetch processing time and cost from extraction result
             const [extraction] = await db
               .select()
@@ -461,14 +620,19 @@ async function main() {
               tool: processor,
               metrics: {
                 characterErrorRate: accuracy.characterErrorRate,
+                orderIndependentCER: accuracy.orderIndependentCER,
+                orderIndependentAccuracy: accuracy.orderIndependentAccuracy,
                 characterAccuracy: accuracy.characterAccuracy,
                 characterSetCoverage: accuracy.characterSetCoverage,
                 exactCharCountMatch: accuracy.exactCharCountMatch,
                 extractedCharCount: accuracy.extractedCharCount,
                 groundTruthCharCount: accuracy.groundTruthCharCount,
+                editDistance: accuracy.editDistance,
+                orderIndependentEditDistance: accuracy.orderIndependentEditDistance,
                 processingTimeMs: extraction.processingTimeMs || 0,
                 apiCost: extraction.apiCost || 0,
               },
+              orderIndependentCharAnalysis: accuracy.orderIndependentCharAnalysis,
             });
           }
         }
