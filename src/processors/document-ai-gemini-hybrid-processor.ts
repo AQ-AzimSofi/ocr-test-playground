@@ -1,5 +1,5 @@
 import { geminiClient } from '../lib/gemini-client.js';
-import { azureDocumentClient } from '../lib/azure-document-client.js';
+import { documentAIClient } from '../lib/document-ai-client.js';
 import { db, extractionResults } from '../db/index.js';
 import sharp from 'sharp';
 import { parseGeminiValidation } from '../utils/gemini-parser.js';
@@ -12,17 +12,17 @@ import {
 import { cropImageRegion } from '../utils/image-cropper.js';
 
 /**
- * Process drawing using Azure Layout + Gemini validation workflow
- * 1. Run Azure Layout for baseline OCR (with structure)
+ * Process drawing using Document AI + Gemini validation workflow
+ * 1. Run Document AI for baseline OCR with word-level tokens
  * 2. Ask Gemini to validate and find missing text
  * 3. Crop and re-process regions with missing text
  * 4. Synthesize bboxes for Gemini-found text
  */
-export async function processWithGeminiValidationAzureLayout(
+export async function processWithDocumentAIGeminiHybrid(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`  Processing with Gemini Validation (Azure Layout)...`);
+  console.log(`  Processing with Document AI + Gemini Hybrid (Validation)...`);
   const startTime = Date.now();
 
   try {
@@ -31,23 +31,23 @@ export async function processWithGeminiValidationAzureLayout(
     const imageWidth = metadata.width || 1000;
     const imageHeight = metadata.height || 1000;
 
-    // Step 1: Run Azure Layout for baseline OCR
-    console.log(`  Running Azure Layout (baseline)...`);
-    const azureResult = await azureDocumentClient.analyzeLayout(imagePath);
+    // Step 1: Run Document AI for baseline OCR
+    console.log(`  Running Document AI (baseline)...`);
+    const docAIResult = await documentAIClient.analyzeDocument(imagePath);
 
     console.log(
-      `  Azure extracted: ${azureResult.content.length} chars, ${azureResult.lines.length} lines`
+      `  Document AI extracted: ${docAIResult.content.length} chars, ${docAIResult.words.length} words`
     );
 
-    // Convert Azure lines to our bbox format
-    const azureBboxes: BoundingBox[] = azureResult.lines.map((line) => ({
-      bounds: line.bounds,
-      text: line.text,
-      confidence: line.confidence || 0.85,
+    // Convert Document AI words to our bbox format
+    const docAIBboxes: BoundingBox[] = docAIResult.words.map((word) => ({
+      bounds: word.bounds,
+      text: word.text,
+      confidence: word.confidence,
     }));
 
-    // Step 2: Ask Gemini to validate Azure's results
-    console.log(`  Asking Gemini to validate Azure Layout results...`);
+    // Step 2: Ask Gemini to validate Document AI's results
+    console.log(`  Asking Gemini to validate Document AI results...`);
 
     const validationPrompt = `You are a quality assurance system for OCR.
 
@@ -55,7 +55,7 @@ Compare the OCR text below with what you see in the image.
 Identify any missing text or incorrect text.
 
 OCR TEXT:
-${azureResult.content}
+${docAIResult.content}
 
 TASK:
 1. List any text visible in the image that is MISSING from the OCR above
@@ -92,54 +92,57 @@ IMPORTANT:
       `  Gemini found: ${validation.missingText.length} missing, ${validation.incorrectText.length} incorrect`
     );
 
-    // If no issues found, return Azure results as-is
+    // If no issues found, return Document AI results as-is
     if (
       validation.missingText.length === 0 &&
       validation.incorrectText.length === 0
     ) {
-      console.log(`  No issues found - using Azure Layout results as-is`);
+      console.log(`  No issues found - using Document AI results as-is`);
 
       const processingTime = Date.now() - startTime;
-      const azureCost = azureDocumentClient.estimateCost(
-        azureResult.pages.length,
-        'layout'
-      );
+      const docAICost = documentAIClient.estimateCost(docAIResult.pages.length);
       const geminiCost = geminiClient.estimateCost(1); // One validation call
-      const totalCost = azureCost + geminiCost;
+      const totalCost = docAICost + geminiCost;
 
       const [dbResult] = await db
         .insert(extractionResults)
         .values({
           drawingId,
-          tool: 'gemini-validation-azure-layout',
-          rawText: azureResult.content,
-          boundingBoxes: azureResult.lines.map((line) => ({
-            text: line.text,
-            bounds: line.bounds,
-            confidence: line.confidence || 0.85,
+          tool: 'document-ai-gemini-hybrid',
+          rawText: docAIResult.content,
+          boundingBoxes: docAIResult.words.map((word) => ({
+            text: word.text,
+            bounds: word.bounds,
+            confidence: word.confidence,
             bboxSource: 'ocr',
+            metadata: { source: 'document-ai' },
           })),
           processingTimeMs: processingTime,
           apiCost: totalCost,
           metadata: {
-            azureLineCount: azureResult.lines.length,
+            docAIWordCount: docAIResult.words.length,
             geminiValidationPassed: true,
             issuesFound: 0,
-            baselineOCR: 'azure-layout',
+            avgConfidence:
+              docAIResult.words.reduce((s, w) => s + w.confidence, 0) /
+              docAIResult.words.length,
           },
         })
         .returning();
 
       console.log(
-        `  Gemini Validation (Azure Layout) completed in ${(processingTime / 1000).toFixed(2)}s`
+        `  Document AI + Gemini completed in ${(processingTime / 1000).toFixed(2)}s`
       );
-      console.log(`     No issues found - Azure Layout results validated`);
+      console.log(`     No issues found - Document AI results validated`);
+      console.log(
+        `     Cost: DocAI=${docAICost.toFixed(2)}¥ + Gemini=${geminiCost.toFixed(2)}¥ = ${totalCost.toFixed(2)}¥`
+      );
 
       return {
         success: true,
         extractionResultId: dbResult.id,
-        tool: 'gemini-validation-azure-layout',
-        rawText: azureResult.content,
+        tool: 'document-ai-gemini-hybrid',
+        rawText: docAIResult.content,
         processingTime,
         cost: totalCost,
       };
@@ -212,7 +215,7 @@ IMPORTANT:
           // Synthesize bbox for the found text
           const synthesizedBbox = synthesizeBboxForText(
             geminiResult.text,
-            azureBboxes,
+            docAIBboxes,
             estimatedPosition,
             imageWidth,
             imageHeight
@@ -240,7 +243,7 @@ IMPORTANT:
           // Fallback: synthesize bbox without crop
           const fallbackBbox = synthesizeBboxForText(
             missing.text,
-            azureBboxes,
+            docAIBboxes,
             estimatedPosition,
             imageWidth,
             imageHeight
@@ -265,7 +268,7 @@ IMPORTANT:
 
         const synthesizedBbox = synthesizeBboxForText(
           missing.text,
-          azureBboxes,
+          docAIBboxes,
           undefined,
           imageWidth,
           imageHeight
@@ -290,11 +293,11 @@ IMPORTANT:
         `  Correcting: "${incorrect.found}" -> "${incorrect.shouldBe}"`
       );
 
-      // Find the Azure bbox that matches the incorrect text
-      const match = fuzzyMatchTextToBbox(incorrect.found, azureBboxes, 0.5);
+      // Find the Document AI bbox that matches the incorrect text
+      const match = fuzzyMatchTextToBbox(incorrect.found, docAIBboxes, 0.5);
 
       if (match) {
-        // Update the text in place (will replace Azure's version)
+        // Update the text in place (will replace Document AI's version)
         synthesizedBboxes.push({
           text: incorrect.shouldBe,
           bounds: match.bbox.bounds,
@@ -313,78 +316,81 @@ IMPORTANT:
       }
     }
 
-    // Step 5: Merge Azure bboxes with synthesized ones
+    // Step 5: Merge Document AI bboxes with synthesized ones
     const allBboxes = [
-      ...azureResult.lines.map((line) => ({
-        text: line.text,
-        bounds: line.bounds,
-        confidence: line.confidence || 0.85,
+      ...docAIResult.words.map((word) => ({
+        text: word.text,
+        bounds: word.bounds,
+        confidence: word.confidence,
         bboxSource: 'ocr' as const,
+        metadata: { source: 'document-ai' },
       })),
       ...synthesizedBboxes,
     ];
 
-    // Rebuild full text (Azure + synthesized)
+    // Rebuild full text (Document AI + synthesized)
     const finalText =
-      azureResult.content +
+      docAIResult.content +
       '\n' +
       synthesizedBboxes.map((b) => b.text).join('\n');
 
     const processingTime = Date.now() - startTime;
-    const azureCost = azureDocumentClient.estimateCost(
-      azureResult.pages.length,
-      'layout'
-    );
+    const docAICost = documentAIClient.estimateCost(docAIResult.pages.length);
     const geminiCost = geminiClient.estimateCost(
       1 + additionalGeminiCalls,
       false
     );
-    const totalCost = azureCost + geminiCost;
+    const totalCost = docAICost + geminiCost;
 
     // Save to database
     const [dbResult] = await db
       .insert(extractionResults)
       .values({
         drawingId,
-        tool: 'gemini-validation-azure-layout',
+        tool: 'document-ai-gemini-hybrid',
         rawText: finalText,
         boundingBoxes: allBboxes,
         processingTimeMs: processingTime,
         apiCost: totalCost,
         metadata: {
-          azureLineCount: azureResult.lines.length,
+          docAIWordCount: docAIResult.words.length,
           geminiValidationIssues:
             validation.missingText.length + validation.incorrectText.length,
           missingTextCount: validation.missingText.length,
           incorrectTextCount: validation.incorrectText.length,
           synthesizedBboxCount: synthesizedBboxes.length,
           additionalGeminiCalls,
-          baselineOCR: 'azure-layout',
+          avgConfidence:
+            docAIResult.words.reduce((s, w) => s + w.confidence, 0) /
+            docAIResult.words.length,
         },
       })
       .returning();
 
     console.log(
-      `  Gemini Validation (Azure Layout) completed in ${(processingTime / 1000).toFixed(2)}s`
+      `  Document AI + Gemini completed in ${(processingTime / 1000).toFixed(2)}s`
     );
     console.log(
       `     Fixed ${validation.missingText.length} missing + ${validation.incorrectText.length} incorrect`
     );
     console.log(
-      `     Total bboxes: ${allBboxes.length} (${azureResult.lines.length} Azure + ${synthesizedBboxes.length} synthesized)`
+      `     Total bboxes: ${allBboxes.length} (${docAIResult.words.length} Document AI + ${synthesizedBboxes.length} synthesized)`
+    );
+    console.log(
+      `     Cost: DocAI=${docAICost.toFixed(2)}¥ + Gemini=${geminiCost.toFixed(2)}¥ = ${totalCost.toFixed(2)}¥`
     );
 
     return {
       success: true,
       extractionResultId: dbResult.id,
-      tool: 'gemini-validation-azure-layout',
+      tool: 'document-ai-gemini-hybrid',
       rawText: finalText,
       boundingBoxes: allBboxes,
       processingTime,
       cost: totalCost,
     };
   } catch (error) {
-    console.error(`  Gemini Validation (Azure Layout) failed:`, error);
+    console.error(`  Document AI + Gemini Hybrid failed:`, error);
     throw error;
   }
 }

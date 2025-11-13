@@ -1,5 +1,5 @@
-import { geminiClient } from '../lib/gemini-client.js';
-import { db, extractionResults } from '../db/index.js';
+import { geminiClient } from '../../lib/gemini-client.js';
+import { db, extractionResults } from '../../db/index.js';
 
 /**
  * Process drawing with Gemini 2.0 Flash multimodal for character-level OCR

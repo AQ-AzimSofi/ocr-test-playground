@@ -1,7 +1,7 @@
-import { azureDocumentClient } from '../lib/azure-document-client.js';
-import { geminiClient } from '../lib/gemini-client.js';
-import { db, extractionResults } from '../db/index.js';
-import { cropImageRegion, CropRegion } from '../utils/image-cropper.js';
+import { azureDocumentClient } from '../../lib/azure-document-client.js';
+import { geminiClient } from '../../lib/gemini-client.js';
+import { db, extractionResults } from '../../db/index.js';
+import { cropImageRegion, CropRegion } from '../../utils/image-cropper.js';
 
 /**
  * Process drawing using Azure Layout with region-based classification

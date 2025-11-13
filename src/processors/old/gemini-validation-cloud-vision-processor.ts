@@ -1,15 +1,15 @@
-import { geminiClient } from '../lib/gemini-client.js';
-import { cloudVisionClient } from '../lib/cloud-vision-client.js';
-import { db, extractionResults } from '../db/index.js';
+import { geminiClient } from '../../lib/gemini-client.js';
+import { cloudVisionClient } from '../../lib/cloud-vision-client.js';
+import { db, extractionResults } from '../../db/index.js';
 import sharp from 'sharp';
-import { parseGeminiValidation } from '../utils/gemini-parser.js';
+import { parseGeminiValidation } from '../../utils/gemini-parser.js';
 import {
   synthesizeBboxForText,
   descriptionToApproximatePosition,
   BoundingBox,
   fuzzyMatchTextToBbox,
-} from '../utils/bbox-estimator.js';
-import { cropImageRegion } from '../utils/image-cropper.js';
+} from '../../utils/bbox-estimator.js';
+import { cropImageRegion } from '../../utils/image-cropper.js';
 
 /**
  * Process drawing using Cloud Vision + Gemini validation workflow

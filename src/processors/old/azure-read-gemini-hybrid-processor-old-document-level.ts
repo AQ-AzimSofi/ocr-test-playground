@@ -1,6 +1,6 @@
-import { azureDocumentClient } from '../lib/azure-document-client.js';
-import { geminiClient } from '../lib/gemini-client.js';
-import { db, extractionResults } from '../db/index.js';
+import { azureDocumentClient } from '../../lib/azure-document-client.js';
+import { geminiClient } from '../../lib/gemini-client.js';
+import { db, extractionResults } from '../../db/index.js';
 import Levenshtein from 'fast-levenshtein';
 
 /**

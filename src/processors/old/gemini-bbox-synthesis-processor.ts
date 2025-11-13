@@ -1,14 +1,14 @@
-import { geminiClient } from '../lib/gemini-client.js';
-import { cloudVisionClient } from '../lib/cloud-vision-client.js';
-import { db, extractionResults } from '../db/index.js';
+import { geminiClient } from '../../lib/gemini-client.js';
+import { cloudVisionClient } from '../../lib/cloud-vision-client.js';
+import { db, extractionResults } from '../../db/index.js';
 import sharp from 'sharp';
 import {
   fuzzyMatchTextToBbox,
   calculateAverageCharDimensions,
   synthesizeBboxForText,
   BoundingBox,
-} from '../utils/bbox-estimator.js';
-import { segmentText } from '../utils/gemini-parser.js';
+} from '../../utils/bbox-estimator.js';
+import { segmentText } from '../../utils/gemini-parser.js';
 
 /**
  * Process drawing by combining Gemini text with Cloud Vision bounding boxes

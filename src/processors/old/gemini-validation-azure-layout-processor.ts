@@ -1,29 +1,28 @@
-import { geminiClient } from '../lib/gemini-client.js';
-import { azureDocumentClient } from '../lib/azure-document-client.js';
-import { db, extractionResults } from '../db/index.js';
+import { geminiClient } from '../../lib/gemini-client.js';
+import { azureDocumentClient } from '../../lib/azure-document-client.js';
+import { db, extractionResults } from '../../db/index.js';
 import sharp from 'sharp';
-import { parseGeminiValidation } from '../utils/gemini-parser.js';
+import { parseGeminiValidation } from '../../utils/gemini-parser.js';
 import {
   synthesizeBboxForText,
   descriptionToApproximatePosition,
   BoundingBox,
   fuzzyMatchTextToBbox,
-  calculateAverageCharDimensions,
-} from '../utils/bbox-estimator.js';
-import { cropImageRegion } from '../utils/image-cropper.js';
+} from '../../utils/bbox-estimator.js';
+import { cropImageRegion } from '../../utils/image-cropper.js';
 
 /**
- * Process drawing using Azure Read + Gemini validation workflow
- * 1. Run Azure Read for baseline OCR
+ * Process drawing using Azure Layout + Gemini validation workflow
+ * 1. Run Azure Layout for baseline OCR (with structure)
  * 2. Ask Gemini to validate and find missing text
  * 3. Crop and re-process regions with missing text
  * 4. Synthesize bboxes for Gemini-found text
  */
-export async function processWithGeminiValidationAzureRead(
+export async function processWithGeminiValidationAzureLayout(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`  Processing with Gemini Validation (Azure Read)...`);
+  console.log(`  Processing with Gemini Validation (Azure Layout)...`);
   const startTime = Date.now();
 
   try {
@@ -32,23 +31,23 @@ export async function processWithGeminiValidationAzureRead(
     const imageWidth = metadata.width || 1000;
     const imageHeight = metadata.height || 1000;
 
-    // Step 1: Run Azure Read for baseline OCR
-    console.log(`  Running Azure Read (baseline)...`);
-    const azureResult = await azureDocumentClient.analyzeRead(imagePath);
+    // Step 1: Run Azure Layout for baseline OCR
+    console.log(`  Running Azure Layout (baseline)...`);
+    const azureResult = await azureDocumentClient.analyzeLayout(imagePath);
 
     console.log(
-      `  Azure extracted: ${azureResult.content.length} chars, ${azureResult.words.length} words`
+      `  Azure extracted: ${azureResult.content.length} chars, ${azureResult.lines.length} lines`
     );
 
-    // Convert Azure words to our bbox format
-    const azureBboxes: BoundingBox[] = azureResult.words.map((word) => ({
-      bounds: word.bounds,
-      text: word.text,
-      confidence: word.confidence,
+    // Convert Azure lines to our bbox format
+    const azureBboxes: BoundingBox[] = azureResult.lines.map((line) => ({
+      bounds: line.bounds,
+      text: line.text,
+      confidence: line.confidence || 0.85,
     }));
 
     // Step 2: Ask Gemini to validate Azure's results
-    console.log(`  Asking Gemini to validate Azure results...`);
+    console.log(`  Asking Gemini to validate Azure Layout results...`);
 
     const validationPrompt = `You are a quality assurance system for OCR.
 
@@ -98,12 +97,12 @@ IMPORTANT:
       validation.missingText.length === 0 &&
       validation.incorrectText.length === 0
     ) {
-      console.log(`  No issues found - using Azure results as-is`);
+      console.log(`  No issues found - using Azure Layout results as-is`);
 
       const processingTime = Date.now() - startTime;
       const azureCost = azureDocumentClient.estimateCost(
         azureResult.pages.length,
-        'read'
+        'layout'
       );
       const geminiCost = geminiClient.estimateCost(1); // One validation call
       const totalCost = azureCost + geminiCost;
@@ -112,33 +111,34 @@ IMPORTANT:
         .insert(extractionResults)
         .values({
           drawingId,
-          tool: 'gemini-validation-azure-read',
+          tool: 'gemini-validation-azure-layout',
           rawText: azureResult.content,
-          boundingBoxes: azureResult.words.map((word) => ({
-            text: word.text,
-            bounds: word.bounds,
-            confidence: word.confidence,
+          boundingBoxes: azureResult.lines.map((line) => ({
+            text: line.text,
+            bounds: line.bounds,
+            confidence: line.confidence || 0.85,
             bboxSource: 'ocr',
           })),
           processingTimeMs: processingTime,
           apiCost: totalCost,
           metadata: {
-            azureWordCount: azureResult.words.length,
+            azureLineCount: azureResult.lines.length,
             geminiValidationPassed: true,
             issuesFound: 0,
+            baselineOCR: 'azure-layout',
           },
         })
         .returning();
 
       console.log(
-        `  Gemini Validation completed in ${(processingTime / 1000).toFixed(2)}s`
+        `  Gemini Validation (Azure Layout) completed in ${(processingTime / 1000).toFixed(2)}s`
       );
-      console.log(`     No issues found - Azure results validated`);
+      console.log(`     No issues found - Azure Layout results validated`);
 
       return {
         success: true,
         extractionResultId: dbResult.id,
-        tool: 'gemini-validation-azure-read',
+        tool: 'gemini-validation-azure-layout',
         rawText: azureResult.content,
         processingTime,
         cost: totalCost,
@@ -315,10 +315,10 @@ IMPORTANT:
 
     // Step 5: Merge Azure bboxes with synthesized ones
     const allBboxes = [
-      ...azureResult.words.map((word) => ({
-        text: word.text,
-        bounds: word.bounds,
-        confidence: word.confidence,
+      ...azureResult.lines.map((line) => ({
+        text: line.text,
+        bounds: line.bounds,
+        confidence: line.confidence || 0.85,
         bboxSource: 'ocr' as const,
       })),
       ...synthesizedBboxes,
@@ -333,7 +333,7 @@ IMPORTANT:
     const processingTime = Date.now() - startTime;
     const azureCost = azureDocumentClient.estimateCost(
       azureResult.pages.length,
-      'read'
+      'layout'
     );
     const geminiCost = geminiClient.estimateCost(
       1 + additionalGeminiCalls,
@@ -346,44 +346,45 @@ IMPORTANT:
       .insert(extractionResults)
       .values({
         drawingId,
-        tool: 'gemini-validation-azure-read',
+        tool: 'gemini-validation-azure-layout',
         rawText: finalText,
         boundingBoxes: allBboxes,
         processingTimeMs: processingTime,
         apiCost: totalCost,
         metadata: {
-          azureWordCount: azureResult.words.length,
+          azureLineCount: azureResult.lines.length,
           geminiValidationIssues:
             validation.missingText.length + validation.incorrectText.length,
           missingTextCount: validation.missingText.length,
           incorrectTextCount: validation.incorrectText.length,
           synthesizedBboxCount: synthesizedBboxes.length,
           additionalGeminiCalls,
+          baselineOCR: 'azure-layout',
         },
       })
       .returning();
 
     console.log(
-      `  Gemini Validation completed in ${(processingTime / 1000).toFixed(2)}s`
+      `  Gemini Validation (Azure Layout) completed in ${(processingTime / 1000).toFixed(2)}s`
     );
     console.log(
       `     Fixed ${validation.missingText.length} missing + ${validation.incorrectText.length} incorrect`
     );
     console.log(
-      `     Total bboxes: ${allBboxes.length} (${azureResult.words.length} Azure + ${synthesizedBboxes.length} synthesized)`
+      `     Total bboxes: ${allBboxes.length} (${azureResult.lines.length} Azure + ${synthesizedBboxes.length} synthesized)`
     );
 
     return {
       success: true,
       extractionResultId: dbResult.id,
-      tool: 'gemini-validation-azure-read',
+      tool: 'gemini-validation-azure-layout',
       rawText: finalText,
       boundingBoxes: allBboxes,
       processingTime,
       cost: totalCost,
     };
   } catch (error) {
-    console.error(`  Gemini Validation failed:`, error);
+    console.error(`  Gemini Validation (Azure Layout) failed:`, error);
     throw error;
   }
 }

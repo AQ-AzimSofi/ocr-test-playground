@@ -11,16 +11,16 @@ dotenv.config({ path: '.env.development' });
  */
 
 interface GeometricObject {
-  type: 'wall' | 'door' | 'window' | 'line' | 'symbol' | 'room' | 'other';
+  type: 'wall' | 'door' | 'window' | 'room';
   subType?: string;
   coordinates: Array<{ x: number; y: number }>;
   properties: {
     length?: number;
-    width?: number;
     thickness?: number;
-    height?: number;
+    orientation?: 'horizontal' | 'vertical' | 'diagonal';
     dimension_text?: string;
     label?: string;
+    area?: number;
     [key: string]: any;
   };
   confidence: number;
@@ -58,9 +58,9 @@ export class GeminiGeometricDetector {
   ): Promise<GeometricDetectionResult> {
     const model = this.genAI.getGenerativeModel({ model: this.model });
 
-    const prompt = `You are an expert architectural drawing analyzer. Analyze this construction/architectural drawing and identify geometric objects.
+    const prompt = `You are an expert architectural drawing analyzer specializing in floor plan wall and room detection. Analyze this floor plan and identify WALLS and ROOMS with precision.
 
-TASK: Identify and extract structural elements with their coordinates and properties.
+TASK: Detect individual wall segments and enclosed room spaces. Be thorough and precise.
 
 OUTPUT FORMAT: Return ONLY valid JSON, no explanations. Use this exact structure:
 {
@@ -72,62 +72,94 @@ OUTPUT FORMAT: Return ONLY valid JSON, no explanations. Use this exact structure
   },
   "objects": [
     {
-      "type": "wall|door|window|line|symbol|room|other",
-      "subType": "<optional: e.g., 'exterior-wall', 'sliding-door', 'casement-window'>",
+      "type": "wall|door|window|room",
+      "subType": "<e.g., 'exterior-wall', 'interior-wall', 'partition', 'sliding-door', 'bedroom', 'bathroom'>",
       "coordinates": [
         {"x": <number>, "y": <number>},
         {"x": <number>, "y": <number>}
       ],
       "properties": {
         "length": <number or null>,
-        "width": <number or null>,
         "thickness": <number or null>,
+        "orientation": "horizontal|vertical|diagonal",
         "dimension_text": "<any dimension text nearby>",
-        "label": "<any label text like '浴室', 'living room'>"
+        "label": "<room name if applicable>",
+        "area": <number or null for rooms>
       },
       "confidence": <0-1>
     }
   ]
 }
 
-DETECTION RULES:
-1. **Walls**: Long continuous lines, typically thick lines. Look for parallel lines indicating wall thickness.
-   - Extract start and end coordinates
-   - Try to determine thickness from parallel lines
-   - Associate nearby dimension text (e.g., "10,920", "3,500")
+CRITICAL DETECTION RULES:
 
-2. **Doors**: Door symbols (arcs, rectangles with swing indicators)
-   - Mark location and opening width
-   - Identify door type if visible (sliding, hinged, double)
+1. **WALLS - Highest Priority**:
+   DEFINITION: Walls are continuous straight lines that form the structure of the floor plan.
 
-3. **Windows**: Window symbols (rectangles with cross-hatching or glass indication)
-   - Mark location and dimensions
-   - Identify window type if visible
+   HOW TO DETECT:
+   - Look for PARALLEL LINE PAIRS that are close together (this is wall thickness)
+   - The outer edges of the parallel lines represent the wall boundaries
+   - Identify EACH CONTINUOUS WALL SEGMENT separately (don't combine walls)
+   - Walls typically form rectangles and connect at corners
 
-4. **Rooms**: Enclosed spaces with labels
-   - Identify boundary coordinates (polygon)
-   - Extract room label text (e.g., "浴室", "寝室")
-   - Calculate approximate area if possible
+   WHAT TO EXTRACT:
+   - coordinates: [start_point, end_point] of the wall centerline
+   - thickness: Distance between the parallel lines in pixels
+   - orientation: "horizontal", "vertical", or "diagonal"
+   - confidence: Higher if parallel lines are clearly visible
 
-5. **Dimension Text Association**:
-   - Find dimension text near each object (numbers with units like "10,920mm", "3,500")
-   - Store in "dimension_text" property
+   EXAMPLE: A horizontal wall segment from left to right would be:
+   {"type":"wall","subType":"interior-wall","coordinates":[{"x":100,"y":200},{"x":500,"y":200}],"properties":{"length":400,"thickness":10,"orientation":"horizontal"},"confidence":0.95}
 
-6. **Coordinate System**:
-   - Use pixel coordinates (top-left = 0,0)
-   - For lines/walls: provide [start_point, end_point]
-   - For rooms/polygons: provide all vertices
-   - For symbols: provide center point or bounding box corners
+2. **ROOMS - Second Priority**:
+   DEFINITION: Enclosed spaces formed by walls, labeled or unlabeled.
 
-IMPORTANT:
-- Return ONLY the JSON object, no markdown code blocks, no explanations
-- Confidence should reflect your certainty (0.0-1.0)
-- If you can't determine a property, use null
-- Coordinates must be numbers (pixel positions)
-- Focus on major structural elements first (walls, doors, windows)
+   HOW TO DETECT:
+   - Identify closed polygons formed by walls
+   - Look for room labels like "浴室" (bathroom), "寝室" (bedroom), "LDK", etc.
+   - Even unlabeled enclosed spaces are rooms
 
-Example minimal output:
-{"metadata":{"image_width":1920,"image_height":1080,"scale":"1:100","units":"mm"},"objects":[{"type":"wall","coordinates":[{"x":100,"y":500},{"x":1200,"y":500}],"properties":{"length":11000,"thickness":150,"dimension_text":"10,920"},"confidence":0.9}]}`;
+   WHAT TO EXTRACT:
+   - coordinates: ALL corner points of the room polygon (clockwise or counter-clockwise)
+   - label: Room name/label if visible
+   - area: Approximate area if calculable
+   - subType: Room function if identifiable from label
+
+   EXAMPLE: A rectangular room with 4 corners:
+   {"type":"room","subType":"bedroom","coordinates":[{"x":100,"y":100},{"x":400,"y":100},{"x":400,"y":300},{"x":100,"y":300}],"properties":{"label":"寝室","area":60000},"confidence":0.9}
+
+3. **DOORS** (Optional but helpful):
+   - Door symbols: arcs, swing indicators, gaps in walls
+   - Mark location where wall has an opening
+   - Include door type if identifiable
+
+4. **WINDOWS** (Optional but helpful):
+   - Window symbols in walls
+   - Usually shown as breaks in walls with special symbols
+
+STRATEGY FOR ANALYSIS:
+Step 1: Scan the entire floor plan for PARALLEL LINE PAIRS (these are walls)
+Step 2: Trace each wall segment individually from start to end
+Step 3: Identify ENCLOSED SPACES (rooms) formed by walls
+Step 4: Look for text labels inside rooms
+Step 5: Mark doors and windows as openings in walls
+
+COORDINATE SYSTEM:
+- Top-left corner = (0, 0)
+- X increases to the right
+- Y increases downward
+- Provide PRECISE pixel coordinates for all points
+
+IMPORTANT RULES:
+- Return ONLY the JSON object, no markdown code blocks
+- Detect EVERY individual wall segment (don't skip any)
+- Be precise with coordinates - measure carefully
+- Use confidence to indicate detection certainty
+- Prioritize walls and rooms over other elements
+- If unsure about thickness, estimate from visible parallel lines
+
+Example output for a simple room:
+{"metadata":{"image_width":800,"image_height":600,"scale":"1:100","units":"mm"},"objects":[{"type":"wall","subType":"exterior-wall","coordinates":[{"x":50,"y":50},{"x":750,"y":50}],"properties":{"length":700,"thickness":15,"orientation":"horizontal"},"confidence":0.95},{"type":"wall","subType":"exterior-wall","coordinates":[{"x":750,"y":50},{"x":750,"y":550}],"properties":{"length":500,"thickness":15,"orientation":"vertical"},"confidence":0.95},{"type":"wall","subType":"exterior-wall","coordinates":[{"x":750,"y":550},{"x":50,"y":550}],"properties":{"length":700,"thickness":15,"orientation":"horizontal"},"confidence":0.95},{"type":"wall","subType":"exterior-wall","coordinates":[{"x":50,"y":550},{"x":50,"y":50}],"properties":{"length":500,"thickness":15,"orientation":"vertical"},"confidence":0.95},{"type":"room","coordinates":[{"x":50,"y":50},{"x":750,"y":50},{"x":750,"y":550},{"x":50,"y":550}],"properties":{"area":350000,"label":null},"confidence":0.9}]}`;
 
     const imageData = fs.readFileSync(imagePath);
     const base64Image = imageData.toString('base64');
