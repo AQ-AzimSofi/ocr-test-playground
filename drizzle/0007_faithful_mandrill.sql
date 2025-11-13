@@ -1,0 +1,1 @@
+ALTER TABLE "accuracy_metrics" ADD COLUMN "order_independent_char_analysis" jsonb;

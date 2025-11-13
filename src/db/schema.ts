@@ -22,6 +22,9 @@ export const testDrawings = pgTable('test_drawings', {
   quality: text('quality').notNull(), // 'high', 'medium', 'low'
   source: text('source').notNull(), // 'synthetic', 'cad-generated', 'scanned', 'manual'
 
+  // Confidential flag (for PDFs that cannot use Gemini processors)
+  isConfidential: boolean('is_confidential').default(false).notNull(),
+
   // Ground truth data for accuracy calculation
   groundTruth: jsonb('ground_truth').notNull().$type<{
     fullText: string; // Complete text content from the drawing for character-level comparison
@@ -86,16 +89,25 @@ export const accuracyMetrics = pgTable('accuracy_metrics', {
     .references(() => testDrawings.drawingId),
   tool: text('tool').notNull(),
 
-  // Character-level OCR accuracy metrics
+  // Character-level OCR accuracy metrics (position-sensitive)
   characterErrorRate: real('character_error_rate'), // CER (0.0 = perfect, 1.0 = completely wrong)
   characterAccuracy: real('character_accuracy'), // Position-based accuracy (0-100%)
   characterSetCoverage: real('character_set_coverage'), // Unique character coverage (0-100%)
+
+  // Order-independent metrics (content completeness regardless of text order)
+  orderIndependentCer: real('order_independent_cer'), // Order-independent CER (0.0 = perfect, 1.0 = completely wrong)
+  orderIndependentAccuracy: real('order_independent_accuracy'), // Order-independent accuracy (0-100%)
+  orderIndependentEditDistance: integer('order_independent_edit_distance'), // Edit distance after sorting characters
 
   // Character count metrics
   extractedCharCount: integer('extracted_char_count'),
   groundTruthCharCount: integer('ground_truth_char_count'),
   exactCharCountMatch: boolean('exact_char_count_match'),
   charCountDifference: integer('char_count_difference'), // Can be negative or positive
+
+  // Normalized character counts (after whitespace removal and full-width conversion)
+  normalizedExtractedLength: integer('normalized_extracted_length'),
+  normalizedGroundTruthLength: integer('normalized_ground_truth_length'),
 
   // Edit distance (Levenshtein)
   editDistance: integer('edit_distance'),
@@ -120,6 +132,14 @@ export const accuracyMetrics = pgTable('accuracy_metrics', {
       expected: string;
       actual: string;
     }>;
+  }>(),
+
+  // Order-independent character frequency analysis
+  orderIndependentCharAnalysis: jsonb('order_independent_char_analysis').$type<{
+    missingCharacters: Record<string, number>; // char -> count
+    extraCharacters: Record<string, number>; // char -> count
+    missingTotal: number;
+    extraTotal: number;
   }>(),
 
   calculatedAt: timestamp('calculated_at').defaultNow().notNull(),
@@ -262,4 +282,64 @@ export const elementRelationships = pgTable('element_relationships', {
 
   metadata: jsonb('metadata').$type<Record<string, any>>(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+/**
+ * Manual verification of bounding boxes for confidential documents
+ * Allows users to mark each bbox as correct/incorrect without ground truth
+ */
+export const bboxVerifications = pgTable('bbox_verifications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  extractionResultId: uuid('extraction_result_id')
+    .notNull()
+    .references(() => extractionResults.id),
+  drawingId: text('drawing_id')
+    .notNull()
+    .references(() => testDrawings.drawingId),
+
+  // Bbox identification (index in the boundingBoxes array)
+  bboxIndex: integer('bbox_index').notNull(),
+
+  // Verification status
+  status: text('status').notNull(), // 'correct' | 'incorrect' | 'unverified'
+
+  // Optional notes about why it's incorrect
+  notes: text('notes'),
+
+  // Verification metadata
+  verifiedAt: timestamp('verified_at').defaultNow().notNull(),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
+});
+
+/**
+ * Missing text entries for confidential documents
+ * Tracks text that should have been detected but wasn't found by OCR
+ */
+export const missingTextEntries = pgTable('missing_text_entries', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  extractionResultId: uuid('extraction_result_id')
+    .notNull()
+    .references(() => extractionResults.id),
+  drawingId: text('drawing_id')
+    .notNull()
+    .references(() => testDrawings.drawingId),
+
+  // The text that should have been detected
+  text: text('text').notNull(),
+
+  // Optional estimated location where this text should be
+  estimatedLocation: jsonb('estimated_location').$type<{
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+    page?: number;
+  }>(),
+
+  // Optional notes
+  notes: text('notes'),
+
+  // When this missing text was added
+  addedAt: timestamp('added_at').defaultNow().notNull(),
+  metadata: jsonb('metadata').$type<Record<string, any>>(),
 });
