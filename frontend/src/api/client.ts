@@ -83,6 +83,18 @@ class APIClient {
     return Promise.all(ids.map((id) => this.deleteTestRun(id)));
   }
 
+  async createTestRun(data: {
+    processors: string[];
+    drawingIds: string[];
+    runName?: string;
+    description?: string;
+  }) {
+    return this.request('/api/test-runs/create', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Verification endpoints (for confidential documents)
   async verifyBBox(resultId: string, data: {
     bboxIndex: number;

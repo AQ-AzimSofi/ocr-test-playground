@@ -88,6 +88,23 @@ export const useDeleteTestRuns = () => {
   });
 };
 
+export const useCreateTestRun = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      processors: string[];
+      drawingIds: string[];
+      runName?: string;
+      description?: string;
+    }) => apiClient.createTestRun(data),
+    onSuccess: () => {
+      // Invalidate test runs query to refetch the list
+      queryClient.invalidateQueries({ queryKey: ['test-runs'] });
+    },
+  });
+};
+
 export const useSaveCorrections = () => {
   const queryClient = useQueryClient();
 
