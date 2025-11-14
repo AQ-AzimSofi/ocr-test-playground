@@ -136,7 +136,7 @@ export default function Settings() {
                   placeholder="Enter your Google Gemini API key"
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-500">Required for: All Gemini-based and hybrid processors</p>
+              <p className="mt-1 text-xs text-gray-500">Required for: All Gemini-based processors, hybrid processors, and Floor Plan to Revit conversion</p>
             </div>
 
             {/* Document AI */}

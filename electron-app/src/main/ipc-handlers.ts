@@ -230,11 +230,89 @@ async function loadApiKeys(): Promise<Record<string, string>> {
   }
 }
 
-// Floor Plan Processing (stub - will be implemented in next phase)
-ipcMain.handle('process-floor-plan', async (_event, imagePath: string) => {
-  console.log('Floor plan processing request:', imagePath);
-  // TODO: Implement floor plan processing
-  return { success: false, error: 'Not implemented yet' };
+// Floor Plan Processing
+ipcMain.handle('process-floor-plan', async (event, params: { imagePath: string; apiKey: string }) => {
+  console.log('Floor plan processing request:', params.imagePath);
+
+  try {
+    const { imagePath, apiKey } = params;
+
+    // Import floor plan modules
+    const { GeminiGeometricDetector } = await import('./processors/gemini-geometric-processor');
+    const { generateRevitOutput, saveRevitJSON } = await import('./utils/revit-generator');
+    const { generateDynamoScript } = await import('./utils/dynamo-script-generator');
+
+    // Send progress update
+    event.sender.send('progress-update', {
+      step: 'Analyzing floor plan with Gemini AI...',
+      progress: 1,
+      total: 3,
+    });
+
+    // Detect geometric objects
+    const detector = new GeminiGeometricDetector(apiKey);
+    const startTime = Date.now();
+    const detection = await detector.detectGeometricObjects(imagePath);
+    const processingTime = Date.now() - startTime;
+
+    event.sender.send('progress-update', {
+      step: 'Generating Revit JSON...',
+      progress: 2,
+      total: 3,
+    });
+
+    // Generate Revit output
+    const fileName = require('path').basename(imagePath);
+    const revitOutput = generateRevitOutput(detection, fileName);
+
+    // Save outputs to temp directory
+    const tmpDir = require('os').tmpdir();
+    const baseFileName = fileName.replace(/\.[^/.]+$/, '');
+    const timestamp = Date.now();
+
+    const jsonPath = require('path').join(tmpDir, `${baseFileName}-revit-${timestamp}.json`);
+    const scriptPath = require('path').join(tmpDir, `${baseFileName}-dynamo-${timestamp}.py`);
+
+    // Save JSON
+    saveRevitJSON(revitOutput, jsonPath);
+
+    // Generate and save Dynamo script
+    const dynamoScript = generateDynamoScript(jsonPath);
+    await require('fs').promises.writeFile(scriptPath, dynamoScript, 'utf-8');
+
+    event.sender.send('progress-update', {
+      step: 'Complete!',
+      progress: 3,
+      total: 3,
+    });
+
+    // Calculate cost
+    const cost = detector.estimateCost(1);
+
+    return {
+      success: true,
+      detection: {
+        objectCount: detection.objects.length,
+        walls: detection.objects.filter(o => o.type === 'wall').length,
+        doors: detection.objects.filter(o => o.type === 'door').length,
+        windows: detection.objects.filter(o => o.type === 'window').length,
+        rooms: detection.objects.filter(o => o.type === 'room').length,
+      },
+      processingTime,
+      cost,
+      outputs: {
+        jsonPath,
+        scriptPath,
+      },
+      revitOutput,
+    };
+  } catch (error) {
+    console.error('Floor plan processing failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 });
 
 // File System Operations

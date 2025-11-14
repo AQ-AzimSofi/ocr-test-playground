@@ -16,11 +16,22 @@ export interface ElectronAPI {
   }) => Promise<{ success: boolean; reportPath?: string; error?: string }>;
 
   // Floor Plan Processing
-  processFloorPlan: (imagePath: string) => Promise<{
+  processFloorPlan: (params: { imagePath: string; apiKey: string }) => Promise<{
     success: boolean;
-    revitJsonPath?: string;
-    dynamoScript?: string;
-    preview?: { walls: any[]; rooms: any[] };
+    detection?: {
+      objectCount: number;
+      walls: number;
+      doors: number;
+      windows: number;
+      rooms: number;
+    };
+    processingTime?: number;
+    cost?: number;
+    outputs?: {
+      jsonPath: string;
+      scriptPath: string;
+    };
+    revitOutput?: any;
     error?: string;
   }>;
 
@@ -45,7 +56,7 @@ const electronAPI: ElectronAPI = {
   processOCR: (params) => ipcRenderer.invoke('process-ocr', params),
 
   // Floor Plan Processing
-  processFloorPlan: (imagePath) => ipcRenderer.invoke('process-floor-plan', imagePath),
+  processFloorPlan: (params) => ipcRenderer.invoke('process-floor-plan', params),
 
   // File System
   selectFile: (filters) => ipcRenderer.invoke('select-file', filters),
