@@ -9,12 +9,6 @@ import {
 
 type FileSource = 'existing' | 'upload';
 
-interface SelectedDrawing {
-  id: string;
-  fileName: string;
-  isConfidential: boolean;
-}
-
 export function RunTests() {
   const navigate = useNavigate();
   const { data: drawingsData, isLoading: drawingsLoading } = useDrawings();

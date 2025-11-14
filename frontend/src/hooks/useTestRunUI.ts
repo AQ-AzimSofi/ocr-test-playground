@@ -9,7 +9,7 @@ export function useTestRunUI() {
   const [showGeminiIndicators, setShowGeminiIndicators] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [headerCollapsed, setHeaderCollapsed] = useState(true);
-  const [sidebarMainTab, setSidebarMainTab] = useState<'text' | 'stats' | 'debug'>('text');
+  const [sidebarMainTab, setSidebarMainTab] = useState<'text' | 'stats' | 'debug' | 'verification'>('text');
   const [activeTab, setActiveTab] = useState<'left' | 'right'>('left');
   const [scrollToBboxIndex, setScrollToBboxIndex] = useState<number | null>(null);
   const [fixedTooltipPos, setFixedTooltipPos] = useState<{ x: number; y: number } | null>(null);

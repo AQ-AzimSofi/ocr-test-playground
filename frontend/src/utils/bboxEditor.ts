@@ -49,7 +49,7 @@ export function getBoundingRect(bounds: Array<{ x: number; y: number }>) {
  */
 export function getResizeHandles(
   bbox: BoundingBox,
-  scale: number = 1
+  _scale: number = 1
 ): Handle[] {
   const rect = getBoundingRect(bbox.bounds);
   const { minX, minY, maxX, maxY } = rect;

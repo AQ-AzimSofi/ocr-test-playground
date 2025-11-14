@@ -113,7 +113,7 @@ export const useSaveCorrections = () => {
       apiClient.saveCorrections(resultId, corrections) as Promise<
         APIResponse<SaveCorrectionsResponse>
       >,
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate queries to refetch updated data
       queryClient.invalidateQueries({ queryKey: ['result', variables.resultId] });
       queryClient.invalidateQueries({ queryKey: ['test-run'] });
@@ -137,7 +137,7 @@ export const useVerifyBBox = () => {
   return useMutation({
     mutationFn: ({ resultId, ...data }: VerifyBBoxRequest & { resultId: string }) =>
       apiClient.verifyBBox(resultId, data),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate verification stats and result to refetch
       queryClient.invalidateQueries({ queryKey: ['verification-stats', variables.resultId] });
       queryClient.invalidateQueries({ queryKey: ['result', variables.resultId] });
@@ -151,7 +151,7 @@ export const useAddMissingText = () => {
   return useMutation({
     mutationFn: ({ resultId, ...data }: AddMissingTextRequest & { resultId: string }) =>
       apiClient.addMissingText(resultId, data),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate verification stats to refetch
       queryClient.invalidateQueries({ queryKey: ['verification-stats', variables.resultId] });
     },
@@ -164,7 +164,7 @@ export const useDeleteMissingText = () => {
   return useMutation({
     mutationFn: ({ resultId, missingTextId }: { resultId: string; missingTextId: string }) =>
       apiClient.deleteMissingText(resultId, missingTextId),
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       // Invalidate verification stats to refetch
       queryClient.invalidateQueries({ queryKey: ['verification-stats', variables.resultId] });
     },

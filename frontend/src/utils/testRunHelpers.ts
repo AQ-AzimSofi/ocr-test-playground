@@ -61,7 +61,7 @@ export function normalizeBounds(
  */
 export function calculateBboxScreenPosition(
   bbox: BoundingBox,
-  canvasRef: React.RefObject<ImageCanvasRef>
+  canvasRef: React.RefObject<ImageCanvasRef | null>
 ): { x: number; y: number } | null {
   if (!bbox.bounds || bbox.bounds.length === 0 || !canvasRef.current) {
     return null;

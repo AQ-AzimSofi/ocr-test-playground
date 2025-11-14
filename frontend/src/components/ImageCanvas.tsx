@@ -18,7 +18,6 @@ import {
   clampBBoxToImage,
   getCursorForHandle,
   drawHandle,
-  isPointInBBox,
   type HandleType,
 } from '../utils/bboxEditor';
 

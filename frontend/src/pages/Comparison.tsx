@@ -341,7 +341,7 @@ export function Comparison() {
                 <div>
                   <span className="font-medium">Processing Time Diff:</span>{' '}
                   {Math.abs(
-                    leftResult.processingTimeMs - rightResult.processingTimeMs
+                    (leftResult.processingTimeMs || 0) - (rightResult.processingTimeMs || 0)
                   )}
                   ms
                 </div>

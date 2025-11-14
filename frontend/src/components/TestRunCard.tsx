@@ -53,7 +53,6 @@ export function TestRunCard({
 
   const startedAt = new Date(testRun.startedAt);
   const relativeTime = formatDistanceToNow(startedAt, { addSuffix: true });
-  const fullTimestamp = format(startedAt, 'PPpp');
   const dateOnly = format(startedAt, 'PPp'); // Shorter format
 
   const isComplete = testRun.completed;

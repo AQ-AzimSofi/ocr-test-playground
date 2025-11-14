@@ -9,14 +9,9 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
   LineChart,
   Line,
 } from 'recharts';
-
-const COLORS = ['#22c55e', '#eab308', '#f97316', '#ef4444'];
 
 export function Statistics() {
   const { drawingId } = useParams<{ drawingId: string }>();
@@ -96,22 +91,9 @@ export function Statistics() {
     };
   });
 
-  // Accuracy metrics (if available)
-  const accuracyData = tools
-    .map((tool) => {
-      const result = resultsByTool[tool];
-      if (result?.accuracyMetrics) {
-        return {
-          tool,
-          cer: result.accuracyMetrics.cer * 100,
-          wer: result.accuracyMetrics.wer * 100,
-          precision: result.accuracyMetrics.precision * 100,
-          recall: result.accuracyMetrics.recall * 100,
-        };
-      }
-      return null;
-    })
-    .filter(Boolean);
+  // TODO: Accuracy metrics section disabled - needs type alignment
+  // The ExtractionResult type doesn't currently have accuracyMetrics property
+  const accuracyData: any[] = [];
 
   return (
     <div className="min-h-screen bg-gray-50">

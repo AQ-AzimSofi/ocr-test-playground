@@ -4,19 +4,19 @@
     "file_name": "zumen_04b.png",
     "scale": "1:100",
     "units": "mm",
-    "image_width": 994,
-    "image_height": 694,
-    "processing_date": "2025-11-09T02:57:04.986Z",
+    "image_width": 827,
+    "image_height": 590,
+    "processing_date": "2025-11-14T03:30:43.304Z",
     "tool": "gemini-geometric",
     "coordinate_transformation": {
-      "scaling_factor": 51.776110259817415,
-      "pixels_per_mm": 0.019313926731496543,
-      "scaling_confidence": 0.6,
-      "anchor_count": 23,
+      "scaling_factor": 12.792797031834928,
+      "pixels_per_mm": 0.07816898818229476,
+      "scaling_confidence": 0.7999999999999999,
+      "anchor_count": 15,
       "coordinate_system": "top-left origin (image standard)"
     },
     "data_quality": {
-      "overall_completeness": 45.58258642765685,
+      "overall_completeness": 46.42857142857143,
       "total_issues": 0,
       "errors": 0,
       "warnings": 0
@@ -24,3167 +24,2469 @@
   },
   "elements": [
     {
-      "id": "e230864c-1124-498d-97cb-af3e98a82c57",
+      "id": "89cbca9c-3acf-4571-854e-35e4cbf813bb",
       "type": "wall",
       "subType": "exterior-wall",
       "geometry": {
         "type": "line",
         "coordinates_px": [
           {
-            "x": 85,
-            "y": 147
+            "x": 768,
+            "y": 110
           },
           {
-            "x": 100,
-            "y": 147
+            "x": 768,
+            "y": 500
           }
         ],
         "coordinates_mm": [
           {
-            "x": 4400.969372084481,
-            "y": 7611.0882081931595
+            "x": 9824.868120449224,
+            "y": 1407.207673501842
           },
           {
-            "x": 5177.6110259817415,
-            "y": 7611.0882081931595
+            "x": 9824.868120449224,
+            "y": 6396.398515917464
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
+        "length": 390,
+        "thickness": 8,
+        "orientation": "vertical",
+        "dimension_text": "800x1160",
+        "length_px": 390,
+        "length_mm": 4989.190842415622,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.98
+    },
+    {
+      "id": "f3088a76-ce54-4e55-9a81-469d35810412",
+      "type": "wall",
+      "subType": "exterior-wall",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 768,
+            "y": 500
+          },
+          {
+            "x": 120,
+            "y": 500
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 9824.868120449224,
+            "y": 6396.398515917464
+          },
+          {
+            "x": 1535.1356438201913,
+            "y": 6396.398515917464
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": 648,
+        "thickness": 8,
+        "orientation": "horizontal",
+        "dimension_text": "640x1540x1570 3510x2230",
+        "length_px": 648,
+        "length_mm": 8289.732476629033,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.98
+    },
+    {
+      "id": "c6bda8a5-0957-4622-864f-fae67c726adc",
+      "type": "wall",
+      "subType": "interior-wall",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 214,
+            "y": 110
+          },
+          {
+            "x": 214,
+            "y": 142
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 2737.6585648126747,
+            "y": 1407.207673501842
+          },
+          {
+            "x": 2737.6585648126747,
+            "y": 1816.5771785205598
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": 32,
+        "thickness": 6,
+        "orientation": "vertical",
         "dimension_text": null,
-        "length_px": 15,
-        "length_mm": 776.6416538972612,
+        "length_px": 32,
+        "length_mm": 409.3695050187177,
         "length_verified": false
       },
       "level": "Level 1",
-      "confidence": 0.9
+      "confidence": 0.95
     },
     {
-      "id": "407c1b3f-6cb5-4b59-97f6-3070964f6b2c",
+      "id": "884ebc55-586b-492c-9ed7-6a9c979355a9",
       "type": "wall",
-      "subType": "exterior-wall",
+      "subType": "interior-wall",
       "geometry": {
         "type": "line",
         "coordinates_px": [
           {
-            "x": 160,
-            "y": 147
+            "x": 308,
+            "y": 110
           },
           {
-            "x": 240,
-            "y": 147
+            "x": 308,
+            "y": 214
           }
         ],
         "coordinates_mm": [
           {
-            "x": 8284.177641570786,
-            "y": 7611.0882081931595
+            "x": 3940.1814858051575,
+            "y": 1407.207673501842
           },
           {
-            "x": 12426.26646235618,
-            "y": 7611.0882081931595
+            "x": 3940.1814858051575,
+            "y": 2737.6585648126747
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
-        "dimension_text": "1,820",
-        "length_px": 80,
-        "length_mm": 4142.088820785393,
+        "length": 104,
+        "thickness": 6,
+        "orientation": "vertical",
+        "dimension_text": null,
+        "length_px": 104,
+        "length_mm": 1330.4508913108325,
         "length_verified": false
       },
       "level": "Level 1",
-      "confidence": 0.9
+      "confidence": 0.95
     },
     {
-      "id": "690d3013-22f1-4ca5-a43d-be7e62f8b600",
+      "id": "65c6808c-b095-43eb-936b-42093382224c",
       "type": "wall",
-      "subType": "exterior-wall",
+      "subType": "interior-wall",
       "geometry": {
         "type": "line",
         "coordinates_px": [
           {
-            "x": 500,
-            "y": 147
+            "x": 214,
+            "y": 142
           },
           {
-            "x": 520,
-            "y": 147
+            "x": 214,
+            "y": 214
           }
         ],
         "coordinates_mm": [
           {
-            "x": 25888.05512990871,
-            "y": 7611.0882081931595
+            "x": 2737.6585648126747,
+            "y": 1816.5771785205598
           },
           {
-            "x": 26923.577335105056,
-            "y": 7611.0882081931595
+            "x": 2737.6585648126747,
+            "y": 2737.6585648126747
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
-        "dimension_text": "455",
-        "length_px": 20,
-        "length_mm": 1035.5222051963483,
+        "length": 72,
+        "thickness": 6,
+        "orientation": "vertical",
+        "dimension_text": null,
+        "length_px": 72,
+        "length_mm": 921.0813862921148,
         "length_verified": false
       },
       "level": "Level 1",
-      "confidence": 0.9
+      "confidence": 0.95
     },
     {
-      "id": "35afb7e5-0483-4ca3-8ad5-df0cf0f7315c",
+      "id": "3f1b2e0c-3529-43fd-96bc-f48bec249be8",
       "type": "wall",
-      "subType": "exterior-wall",
+      "subType": "interior-wall",
       "geometry": {
         "type": "line",
         "coordinates_px": [
           {
-            "x": 550,
-            "y": 147
+            "x": 308,
+            "y": 214
           },
           {
-            "x": 660,
-            "y": 147
+            "x": 385,
+            "y": 214
           }
         ],
         "coordinates_mm": [
           {
-            "x": 28476.860642899577,
-            "y": 7611.0882081931595
+            "x": 3940.1814858051575,
+            "y": 2737.6585648126747
           },
           {
-            "x": 34172.232771479496,
-            "y": 7611.0882081931595
+            "x": 4925.226857256447,
+            "y": 2737.6585648126747
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
-        "dimension_text": "2,275",
+        "length": 77,
+        "thickness": 6,
+        "orientation": "horizontal",
+        "dimension_text": null,
+        "length_px": 77,
+        "length_mm": 985.0453714512894,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.95
+    },
+    {
+      "id": "204ca805-f54f-4af1-a763-1ac20f02419e",
+      "type": "wall",
+      "subType": "interior-wall",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 385,
+            "y": 110
+          },
+          {
+            "x": 385,
+            "y": 178
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 4925.226857256447,
+            "y": 1407.207673501842
+          },
+          {
+            "x": 4925.226857256447,
+            "y": 2277.1178716666172
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": 68,
+        "thickness": 6,
+        "orientation": "vertical",
+        "dimension_text": null,
+        "length_px": 68,
+        "length_mm": 869.9101981647751,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.95
+    },
+    {
+      "id": "ff4b6ad8-3906-4b91-b231-78f1abbeb69e",
+      "type": "wall",
+      "subType": "interior-wall",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 385,
+            "y": 248
+          },
+          {
+            "x": 495,
+            "y": 248
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 4925.226857256447,
+            "y": 3172.613663895062
+          },
+          {
+            "x": 6332.434530758289,
+            "y": 3172.613663895062
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": 110,
+        "thickness": 6,
+        "orientation": "horizontal",
+        "dimension_text": null,
         "length_px": 110,
-        "length_mm": 5695.372128579916,
+        "length_mm": 1407.207673501842,
         "length_verified": false
       },
       "level": "Level 1",
-      "confidence": 0.9
+      "confidence": 0.95
     },
     {
-      "id": "83b622e2-ccc6-4b93-9ebc-5065242ca440",
+      "id": "62c59a9a-90b6-45fd-b122-bebf3a7227d3",
+      "type": "wall",
+      "subType": "interior-wall",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 495,
+            "y": 110
+          },
+          {
+            "x": 495,
+            "y": 248
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 6332.434530758289,
+            "y": 1407.207673501842
+          },
+          {
+            "x": 6332.434530758289,
+            "y": 3172.613663895062
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": 138,
+        "thickness": 6,
+        "orientation": "vertical",
+        "dimension_text": null,
+        "length_px": 138,
+        "length_mm": 1765.40599039322,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.95
+    },
+    {
+      "id": "b047f8ba-5ad0-4d26-ac3b-68a5e5bd0985",
+      "type": "wall",
+      "subType": "interior-wall",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 120,
+            "y": 278
+          },
+          {
+            "x": 308,
+            "y": 278
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 1535.1356438201913,
+            "y": 3556.39757485011
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 3556.39757485011
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": 188,
+        "thickness": 6,
+        "orientation": "horizontal",
+        "dimension_text": null,
+        "length_px": 188,
+        "length_mm": 2405.0458419849665,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.95
+    },
+    {
+      "id": "38dd1ac2-6ff7-40fb-b24f-503b129b5e7d",
+      "type": "wall",
+      "subType": "interior-wall",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 214,
+            "y": 214
+          },
+          {
+            "x": 214,
+            "y": 278
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 2737.6585648126747,
+            "y": 2737.6585648126747
+          },
+          {
+            "x": 2737.6585648126747,
+            "y": 3556.39757485011
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": 64,
+        "thickness": 6,
+        "orientation": "vertical",
+        "dimension_text": null,
+        "length_px": 64,
+        "length_mm": 818.7390100374354,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.95
+    },
+    {
+      "id": "7051bcf4-e6a3-4428-a874-514cd6c6957d",
+      "type": "wall",
+      "subType": "interior-wall",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 308,
+            "y": 214
+          },
+          {
+            "x": 308,
+            "y": 278
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 3940.1814858051575,
+            "y": 2737.6585648126747
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 3556.39757485011
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": 64,
+        "thickness": 6,
+        "orientation": "vertical",
+        "dimension_text": null,
+        "length_px": 64,
+        "length_mm": 818.7390100374354,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.95
+    },
+    {
+      "id": "78178c86-80fb-4538-9622-47ef504fbc4e",
+      "type": "wall",
+      "subType": "interior-wall",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 214,
+            "y": 278
+          },
+          {
+            "x": 214,
+            "y": 380
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 2737.6585648126747,
+            "y": 3556.39757485011
+          },
+          {
+            "x": 2737.6585648126747,
+            "y": 4861.2628720972725
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": 102,
+        "thickness": 6,
+        "orientation": "vertical",
+        "dimension_text": null,
+        "length_px": 102,
+        "length_mm": 1304.8652972471627,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.95
+    },
+    {
+      "id": "a0d771e7-d084-4b72-bbe7-31a6d354d980",
       "type": "wall",
       "subType": "exterior-wall",
       "geometry": {
         "type": "line",
         "coordinates_px": [
           {
-            "x": 780,
-            "y": 147
+            "x": 120,
+            "y": 500
           },
           {
-            "x": 908,
-            "y": 147
+            "x": 120,
+            "y": 110
           }
         ],
         "coordinates_mm": [
           {
-            "x": 40385.36600265758,
-            "y": 7611.0882081931595
+            "x": 1535.1356438201913,
+            "y": 6396.398515917464
           },
           {
-            "x": 47012.70811591421,
-            "y": 7611.0882081931595
+            "x": 1535.1356438201913,
+            "y": 1407.207673501842
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
-        "dimension_text": "2,730",
-        "length_px": 128,
-        "length_mm": 6627.342113256629,
+        "length": 910,
+        "thickness": 8,
+        "orientation": "vertical",
+        "dimension_text": "910",
+        "length_px": 390,
+        "length_mm": 4989.190842415622,
         "length_verified": false
       },
       "level": "Level 1",
-      "confidence": 0.9
+      "confidence": 0.98
     },
     {
-      "id": "4e4ae361-85d8-461e-9ae8-41bcfa4cec5c",
+      "id": "9d3ed471-ff2c-4011-85ff-f727071d9e91",
+      "type": "wall",
+      "subType": "interior-wall",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 120,
+            "y": 214
+          },
+          {
+            "x": 308,
+            "y": 214
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 1535.1356438201913,
+            "y": 2737.6585648126747
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 2737.6585648126747
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": 910,
+        "thickness": 6,
+        "orientation": "horizontal",
+        "dimension_text": "910",
+        "length_px": 188,
+        "length_mm": 2405.0458419849665,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.95
+    },
+    {
+      "id": "bb3696ad-ffa4-46df-8648-a6912971897f",
       "type": "wall",
       "subType": "exterior-wall",
       "geometry": {
         "type": "line",
         "coordinates_px": [
           {
-            "x": 908,
-            "y": 147
+            "x": 120,
+            "y": 110
           },
           {
-            "x": 908,
-            "y": 260
+            "x": 768,
+            "y": 110
           }
         ],
         "coordinates_mm": [
           {
-            "x": 47012.70811591421,
-            "y": 7611.0882081931595
+            "x": 1535.1356438201913,
+            "y": 1407.207673501842
           },
           {
-            "x": 47012.70811591421,
-            "y": 13461.788667552528
+            "x": 9824.868120449224,
+            "y": 1407.207673501842
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
-        "dimension_text": "800",
-        "length_px": 113,
-        "length_mm": 5850.700459359368,
+        "length": 5,
+        "thickness": 8,
+        "orientation": "horizontal",
+        "dimension_text": "05",
+        "length_px": 648,
+        "length_mm": 8289.732476629033,
         "length_verified": false
       },
       "level": "Level 1",
-      "confidence": 0.9
+      "confidence": 0.98
     },
     {
-      "id": "d6b121cd-da01-48d9-8bb1-7815d1777bbe",
-      "type": "wall",
-      "subType": "exterior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 908,
-            "y": 280
-          },
-          {
-            "x": 908,
-            "y": 430
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 47012.70811591421,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 47012.70811591421,
-            "y": 22263.727411721487
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
-        "dimension_text": "1,160",
-        "length_px": 150,
-        "length_mm": 7766.416538972612,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "4e45a6fd-b977-4804-930d-c0391ae8a9d1",
-      "type": "wall",
-      "subType": "exterior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 908,
-            "y": 450
-          },
-          {
-            "x": 908,
-            "y": 570
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 47012.70811591421,
-            "y": 23299.249616917838
-          },
-          {
-            "x": 47012.70811591421,
-            "y": 29512.382848095927
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
-        "dimension_text": null,
-        "length_px": 120,
-        "length_mm": 6213.13323117809,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "750b7160-cdbd-4b7b-8955-6777ffa0e806",
-      "type": "wall",
-      "subType": "exterior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 908,
-            "y": 570
-          },
-          {
-            "x": 830,
-            "y": 570
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 47012.70811591421,
-            "y": 29512.382848095927
-          },
-          {
-            "x": 42974.17151564846,
-            "y": 29512.382848095927
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
-        "dimension_text": null,
-        "length_px": 78,
-        "length_mm": 4038.5366002657584,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "4f4f33e6-6bd9-4361-97f1-f90300e03fcc",
-      "type": "wall",
-      "subType": "exterior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 550,
-            "y": 570
-          },
-          {
-            "x": 420,
-            "y": 570
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 28476.860642899577,
-            "y": 29512.382848095927
-          },
-          {
-            "x": 21745.966309123316,
-            "y": 29512.382848095927
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
-        "dimension_text": null,
-        "length_px": 130,
-        "length_mm": 6730.894333776264,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "84433d5a-c406-4924-844c-7f3f6aeeaa79",
-      "type": "wall",
-      "subType": "exterior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 400,
-            "y": 570
-          },
-          {
-            "x": 85,
-            "y": 570
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 20710.444103926966,
-            "y": 29512.382848095927
-          },
-          {
-            "x": 4400.969372084481,
-            "y": 29512.382848095927
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
-        "dimension_text": null,
-        "length_px": 315,
-        "length_mm": 16309.474731842485,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "2a6699f6-0546-4e8f-86f8-a954bbf331b4",
-      "type": "wall",
-      "subType": "exterior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 85,
-            "y": 570
-          },
-          {
-            "x": 85,
-            "y": 450
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 4400.969372084481,
-            "y": 29512.382848095927
-          },
-          {
-            "x": 4400.969372084481,
-            "y": 23299.249616917838
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
-        "dimension_text": "1,365",
-        "length_px": 120,
-        "length_mm": 6213.13323117809,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "cef1e6ee-c575-4726-b858-89ba982b7373",
-      "type": "wall",
-      "subType": "exterior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 85,
-            "y": 430
-          },
-          {
-            "x": 85,
-            "y": 360
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 4400.969372084481,
-            "y": 22263.727411721487
-          },
-          {
-            "x": 4400.969372084481,
-            "y": 18639.39969353427
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
-        "dimension_text": "455",
-        "length_px": 70,
-        "length_mm": 3624.327718187219,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "b3baa7e9-fa3f-43bb-b756-9487feab2503",
-      "type": "wall",
-      "subType": "exterior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 85,
-            "y": 340
-          },
-          {
-            "x": 85,
-            "y": 280
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 4400.969372084481,
-            "y": 17603.877488337923
-          },
-          {
-            "x": 4400.969372084481,
-            "y": 14497.310872748876
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
-        "dimension_text": "455",
-        "length_px": 60,
-        "length_mm": 3106.566615589045,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "3b6d8468-c5e4-4351-a247-0d8f035c5e1a",
-      "type": "wall",
-      "subType": "exterior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 300,
-            "y": 147
-          },
-          {
-            "x": 340,
-            "y": 147
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 15532.833077945224,
-            "y": 7611.0882081931595
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 7611.0882081931595
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": 1820,
-        "thickness": 20,
-        "dimension_text": "1,820",
-        "length_px": 40,
-        "length_mm": 2071.0444103926966,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "dd0563a8-6569-411b-8f96-23a4114311cd",
-      "type": "wall",
-      "subType": "exterior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 85,
-            "y": 260
-          },
-          {
-            "x": 85,
-            "y": 147
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 4400.969372084481,
-            "y": 13461.788667552528
-          },
-          {
-            "x": 4400.969372084481,
-            "y": 7611.0882081931595
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 20,
-        "dimension_text": "910+910+910",
-        "length_px": 113,
-        "length_mm": 5850.700459359368,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "399de020-1480-420e-947f-2d8e39855979",
+      "id": "40a27823-d8c7-401c-9a5f-b9c21e179d84",
       "type": "wall",
       "subType": "interior-wall",
       "geometry": {
         "type": "line",
         "coordinates_px": [
           {
-            "x": 220,
-            "y": 147
+            "x": 308,
+            "y": 278
           },
           {
-            "x": 220,
-            "y": 260
+            "x": 308,
+            "y": 420
           }
         ],
         "coordinates_mm": [
           {
-            "x": 11390.744257159831,
-            "y": 7611.0882081931595
+            "x": 3940.1814858051575,
+            "y": 3556.39757485011
           },
           {
-            "x": 11390.744257159831,
-            "y": 13461.788667552528
+            "x": 3940.1814858051575,
+            "y": 5372.9747533706695
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
+        "length": 142,
+        "thickness": 6,
+        "orientation": "vertical",
         "dimension_text": null,
-        "length_px": 113,
-        "length_mm": 5850.700459359368,
+        "length_px": 142,
+        "length_mm": 1816.5771785205598,
         "length_verified": false
       },
       "level": "Level 1",
-      "confidence": 0.9
+      "confidence": 0.95
     },
     {
-      "id": "35645a26-f671-44f2-ab83-27082a06bc02",
+      "id": "bbd29300-da38-49e7-8794-1298e1b5b65d",
       "type": "wall",
       "subType": "interior-wall",
       "geometry": {
         "type": "line",
         "coordinates_px": [
           {
-            "x": 190,
-            "y": 280
+            "x": 385,
+            "y": 420
           },
           {
-            "x": 220,
-            "y": 280
+            "x": 385,
+            "y": 500
           }
         ],
         "coordinates_mm": [
           {
-            "x": 9837.460949365308,
-            "y": 14497.310872748876
+            "x": 4925.226857256447,
+            "y": 5372.9747533706695
           },
           {
-            "x": 11390.744257159831,
-            "y": 14497.310872748876
+            "x": 4925.226857256447,
+            "y": 6396.398515917464
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
-        "dimension_text": null,
-        "length_px": 30,
-        "length_mm": 1553.2833077945224,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "f6c9d386-3602-4c30-b0d7-9411285c9cc0",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 220,
-            "y": 280
-          },
-          {
-            "x": 220,
-            "y": 340
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 11390.744257159831,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 17603.877488337923
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
-        "dimension_text": null,
-        "length_px": 60,
-        "length_mm": 3106.566615589045,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "b47c70f6-0298-42f4-bc60-12d592f5e565",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 85,
-            "y": 360
-          },
-          {
-            "x": 170,
-            "y": 360
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 4400.969372084481,
-            "y": 18639.39969353427
-          },
-          {
-            "x": 8801.938744168961,
-            "y": 18639.39969353427
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
-        "dimension_text": null,
-        "length_px": 85,
-        "length_mm": 4400.969372084481,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "61225554-06f2-4649-940e-c7d414b30006",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 190,
-            "y": 360
-          },
-          {
-            "x": 220,
-            "y": 360
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 9837.460949365308,
-            "y": 18639.39969353427
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 18639.39969353427
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
-        "dimension_text": null,
-        "length_px": 30,
-        "length_mm": 1553.2833077945224,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "1bae56e0-7696-4aa2-ba41-06f8d8ef8e41",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 220,
-            "y": 360
-          },
-          {
-            "x": 220,
-            "y": 430
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 11390.744257159831,
-            "y": 18639.39969353427
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 22263.727411721487
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
-        "dimension_text": null,
-        "length_px": 70,
-        "length_mm": 3624.327718187219,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "4395d4d8-dd7b-4526-bcac-429a7c5d9dc6",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 220,
-            "y": 430
-          },
-          {
-            "x": 340,
-            "y": 430
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 11390.744257159831,
-            "y": 22263.727411721487
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 22263.727411721487
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
-        "dimension_text": null,
-        "length_px": 120,
-        "length_mm": 6213.13323117809,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "fbbb5888-e089-4cec-8a55-7f4082af0379",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 85,
-            "y": 450
-          },
-          {
-            "x": 220,
-            "y": 450
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 4400.969372084481,
-            "y": 23299.249616917838
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 23299.249616917838
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
-        "dimension_text": null,
-        "length_px": 135,
-        "length_mm": 6989.7748850753505,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "93e9744f-b4b7-40fe-a69e-2eb670d28fa1",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 220,
-            "y": 450
-          },
-          {
-            "x": 220,
-            "y": 570
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 11390.744257159831,
-            "y": 23299.249616917838
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 29512.382848095927
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
-        "dimension_text": null,
-        "length_px": 120,
-        "length_mm": 6213.13323117809,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "43b46be7-add7-41e6-a9bb-789d191a95ec",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 340,
-            "y": 280
-          },
-          {
-            "x": 340,
-            "y": 340
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 17603.877488337923,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 17603.877488337923
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
-        "dimension_text": null,
-        "length_px": 60,
-        "length_mm": 3106.566615589045,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "0c77f59b-7e84-4e52-9901-ce116702fbd1",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 340,
-            "y": 360
-          },
-          {
-            "x": 340,
-            "y": 430
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 17603.877488337923,
-            "y": 18639.39969353427
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 22263.727411721487
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
-        "dimension_text": null,
-        "length_px": 70,
-        "length_mm": 3624.327718187219,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "59fce11c-4547-4503-93ca-cb2aa60f6d7e",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 340,
-            "y": 450
-          },
-          {
-            "x": 340,
-            "y": 470
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 17603.877488337923,
-            "y": 23299.249616917838
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 24334.771822114184
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
-        "dimension_text": null,
-        "length_px": 20,
-        "length_mm": 1035.5222051963483,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "a86338bb-80a9-4014-9282-ed7dbe8a633b",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 340,
-            "y": 490
-          },
-          {
-            "x": 340,
-            "y": 570
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 17603.877488337923,
-            "y": 25370.294027310534
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 29512.382848095927
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
+        "length": 80,
+        "thickness": 6,
+        "orientation": "vertical",
         "dimension_text": null,
         "length_px": 80,
-        "length_mm": 4142.088820785393,
+        "length_mm": 1023.4237625467943,
         "length_verified": false
       },
       "level": "Level 1",
-      "confidence": 0.9
+      "confidence": 0.95
     },
     {
-      "id": "6b18ab34-daf8-457c-8838-ddca6964515f",
+      "id": "5e53ce04-9f15-4cbe-b8a8-3732aa57a82f",
       "type": "wall",
       "subType": "interior-wall",
       "geometry": {
         "type": "line",
         "coordinates_px": [
           {
-            "x": 500,
-            "y": 280
+            "x": 308,
+            "y": 420
           },
           {
-            "x": 500,
-            "y": 320
+            "x": 385,
+            "y": 420
           }
         ],
         "coordinates_mm": [
           {
-            "x": 25888.05512990871,
-            "y": 14497.310872748876
+            "x": 3940.1814858051575,
+            "y": 5372.9747533706695
           },
           {
-            "x": 25888.05512990871,
-            "y": 16568.355283141573
+            "x": 4925.226857256447,
+            "y": 5372.9747533706695
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
+        "length": 77,
+        "thickness": 6,
+        "orientation": "horizontal",
         "dimension_text": null,
-        "length_px": 40,
-        "length_mm": 2071.0444103926966,
+        "length_px": 77,
+        "length_mm": 985.0453714512894,
         "length_verified": false
       },
       "level": "Level 1",
-      "confidence": 0.9
+      "confidence": 0.95
     },
     {
-      "id": "9699a08e-6d2b-408a-994d-220a52326fbe",
+      "id": "423875d0-12b3-4a76-aa21-64286262767e",
       "type": "wall",
       "subType": "interior-wall",
       "geometry": {
         "type": "line",
         "coordinates_px": [
           {
-            "x": 500,
-            "y": 340
+            "x": 455,
+            "y": 420
           },
           {
-            "x": 500,
-            "y": 430
+            "x": 455,
+            "y": 500
           }
         ],
         "coordinates_mm": [
           {
-            "x": 25888.05512990871,
-            "y": 17603.877488337923
+            "x": 5820.722649484892,
+            "y": 5372.9747533706695
           },
           {
-            "x": 25888.05512990871,
-            "y": 22263.727411721487
+            "x": 5820.722649484892,
+            "y": 6396.398515917464
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
+        "length": 80,
+        "thickness": 6,
+        "orientation": "vertical",
         "dimension_text": null,
-        "length_px": 90,
-        "length_mm": 4659.849923383567,
+        "length_px": 80,
+        "length_mm": 1023.4237625467943,
         "length_verified": false
       },
       "level": "Level 1",
-      "confidence": 0.9
+      "confidence": 0.95
     },
     {
-      "id": "88e2e223-9b67-45b4-a39c-56d4a60fa648",
+      "id": "a00f630d-3c29-4c04-9639-fe4548abaa3b",
       "type": "wall",
       "subType": "interior-wall",
       "geometry": {
         "type": "line",
         "coordinates_px": [
           {
-            "x": 520,
-            "y": 430
+            "x": 385,
+            "y": 420
           },
           {
-            "x": 650,
-            "y": 430
+            "x": 455,
+            "y": 420
           }
         ],
         "coordinates_mm": [
           {
-            "x": 26923.577335105056,
-            "y": 22263.727411721487
+            "x": 4925.226857256447,
+            "y": 5372.9747533706695
           },
           {
-            "x": 33654.47166888132,
-            "y": 22263.727411721487
+            "x": 5820.722649484892,
+            "y": 5372.9747533706695
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
+        "length": 70,
+        "thickness": 6,
+        "orientation": "horizontal",
         "dimension_text": null,
-        "length_px": 130,
-        "length_mm": 6730.894333776264,
+        "length_px": 70,
+        "length_mm": 895.495792228445,
         "length_verified": false
       },
       "level": "Level 1",
-      "confidence": 0.9
+      "confidence": 0.95
     },
     {
-      "id": "0214a274-c79f-4581-b1e5-cce401cc0a64",
+      "id": "6620a071-366f-45df-8109-d8f9d530362f",
       "type": "wall",
       "subType": "interior-wall",
       "geometry": {
         "type": "line",
         "coordinates_px": [
           {
-            "x": 220,
-            "y": 340
+            "x": 455,
+            "y": 248
           },
           {
-            "x": 340,
-            "y": 340
+            "x": 455,
+            "y": 420
           }
         ],
         "coordinates_mm": [
           {
-            "x": 11390.744257159831,
-            "y": 17603.877488337923
+            "x": 5820.722649484892,
+            "y": 3172.613663895062
           },
           {
-            "x": 17603.877488337923,
-            "y": 17603.877488337923
+            "x": 5820.722649484892,
+            "y": 5372.9747533706695
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": null,
-        "width": null,
-        "length": 1324,
-        "thickness": 10,
-        "dimension_text": "13,24m",
-        "length_px": 120,
-        "length_mm": 6213.13323117809,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "e00af958-ae2e-4685-881a-60d9cf1cded2",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 650,
-            "y": 280
-          },
-          {
-            "x": 650,
-            "y": 320
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 33654.47166888132,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 33654.47166888132,
-            "y": 16568.355283141573
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
+        "length": 172,
+        "thickness": 6,
+        "orientation": "vertical",
         "dimension_text": null,
-        "length_px": 40,
-        "length_mm": 2071.0444103926966,
+        "length_px": 172,
+        "length_mm": 2200.3610894756075,
         "length_verified": false
       },
       "level": "Level 1",
-      "confidence": 0.9
+      "confidence": 0.95
     },
     {
-      "id": "86e015e6-d72d-4f16-ad81-1a596bd000d6",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 650,
-            "y": 340
-          },
-          {
-            "x": 650,
-            "y": 430
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 33654.47166888132,
-            "y": 17603.877488337923
-          },
-          {
-            "x": 33654.47166888132,
-            "y": 22263.727411721487
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
-        "dimension_text": null,
-        "length_px": 90,
-        "length_mm": 4659.849923383567,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "d4b53579-b9d6-4030-9431-dca7654efbd1",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 500,
-            "y": 450
-          },
-          {
-            "x": 500,
-            "y": 570
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 25888.05512990871,
-            "y": 23299.249616917838
-          },
-          {
-            "x": 25888.05512990871,
-            "y": 29512.382848095927
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": 10,
-        "dimension_text": null,
-        "length_px": 120,
-        "length_mm": 6213.13323117809,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "94adfb59-e56d-43bb-9771-043a9160a5ba",
-      "type": "door",
-      "subType": "hinged-door",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 170,
-            "y": 260
-          },
-          {
-            "x": 190,
-            "y": 280
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 8801.938744168961,
-            "y": 13461.788667552528
-          },
-          {
-            "x": 9837.460949365308,
-            "y": 14497.310872748876
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_px": 28.284271247461902,
-        "length_mm": 1464.4495467271709,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "57ff80a4-58ff-44c3-84a1-bcdca3669150",
-      "type": "door",
-      "subType": "hinged-door",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 170,
-            "y": 340
-          },
-          {
-            "x": 190,
-            "y": 360
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 8801.938744168961,
-            "y": 17603.877488337923
-          },
-          {
-            "x": 9837.460949365308,
-            "y": 18639.39969353427
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_px": 28.284271247461902,
-        "length_mm": 1464.4495467271709,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "36adc3b5-fa51-4ce0-8d0b-c020da3465e5",
-      "type": "door",
-      "subType": "hinged-door",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 320,
-            "y": 280
-          },
-          {
-            "x": 340,
-            "y": 300
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 16568.355283141573,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 15532.833077945224
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_px": 28.284271247461902,
-        "length_mm": 1464.4495467271709,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "be914e87-7f9a-4852-b976-5b6066e83a9c",
-      "type": "door",
-      "subType": "hinged-door",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 320,
-            "y": 340
-          },
-          {
-            "x": 340,
-            "y": 360
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 16568.355283141573,
-            "y": 17603.877488337923
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 18639.39969353427
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_px": 28.284271247461902,
-        "length_mm": 1464.4495467271709,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "402ea5d5-2239-4fc6-bff2-78881d273f2f",
-      "type": "door",
-      "subType": "hinged-door",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 320,
-            "y": 430
-          },
-          {
-            "x": 340,
-            "y": 450
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 16568.355283141573,
-            "y": 22263.727411721487
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 23299.249616917838
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_px": 28.284271247461902,
-        "length_mm": 1464.4495467271709,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "8c5ef4d8-bccd-4890-897d-bb874e5fb95d",
-      "type": "door",
-      "subType": "hinged-door",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 320,
-            "y": 470
-          },
-          {
-            "x": 340,
-            "y": 490
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 16568.355283141573,
-            "y": 24334.771822114184
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 25370.294027310534
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_px": 28.284271247461902,
-        "length_mm": 1464.4495467271709,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "47f18a69-da04-4a30-8e3c-59cd8d562d08",
-      "type": "door",
-      "subType": "hinged-door",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 500,
-            "y": 430
-          },
-          {
-            "x": 520,
-            "y": 450
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 25888.05512990871,
-            "y": 22263.727411721487
-          },
-          {
-            "x": 26923.577335105056,
-            "y": 23299.249616917838
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_px": 28.284271247461902,
-        "length_mm": 1464.4495467271709,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "4b1a1f3e-ed4a-4068-8df3-fea321549736",
-      "type": "door",
-      "subType": "exterior-hinged-door",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 400,
-            "y": 570
-          },
-          {
-            "x": 420,
-            "y": 590
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 20710.444103926966,
-            "y": 29512.382848095927
-          },
-          {
-            "x": 21745.966309123316,
-            "y": 30547.905053292274
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_px": 28.284271247461902,
-        "length_mm": 1464.4495467271709,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "4390b8ec-4982-45ef-b9d0-6c995a99b29b",
-      "type": "door",
-      "subType": "sliding-door",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 500,
-            "y": 280
-          },
-          {
-            "x": 500,
-            "y": 320
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 25888.05512990871,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 25888.05512990871,
-            "y": 16568.355283141573
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_px": 40,
-        "length_mm": 2071.0444103926966,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "40bb24c5-1482-4693-a32e-dbac2e766a9a",
-      "type": "door",
-      "subType": "sliding-door",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 650,
-            "y": 280
-          },
-          {
-            "x": 650,
-            "y": 320
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 33654.47166888132,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 33654.47166888132,
-            "y": 16568.355283141573
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_px": 40,
-        "length_mm": 2071.0444103926966,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "5ccba463-c514-469c-ab2b-69ea776986d7",
-      "type": "door",
-      "subType": "sliding-door",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 340,
-            "y": 490
-          },
-          {
-            "x": 340,
-            "y": 520
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 17603.877488337923,
-            "y": 25370.294027310534
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 26923.577335105056
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_px": 30,
-        "length_mm": 1553.2833077945224,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "4ee88644-2431-4fae-b1db-4db9470e5245",
-      "type": "window",
-      "subType": "fixed-window",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 65,
-            "y": 260
-          },
-          {
-            "x": 85,
-            "y": 280
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 3365.447166888132,
-            "y": 13461.788667552528
-          },
-          {
-            "x": 4400.969372084481,
-            "y": 14497.310872748876
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": 770,
-        "length": 640,
-        "thickness": null,
-        "dimension_text": "640x770",
-        "length_px": 28.284271247461902,
-        "length_mm": 1464.4495467271709,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "f817419e-a1e9-4ce3-88f5-5c5c1ace28d0",
-      "type": "window",
-      "subType": "fixed-window",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 520,
-            "y": 127
-          },
-          {
-            "x": 550,
-            "y": 147
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 26923.577335105056,
-            "y": 6575.566002996811
-          },
-          {
-            "x": 28476.860642899577,
-            "y": 7611.0882081931595
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": 2275,
-        "length": 405,
-        "thickness": null,
-        "dimension_text": "2,275",
-        "length_px": 36.05551275463989,
-        "length_mm": 1866.814203858488,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "6cace818-8481-4997-985b-fd2c7ac850bc",
-      "type": "window",
-      "subType": "fixed-window",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 680,
-            "y": 127
-          },
-          {
-            "x": 780,
-            "y": 147
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 35207.754976675846,
-            "y": 6575.566002996811
-          },
-          {
-            "x": 40385.36600265758,
-            "y": 7611.0882081931595
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": 2730,
-        "length": 1255,
-        "thickness": null,
-        "dimension_text": "2,730",
-        "length_px": 101.9803902718557,
-        "length_mm": 5280.147931054812,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "45c2813d-0702-4ee1-af3e-1f8deb65d800",
-      "type": "window",
-      "subType": "fixed-window",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 240,
-            "y": 127
-          },
-          {
-            "x": 300,
-            "y": 147
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 12426.26646235618,
-            "y": 6575.566002996811
-          },
-          {
-            "x": 15532.833077945224,
-            "y": 7611.0882081931595
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": 5,
-        "length": 640,
-        "thickness": null,
-        "dimension_text": "05",
-        "length_px": 63.245553203367585,
-        "length_mm": 3274.6087361007085,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "44ba8bb7-7f79-483d-b9a3-4c7a904518b9",
-      "type": "window",
-      "subType": "fixed-window",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 65,
-            "y": 340
-          },
-          {
-            "x": 85,
-            "y": 360
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 3365.447166888132,
-            "y": 17603.877488337923
-          },
-          {
-            "x": 4400.969372084481,
-            "y": 18639.39969353427
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": 960,
-        "length": 1255,
-        "thickness": null,
-        "dimension_text": "1255x960",
-        "length_px": 28.284271247461902,
-        "length_mm": 1464.4495467271709,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "b0adb294-5d64-4401-96eb-70bc5cc743be",
-      "type": "window",
-      "subType": "fixed-window",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 65,
-            "y": 430
-          },
-          {
-            "x": 85,
-            "y": 450
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 3365.447166888132,
-            "y": 22263.727411721487
-          },
-          {
-            "x": 4400.969372084481,
-            "y": 23299.249616917838
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": 1570,
-        "length": 640,
-        "thickness": null,
-        "dimension_text": "640x1570",
-        "length_px": 28.284271247461902,
-        "length_mm": 1464.4495467271709,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "f2a5a330-688f-4123-ae82-0bfdb1da5bb8",
-      "type": "window",
-      "subType": "sliding-window",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 550,
-            "y": 570
-          },
-          {
-            "x": 830,
-            "y": 590
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 28476.860642899577,
-            "y": 29512.382848095927
-          },
-          {
-            "x": 42974.17151564846,
-            "y": 30547.905053292274
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": 2230,
-        "length": 3510,
-        "thickness": null,
-        "dimension_text": "3510x2230",
-        "length_px": 280.713376952364,
-        "length_mm": 14534.246756491288,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "67f8ae99-6857-45fa-8194-6e96febc2e23",
-      "type": "room",
-      "subType": "washroom",
-      "geometry": {
-        "type": "polygon",
-        "coordinates_px": [
-          {
-            "x": 220,
-            "y": 147
-          },
-          {
-            "x": 340,
-            "y": 147
-          },
-          {
-            "x": 340,
-            "y": 260
-          },
-          {
-            "x": 220,
-            "y": 260
-          },
-          {
-            "x": 220,
-            "y": 147
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 11390.744257159831,
-            "y": 7611.0882081931595
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 7611.0882081931595
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 13461.788667552528
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 13461.788667552528
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 7611.0882081931595
-          }
-        ]
-      },
-      "properties": {
-        "label": "洗面室",
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "de89a2e5-238a-4c24-90a9-0ca821126c37",
-      "type": "room",
-      "subType": "toilet",
-      "geometry": {
-        "type": "polygon",
-        "coordinates_px": [
-          {
-            "x": 85,
-            "y": 280
-          },
-          {
-            "x": 220,
-            "y": 280
-          },
-          {
-            "x": 220,
-            "y": 340
-          },
-          {
-            "x": 85,
-            "y": 340
-          },
-          {
-            "x": 85,
-            "y": 280
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 4400.969372084481,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 17603.877488337923
-          },
-          {
-            "x": 4400.969372084481,
-            "y": 17603.877488337923
-          },
-          {
-            "x": 4400.969372084481,
-            "y": 14497.310872748876
-          }
-        ]
-      },
-      "properties": {
-        "label": "トイレ",
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "0c5b97bc-e083-4188-9d5c-ea13c0e53bc3",
-      "type": "room",
-      "subType": "closet",
-      "geometry": {
-        "type": "polygon",
-        "coordinates_px": [
-          {
-            "x": 220,
-            "y": 280
-          },
-          {
-            "x": 340,
-            "y": 280
-          },
-          {
-            "x": 340,
-            "y": 340
-          },
-          {
-            "x": 220,
-            "y": 340
-          },
-          {
-            "x": 220,
-            "y": 280
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 11390.744257159831,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 17603.877488337923
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 17603.877488337923
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 14497.310872748876
-          }
-        ]
-      },
-      "properties": {
-        "label": "押入",
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "9d4961e0-a600-48e9-8cf4-bf04e8a71dff",
-      "type": "room",
-      "subType": "japanese-style room",
-      "geometry": {
-        "type": "polygon",
-        "coordinates_px": [
-          {
-            "x": 85,
-            "y": 450
-          },
-          {
-            "x": 220,
-            "y": 450
-          },
-          {
-            "x": 220,
-            "y": 570
-          },
-          {
-            "x": 85,
-            "y": 570
-          },
-          {
-            "x": 85,
-            "y": 450
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 4400.969372084481,
-            "y": 23299.249616917838
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 23299.249616917838
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 29512.382848095927
-          },
-          {
-            "x": 4400.969372084481,
-            "y": 29512.382848095927
-          },
-          {
-            "x": 4400.969372084481,
-            "y": 23299.249616917838
-          }
-        ]
-      },
-      "properties": {
-        "area": "13.24㎡",
-        "label": "和室",
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "bb13b6dc-4fe1-4844-8e8f-efc34f7d42f9",
-      "type": "room",
-      "subType": "wood-floor room",
-      "geometry": {
-        "type": "polygon",
-        "coordinates_px": [
-          {
-            "x": 220,
-            "y": 450
-          },
-          {
-            "x": 340,
-            "y": 450
-          },
-          {
-            "x": 340,
-            "y": 570
-          },
-          {
-            "x": 220,
-            "y": 570
-          },
-          {
-            "x": 220,
-            "y": 450
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 11390.744257159831,
-            "y": 23299.249616917838
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 23299.249616917838
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 29512.382848095927
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 29512.382848095927
-          },
-          {
-            "x": 11390.744257159831,
-            "y": 23299.249616917838
-          }
-        ]
-      },
-      "properties": {
-        "label": "板の間",
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "b7c3543d-e96a-4992-a8d5-4a988190e103",
-      "type": "room",
-      "subType": "entrance",
-      "geometry": {
-        "type": "polygon",
-        "coordinates_px": [
-          {
-            "x": 340,
-            "y": 450
-          },
-          {
-            "x": 500,
-            "y": 450
-          },
-          {
-            "x": 500,
-            "y": 570
-          },
-          {
-            "x": 340,
-            "y": 570
-          },
-          {
-            "x": 340,
-            "y": 450
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 17603.877488337923,
-            "y": 23299.249616917838
-          },
-          {
-            "x": 25888.05512990871,
-            "y": 23299.249616917838
-          },
-          {
-            "x": 25888.05512990871,
-            "y": 29512.382848095927
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 29512.382848095927
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 23299.249616917838
-          }
-        ]
-      },
-      "properties": {
-        "label": "玄関",
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "d2597969-dbe0-4f57-abc7-666c655ce272",
-      "type": "room",
-      "subType": "hall",
-      "geometry": {
-        "type": "polygon",
-        "coordinates_px": [
-          {
-            "x": 340,
-            "y": 280
-          },
-          {
-            "x": 500,
-            "y": 280
-          },
-          {
-            "x": 500,
-            "y": 430
-          },
-          {
-            "x": 340,
-            "y": 430
-          },
-          {
-            "x": 340,
-            "y": 280
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 17603.877488337923,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 25888.05512990871,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 25888.05512990871,
-            "y": 22263.727411721487
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 22263.727411721487
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 14497.310872748876
-          }
-        ]
-      },
-      "properties": {
-        "label": "ホール",
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "d96f1212-cc25-4001-b355-ca63210dd6e9",
-      "type": "room",
-      "subType": "dining",
-      "geometry": {
-        "type": "polygon",
-        "coordinates_px": [
-          {
-            "x": 650,
-            "y": 280
-          },
-          {
-            "x": 908,
-            "y": 280
-          },
-          {
-            "x": 908,
-            "y": 430
-          },
-          {
-            "x": 650,
-            "y": 430
-          },
-          {
-            "x": 650,
-            "y": 280
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 33654.47166888132,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 47012.70811591421,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 47012.70811591421,
-            "y": 22263.727411721487
-          },
-          {
-            "x": 33654.47166888132,
-            "y": 22263.727411721487
-          },
-          {
-            "x": 33654.47166888132,
-            "y": 14497.310872748876
-          }
-        ]
-      },
-      "properties": {
-        "label": "ダイニング",
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "bdd1826c-3ac1-4003-92cf-f7a7a8ce6578",
-      "type": "room",
-      "subType": "living",
-      "geometry": {
-        "type": "polygon",
-        "coordinates_px": [
-          {
-            "x": 500,
-            "y": 450
-          },
-          {
-            "x": 908,
-            "y": 450
-          },
-          {
-            "x": 908,
-            "y": 570
-          },
-          {
-            "x": 500,
-            "y": 570
-          },
-          {
-            "x": 500,
-            "y": 450
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 25888.05512990871,
-            "y": 23299.249616917838
-          },
-          {
-            "x": 47012.70811591421,
-            "y": 23299.249616917838
-          },
-          {
-            "x": 47012.70811591421,
-            "y": 29512.382848095927
-          },
-          {
-            "x": 25888.05512990871,
-            "y": 29512.382848095927
-          },
-          {
-            "x": 25888.05512990871,
-            "y": 23299.249616917838
-          }
-        ]
-      },
-      "properties": {
-        "area": "33.95㎡",
-        "label": "リビング",
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "1da44cd3-3668-47d0-972e-6a72680aaa8e",
+      "id": "2ad77548-2806-4588-ac29-cfe34c965ce1",
       "type": "room",
       "subType": "bathroom",
       "geometry": {
         "type": "polygon",
         "coordinates_px": [
           {
-            "x": 85,
-            "y": 147
+            "x": 120,
+            "y": 110
           },
           {
-            "x": 220,
-            "y": 147
+            "x": 214,
+            "y": 110
           },
           {
-            "x": 220,
-            "y": 260
+            "x": 214,
+            "y": 142
           },
           {
-            "x": 85,
-            "y": 260
-          },
-          {
-            "x": 85,
-            "y": 147
+            "x": 120,
+            "y": 142
           }
         ],
         "coordinates_mm": [
           {
-            "x": 4400.969372084481,
-            "y": 7611.0882081931595
+            "x": 1535.1356438201913,
+            "y": 1407.207673501842
           },
           {
-            "x": 11390.744257159831,
-            "y": 7611.0882081931595
+            "x": 2737.6585648126747,
+            "y": 1407.207673501842
           },
           {
-            "x": 11390.744257159831,
-            "y": 13461.788667552528
+            "x": 2737.6585648126747,
+            "y": 1816.5771785205598
           },
           {
-            "x": 4400.969372084481,
-            "y": 13461.788667552528
-          },
-          {
-            "x": 4400.969372084481,
-            "y": 7611.0882081931595
+            "x": 1535.1356438201913,
+            "y": 1816.5771785205598
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": "浴室",
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": "910",
         "length_verified": false
       },
       "level": "Level 1",
       "confidence": 0.9
     },
     {
-      "id": "7fce631e-2733-4d4d-bd11-f72cbd635876",
+      "id": "72cab676-d170-4e79-9b75-a690909d78f4",
+      "type": "room",
+      "subType": "washroom",
+      "geometry": {
+        "type": "polygon",
+        "coordinates_px": [
+          {
+            "x": 214,
+            "y": 110
+          },
+          {
+            "x": 308,
+            "y": 110
+          },
+          {
+            "x": 308,
+            "y": 214
+          },
+          {
+            "x": 214,
+            "y": 214
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 2737.6585648126747,
+            "y": 1407.207673501842
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 1407.207673501842
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 2737.6585648126747
+          },
+          {
+            "x": 2737.6585648126747,
+            "y": 2737.6585648126747
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": "洗面室",
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "704a79a1-931e-4852-ac59-d46a2f033c61",
+      "type": "room",
+      "subType": "toilet",
+      "geometry": {
+        "type": "polygon",
+        "coordinates_px": [
+          {
+            "x": 120,
+            "y": 142
+          },
+          {
+            "x": 214,
+            "y": 142
+          },
+          {
+            "x": 214,
+            "y": 214
+          },
+          {
+            "x": 120,
+            "y": 214
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 1535.1356438201913,
+            "y": 1816.5771785205598
+          },
+          {
+            "x": 2737.6585648126747,
+            "y": 1816.5771785205598
+          },
+          {
+            "x": 2737.6585648126747,
+            "y": 2737.6585648126747
+          },
+          {
+            "x": 1535.1356438201913,
+            "y": 2737.6585648126747
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": "トイレ",
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "73b6cfe0-a8f6-4d25-b868-75b3e20c2caf",
+      "type": "room",
+      "subType": "storage",
+      "geometry": {
+        "type": "polygon",
+        "coordinates_px": [
+          {
+            "x": 308,
+            "y": 110
+          },
+          {
+            "x": 358,
+            "y": 110
+          },
+          {
+            "x": 358,
+            "y": 214
+          },
+          {
+            "x": 308,
+            "y": 214
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 3940.1814858051575,
+            "y": 1407.207673501842
+          },
+          {
+            "x": 4579.821337396904,
+            "y": 1407.207673501842
+          },
+          {
+            "x": 4579.821337396904,
+            "y": 2737.6585648126747
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 2737.6585648126747
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": "物入",
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "cdc4a241-bc2a-44ed-8d9d-ef96dd6cc311",
       "type": "room",
       "subType": "kitchen",
       "geometry": {
         "type": "polygon",
         "coordinates_px": [
           {
-            "x": 500,
-            "y": 280
+            "x": 385,
+            "y": 110
           },
           {
-            "x": 650,
-            "y": 280
+            "x": 495,
+            "y": 110
           },
           {
-            "x": 650,
-            "y": 430
+            "x": 495,
+            "y": 248
           },
           {
-            "x": 500,
-            "y": 430
-          },
-          {
-            "x": 500,
-            "y": 280
+            "x": 385,
+            "y": 248
           }
         ],
         "coordinates_mm": [
           {
-            "x": 25888.05512990871,
-            "y": 14497.310872748876
+            "x": 4925.226857256447,
+            "y": 1407.207673501842
           },
           {
-            "x": 33654.47166888132,
-            "y": 14497.310872748876
+            "x": 6332.434530758289,
+            "y": 1407.207673501842
           },
           {
-            "x": 33654.47166888132,
-            "y": 22263.727411721487
+            "x": 6332.434530758289,
+            "y": 3172.613663895062
           },
           {
-            "x": 25888.05512990871,
-            "y": 22263.727411721487
-          },
-          {
-            "x": 25888.05512990871,
-            "y": 14497.310872748876
+            "x": 4925.226857256447,
+            "y": 3172.613663895062
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": "キッチン",
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": "33.95m",
         "length_verified": false
       },
       "level": "Level 1",
       "confidence": 0.9
     },
     {
-      "id": "d0e7de0c-1917-40b3-b28d-e9bf92d1315c",
+      "id": "5f4baa78-8801-4e56-b3b5-cde7f84b778b",
       "type": "room",
-      "subType": "storage-under-stairs",
+      "subType": "dining",
       "geometry": {
         "type": "polygon",
         "coordinates_px": [
           {
-            "x": 340,
-            "y": 260
+            "x": 495,
+            "y": 110
           },
           {
-            "x": 500,
-            "y": 260
+            "x": 768,
+            "y": 110
           },
           {
-            "x": 500,
-            "y": 280
+            "x": 768,
+            "y": 248
           },
           {
-            "x": 340,
-            "y": 280
-          },
-          {
-            "x": 340,
-            "y": 260
+            "x": 495,
+            "y": 248
           }
         ],
         "coordinates_mm": [
           {
-            "x": 17603.877488337923,
-            "y": 13461.788667552528
+            "x": 6332.434530758289,
+            "y": 1407.207673501842
           },
           {
-            "x": 25888.05512990871,
-            "y": 13461.788667552528
+            "x": 9824.868120449224,
+            "y": 1407.207673501842
           },
           {
-            "x": 25888.05512990871,
-            "y": 14497.310872748876
+            "x": 9824.868120449224,
+            "y": 3172.613663895062
           },
           {
-            "x": 17603.877488337923,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 13461.788667552528
+            "x": 6332.434530758289,
+            "y": 3172.613663895062
           }
         ]
       },
       "properties": {
-        "label": "物入 / 廊下 (階段下)",
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.8
-    },
-    {
-      "id": "bdd60fc6-893f-435b-a0cd-9f7d8c0c26a8",
-      "type": "symbol",
-      "subType": "stairs",
-      "geometry": {
-        "type": "polygon",
-        "coordinates_px": [
-          {
-            "x": 340,
-            "y": 260
-          },
-          {
-            "x": 500,
-            "y": 260
-          },
-          {
-            "x": 500,
-            "y": 280
-          },
-          {
-            "x": 340,
-            "y": 280
-          },
-          {
-            "x": 340,
-            "y": 260
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 17603.877488337923,
-            "y": 13461.788667552528
-          },
-          {
-            "x": 25888.05512990871,
-            "y": 13461.788667552528
-          },
-          {
-            "x": 25888.05512990871,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 17603.877488337923,
-            "y": 13461.788667552528
-          }
-        ]
-      },
-      "properties": {
-        "label": "階段",
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": null,
+        "area": null,
+        "label": "ダイニング",
         "length_verified": false
       },
       "level": "Level 1",
       "confidence": 0.9
     },
     {
-      "id": "f51bc88a-5eca-4168-9a82-3a174f5ef519",
-      "type": "window",
-      "subType": "fixed-window",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 100,
-            "y": 127
-          },
-          {
-            "x": 160,
-            "y": 147
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 5177.6110259817415,
-            "y": 6575.566002996811
-          },
-          {
-            "x": 8284.177641570786,
-            "y": 7611.0882081931595
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": 910,
-        "length": 640,
-        "thickness": null,
-        "dimension_text": "910",
-        "length_px": 63.245553203367585,
-        "length_mm": 3274.6087361007085,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "96191115-7b01-4510-bf54-cf9deb4da665",
-      "type": "wall",
-      "subType": "interior-wall",
-      "geometry": {
-        "type": "line",
-        "coordinates_px": [
-          {
-            "x": 85,
-            "y": 280
-          },
-          {
-            "x": 170,
-            "y": 280
-          }
-        ],
-        "coordinates_mm": [
-          {
-            "x": 4400.969372084481,
-            "y": 14497.310872748876
-          },
-          {
-            "x": 8801.938744168961,
-            "y": 14497.310872748876
-          }
-        ]
-      },
-      "properties": {
-        "label": null,
-        "width": null,
-        "length": 7280,
-        "thickness": 10,
-        "dimension_text": "7,280",
-        "length_px": 85,
-        "length_mm": 4400.969372084481,
-        "length_verified": false
-      },
-      "level": "Level 1",
-      "confidence": 0.9
-    },
-    {
-      "id": "99760279-4e94-4cdb-9c90-14eba2739014",
+      "id": "816247ed-d0fd-4b00-bee2-e4a7f48b1bcf",
       "type": "room",
       "subType": "alcove",
       "geometry": {
         "type": "polygon",
         "coordinates_px": [
           {
-            "x": 85,
-            "y": 360
+            "x": 120,
+            "y": 214
           },
           {
-            "x": 220,
-            "y": 360
+            "x": 214,
+            "y": 214
           },
           {
-            "x": 220,
-            "y": 430
+            "x": 214,
+            "y": 278
           },
           {
-            "x": 85,
-            "y": 430
-          },
-          {
-            "x": 85,
-            "y": 360
+            "x": 120,
+            "y": 278
           }
         ],
         "coordinates_mm": [
           {
-            "x": 4400.969372084481,
-            "y": 18639.39969353427
+            "x": 1535.1356438201913,
+            "y": 2737.6585648126747
           },
           {
-            "x": 11390.744257159831,
-            "y": 18639.39969353427
+            "x": 2737.6585648126747,
+            "y": 2737.6585648126747
           },
           {
-            "x": 11390.744257159831,
-            "y": 22263.727411721487
+            "x": 2737.6585648126747,
+            "y": 3556.39757485011
           },
           {
-            "x": 4400.969372084481,
-            "y": 22263.727411721487
-          },
-          {
-            "x": 4400.969372084481,
-            "y": 18639.39969353427
+            "x": 1535.1356438201913,
+            "y": 3556.39757485011
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": "床の間",
-        "width": null,
-        "length": null,
-        "thickness": null,
-        "dimension_text": "455455",
         "length_verified": false
       },
       "level": "Level 1",
       "confidence": 0.9
     },
     {
-      "id": "02ade190-1379-4b64-be77-a625aa91eec8",
-      "type": "wall",
-      "subType": "exterior-wall",
+      "id": "91684b6a-22db-4347-9292-eb0503f4a46e",
+      "type": "room",
+      "subType": "closet",
+      "geometry": {
+        "type": "polygon",
+        "coordinates_px": [
+          {
+            "x": 214,
+            "y": 214
+          },
+          {
+            "x": 308,
+            "y": 214
+          },
+          {
+            "x": 308,
+            "y": 278
+          },
+          {
+            "x": 214,
+            "y": 278
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 2737.6585648126747,
+            "y": 2737.6585648126747
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 2737.6585648126747
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 3556.39757485011
+          },
+          {
+            "x": 2737.6585648126747,
+            "y": 3556.39757485011
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": "押入",
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "d695db5f-aae6-4494-9abe-7c0e2c0a3c4e",
+      "type": "room",
+      "subType": "japanese-room",
+      "geometry": {
+        "type": "polygon",
+        "coordinates_px": [
+          {
+            "x": 120,
+            "y": 278
+          },
+          {
+            "x": 214,
+            "y": 278
+          },
+          {
+            "x": 214,
+            "y": 380
+          },
+          {
+            "x": 120,
+            "y": 380
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 1535.1356438201913,
+            "y": 3556.39757485011
+          },
+          {
+            "x": 2737.6585648126747,
+            "y": 3556.39757485011
+          },
+          {
+            "x": 2737.6585648126747,
+            "y": 4861.2628720972725
+          },
+          {
+            "x": 1535.1356438201913,
+            "y": 4861.2628720972725
+          }
+        ]
+      },
+      "properties": {
+        "area": "13.24㎡",
+        "label": "和室",
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "9b253c21-0d0c-4b58-8c6c-1443eac6901b",
+      "type": "room",
+      "subType": "wooden-floor-room",
+      "geometry": {
+        "type": "polygon",
+        "coordinates_px": [
+          {
+            "x": 214,
+            "y": 278
+          },
+          {
+            "x": 308,
+            "y": 278
+          },
+          {
+            "x": 308,
+            "y": 380
+          },
+          {
+            "x": 214,
+            "y": 380
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 2737.6585648126747,
+            "y": 3556.39757485011
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 3556.39757485011
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 4861.2628720972725
+          },
+          {
+            "x": 2737.6585648126747,
+            "y": 4861.2628720972725
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": "板の間",
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "c78dc8fa-094c-49e2-8e84-a6443bc613bf",
+      "type": "room",
+      "subType": "hall",
+      "geometry": {
+        "type": "polygon",
+        "coordinates_px": [
+          {
+            "x": 308,
+            "y": 214
+          },
+          {
+            "x": 385,
+            "y": 214
+          },
+          {
+            "x": 385,
+            "y": 248
+          },
+          {
+            "x": 455,
+            "y": 248
+          },
+          {
+            "x": 455,
+            "y": 420
+          },
+          {
+            "x": 308,
+            "y": 420
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 3940.1814858051575,
+            "y": 2737.6585648126747
+          },
+          {
+            "x": 4925.226857256447,
+            "y": 2737.6585648126747
+          },
+          {
+            "x": 4925.226857256447,
+            "y": 3172.613663895062
+          },
+          {
+            "x": 5820.722649484892,
+            "y": 3172.613663895062
+          },
+          {
+            "x": 5820.722649484892,
+            "y": 5372.9747533706695
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 5372.9747533706695
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": "ホール",
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "ad4b8bc1-3e29-4dd9-84b7-8f56660afd1c",
+      "type": "room",
+      "subType": "entryway",
+      "geometry": {
+        "type": "polygon",
+        "coordinates_px": [
+          {
+            "x": 308,
+            "y": 420
+          },
+          {
+            "x": 385,
+            "y": 420
+          },
+          {
+            "x": 385,
+            "y": 500
+          },
+          {
+            "x": 308,
+            "y": 500
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 3940.1814858051575,
+            "y": 5372.9747533706695
+          },
+          {
+            "x": 4925.226857256447,
+            "y": 5372.9747533706695
+          },
+          {
+            "x": 4925.226857256447,
+            "y": 6396.398515917464
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 6396.398515917464
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": "玄関",
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "88a8d54e-1a58-433a-be76-e7f1d1f45bc6",
+      "type": "room",
+      "subType": "storage",
+      "geometry": {
+        "type": "polygon",
+        "coordinates_px": [
+          {
+            "x": 385,
+            "y": 420
+          },
+          {
+            "x": 455,
+            "y": 420
+          },
+          {
+            "x": 455,
+            "y": 500
+          },
+          {
+            "x": 385,
+            "y": 500
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 4925.226857256447,
+            "y": 5372.9747533706695
+          },
+          {
+            "x": 5820.722649484892,
+            "y": 5372.9747533706695
+          },
+          {
+            "x": 5820.722649484892,
+            "y": 6396.398515917464
+          },
+          {
+            "x": 4925.226857256447,
+            "y": 6396.398515917464
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": "物入",
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "93571a38-b049-45c2-9fa7-2778a73d297c",
+      "type": "door",
+      "subType": "swing-door",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 214,
+            "y": 170
+          },
+          {
+            "x": 214,
+            "y": 186
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 2737.6585648126747,
+            "y": 2174.7754954119378
+          },
+          {
+            "x": 2737.6585648126747,
+            "y": 2379.4602479212967
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "vertical",
+        "dimension_text": null,
+        "length_px": 16,
+        "length_mm": 204.68475250935884,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.85
+    },
+    {
+      "id": "41c71cc2-f158-4077-b379-b72d59455e7e",
+      "type": "door",
+      "subType": "swing-door",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 308,
+            "y": 160
+          },
+          {
+            "x": 308,
+            "y": 180
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 3940.1814858051575,
+            "y": 2046.8475250935885
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 2302.703465730287
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "vertical",
+        "dimension_text": null,
+        "length_px": 20,
+        "length_mm": 255.85594063669856,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.85
+    },
+    {
+      "id": "5562afc2-dd75-4b97-93c0-92e1df184415",
+      "type": "door",
+      "subType": "swing-door",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 385,
+            "y": 208
+          },
+          {
+            "x": 385,
+            "y": 228
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 4925.226857256447,
+            "y": 2660.901782621665
+          },
+          {
+            "x": 4925.226857256447,
+            "y": 2916.7577232583635
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "vertical",
+        "dimension_text": null,
+        "length_px": 20,
+        "length_mm": 255.85594063669856,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.85
+    },
+    {
+      "id": "d25a5abb-debb-41cb-a675-122dcc4013b3",
+      "type": "door",
+      "subType": "entry-door",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 330,
+            "y": 500
+          },
+          {
+            "x": 350,
+            "y": 500
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 4221.623020505526,
+            "y": 6396.398515917464
+          },
+          {
+            "x": 4477.478961142225,
+            "y": 6396.398515917464
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "horizontal",
+        "dimension_text": null,
+        "length_px": 20,
+        "length_mm": 255.85594063669856,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "b192b6ef-2d33-44e2-b751-e8ec9a33e4dc",
+      "type": "door",
+      "subType": "swing-door",
       "geometry": {
         "type": "line",
         "coordinates_px": [
           {
             "x": 340,
-            "y": 147
+            "y": 420
           },
           {
-            "x": 460,
-            "y": 147
+            "x": 360,
+            "y": 420
           }
         ],
         "coordinates_mm": [
           {
-            "x": 17603.877488337923,
-            "y": 7611.0882081931595
+            "x": 4349.5509908238755,
+            "y": 5372.9747533706695
           },
           {
-            "x": 23817.01071951601,
-            "y": 7611.0882081931595
+            "x": 4605.406931460574,
+            "y": 5372.9747533706695
           }
         ]
       },
       "properties": {
+        "area": null,
         "label": null,
-        "width": null,
-        "length": 910,
-        "thickness": 20,
-        "dimension_text": "910",
-        "length_px": 120,
-        "length_mm": 6213.13323117809,
+        "length": null,
+        "thickness": null,
+        "orientation": "horizontal",
+        "dimension_text": null,
+        "length_px": 20,
+        "length_mm": 255.85594063669856,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.85
+    },
+    {
+      "id": "ffb8e270-4d70-4d4e-98a0-a0511483acbd",
+      "type": "door",
+      "subType": "sliding-door",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 455,
+            "y": 300
+          },
+          {
+            "x": 455,
+            "y": 360
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 5820.722649484892,
+            "y": 3837.8391095504785
+          },
+          {
+            "x": 5820.722649484892,
+            "y": 4605.406931460574
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "vertical",
+        "dimension_text": null,
+        "length_px": 60,
+        "length_mm": 767.5678219100956,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "7bb4b9a1-5163-4361-a5fe-ecbd6f81590c",
+      "type": "door",
+      "subType": "sliding-door",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 308,
+            "y": 300
+          },
+          {
+            "x": 308,
+            "y": 340
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 3940.1814858051575,
+            "y": 3837.8391095504785
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 4349.5509908238755
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "vertical",
+        "dimension_text": null,
+        "length_px": 40,
+        "length_mm": 511.7118812733971,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "08891128-3043-49fd-aa4d-b15ad205d251",
+      "type": "door",
+      "subType": "swing-door",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 214,
+            "y": 120
+          },
+          {
+            "x": 214,
+            "y": 130
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 2737.6585648126747,
+            "y": 1535.1356438201913
+          },
+          {
+            "x": 2737.6585648126747,
+            "y": 1663.0636141385405
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "vertical",
+        "dimension_text": null,
+        "length_px": 10,
+        "length_mm": 127.92797031834928,
         "length_verified": false
       },
       "level": "Level 1",
       "confidence": 0.8
+    },
+    {
+      "id": "9f0d4e7b-3e9d-461d-8c98-26ca80824fdf",
+      "type": "window",
+      "subType": "standard-window",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 140,
+            "y": 110
+          },
+          {
+            "x": 190,
+            "y": 110
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 1790.99158445689,
+            "y": 1407.207673501842
+          },
+          {
+            "x": 2430.6314360486363,
+            "y": 1407.207673501842
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "horizontal",
+        "dimension_text": "640x770",
+        "length_px": 50,
+        "length_mm": 639.6398515917464,
+        "length_verified": true
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "21c5eabd-200d-4c30-a22d-db02058cdad5",
+      "type": "window",
+      "subType": "standard-window",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 240,
+            "y": 110
+          },
+          {
+            "x": 280,
+            "y": 110
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 3070.2712876403825,
+            "y": 1407.207673501842
+          },
+          {
+            "x": 3581.98316891378,
+            "y": 1407.207673501842
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "horizontal",
+        "dimension_text": "640x770",
+        "length_px": 40,
+        "length_mm": 511.7118812733971,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "32022f34-c5c6-45ff-a3e2-dcdef644bc83",
+      "type": "window",
+      "subType": "standard-window",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 420,
+            "y": 110
+          },
+          {
+            "x": 460,
+            "y": 110
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 5372.9747533706695,
+            "y": 1407.207673501842
+          },
+          {
+            "x": 5884.6866346440665,
+            "y": 1407.207673501842
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "horizontal",
+        "dimension_text": "405x370",
+        "length_px": 40,
+        "length_mm": 511.7118812733971,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "2bd53799-e1e3-444e-b123-345290cb28fb",
+      "type": "window",
+      "subType": "standard-window",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 560,
+            "y": 110
+          },
+          {
+            "x": 700,
+            "y": 110
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 7163.96633782756,
+            "y": 1407.207673501842
+          },
+          {
+            "x": 8954.95792228445,
+            "y": 1407.207673501842
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "horizontal",
+        "dimension_text": "1255x960",
+        "length_px": 140,
+        "length_mm": 1790.99158445689,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "d24164ee-da52-4db2-8e9f-a9949f449551",
+      "type": "window",
+      "subType": "standard-window",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 768,
+            "y": 150
+          },
+          {
+            "x": 768,
+            "y": 210
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 9824.868120449224,
+            "y": 1918.9195547752392
+          },
+          {
+            "x": 9824.868120449224,
+            "y": 2686.4873766853348
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "vertical",
+        "dimension_text": "800x1160",
+        "length_px": 60,
+        "length_mm": 767.5678219100956,
+        "length_verified": true
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "cc5d1278-8a0d-4567-9367-72c35772ae6b",
+      "type": "window",
+      "subType": "standard-window",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 768,
+            "y": 320
+          },
+          {
+            "x": 768,
+            "y": 420
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 9824.868120449224,
+            "y": 4093.695050187177
+          },
+          {
+            "x": 9824.868120449224,
+            "y": 5372.9747533706695
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "vertical",
+        "dimension_text": null,
+        "length_px": 100,
+        "length_mm": 1279.2797031834928,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "033186e9-04a7-472d-afb7-67834fd20cf5",
+      "type": "window",
+      "subType": "standard-window",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 530,
+            "y": 500
+          },
+          {
+            "x": 690,
+            "y": 500
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 6780.182426872511,
+            "y": 6396.398515917464
+          },
+          {
+            "x": 8827.0299519661,
+            "y": 6396.398515917464
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "horizontal",
+        "dimension_text": "3510x2230",
+        "length_px": 160,
+        "length_mm": 2046.8475250935885,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "4ea83613-d53d-4a1e-9b6c-1b037a385ad4",
+      "type": "window",
+      "subType": "standard-window",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 120,
+            "y": 300
+          },
+          {
+            "x": 120,
+            "y": 360
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 1535.1356438201913,
+            "y": 3837.8391095504785
+          },
+          {
+            "x": 1535.1356438201913,
+            "y": 4605.406931460574
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "vertical",
+        "dimension_text": "1255x960",
+        "length_px": 60,
+        "length_mm": 767.5678219100956,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "e6a8c48c-ca07-406b-a1b7-b506f861703e",
+      "type": "window",
+      "subType": "standard-window",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 120,
+            "y": 220
+          },
+          {
+            "x": 120,
+            "y": 270
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 1535.1356438201913,
+            "y": 2814.415347003684
+          },
+          {
+            "x": 1535.1356438201913,
+            "y": 3454.0551985954303
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "vertical",
+        "dimension_text": "640x770",
+        "length_px": 50,
+        "length_mm": 639.6398515917464,
+        "length_verified": true
+      },
+      "level": "Level 1",
+      "confidence": 0.9
+    },
+    {
+      "id": "5b1627c9-a831-4cdc-84ad-0bb4ab5497cc",
+      "type": "window",
+      "subType": "standard-window",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 120,
+            "y": 120
+          },
+          {
+            "x": 120,
+            "y": 130
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 1535.1356438201913,
+            "y": 1535.1356438201913
+          },
+          {
+            "x": 1535.1356438201913,
+            "y": 1663.0636141385405
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": null,
+        "thickness": null,
+        "orientation": "vertical",
+        "dimension_text": "640x770",
+        "length_px": 10,
+        "length_mm": 127.92797031834928,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.8
+    },
+    {
+      "id": "72df1bb1-e248-45ff-a4a0-544579c5c12e",
+      "type": "wall",
+      "subType": "interior-wall",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 120,
+            "y": 142
+          },
+          {
+            "x": 214,
+            "y": 142
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 1535.1356438201913,
+            "y": 1816.5771785205598
+          },
+          {
+            "x": 2737.6585648126747,
+            "y": 1816.5771785205598
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": 910,
+        "thickness": 6,
+        "orientation": "horizontal",
+        "dimension_text": "910",
+        "length_px": 94,
+        "length_mm": 1202.5229209924833,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.95
+    },
+    {
+      "id": "f175acf2-f4d7-4d7b-8ad0-2b2a1ef41a5c",
+      "type": "wall",
+      "subType": "interior-wall",
+      "geometry": {
+        "type": "line",
+        "coordinates_px": [
+          {
+            "x": 120,
+            "y": 380
+          },
+          {
+            "x": 308,
+            "y": 380
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 1535.1356438201913,
+            "y": 4861.2628720972725
+          },
+          {
+            "x": 3940.1814858051575,
+            "y": 4861.2628720972725
+          }
+        ]
+      },
+      "properties": {
+        "area": null,
+        "label": null,
+        "length": 1324,
+        "thickness": 6,
+        "orientation": "horizontal",
+        "dimension_text": "13,24m",
+        "length_px": 188,
+        "length_mm": 2405.0458419849665,
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.95
+    },
+    {
+      "id": "d8e6749d-deb7-42ed-81d5-e172c3b52aa9",
+      "type": "room",
+      "subType": "living-room",
+      "geometry": {
+        "type": "polygon",
+        "coordinates_px": [
+          {
+            "x": 455,
+            "y": 248
+          },
+          {
+            "x": 768,
+            "y": 248
+          },
+          {
+            "x": 768,
+            "y": 500
+          },
+          {
+            "x": 455,
+            "y": 500
+          }
+        ],
+        "coordinates_mm": [
+          {
+            "x": 5820.722649484892,
+            "y": 3172.613663895062
+          },
+          {
+            "x": 9824.868120449224,
+            "y": 3172.613663895062
+          },
+          {
+            "x": 9824.868120449224,
+            "y": 6396.398515917464
+          },
+          {
+            "x": 5820.722649484892,
+            "y": 6396.398515917464
+          }
+        ]
+      },
+      "properties": {
+        "area": "33.95㎡",
+        "label": "リビング",
+        "dimension_text": "33.95m",
+        "length_verified": false
+      },
+      "level": "Level 1",
+      "confidence": 0.9
     }
   ],
   "statistics": {
-    "total_elements": 71,
+    "total_elements": 56,
     "elements_by_type": {
-      "wall": 38,
-      "door": 11,
-      "window": 8,
-      "room": 13,
-      "symbol": 1
+      "wall": 24,
+      "room": 14,
+      "door": 8,
+      "window": 10
     },
-    "elements_with_dimensions": 60,
-    "elements_with_verified_dimensions": 0,
+    "elements_with_dimensions": 43,
+    "elements_with_verified_dimensions": 3,
     "defaults_applied_count": 0
   }
 }
