@@ -1,0 +1,73 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Dependencies (will be installed in container)
+node_modules/
+frontend/node_modules/
+
+# Build artifacts
+dist/
+*.tsbuildinfo
+frontend/dist/
+frontend/build/
+
+# Development files
+.env.development
+.env.local
+*.log
+npm-debug.log*
+
+# Documentation
+README.md
+USER_GUIDE.md
+DEPLOYMENT.md
+*.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test results and outputs
+results/
+*.db
+*.db-*
+
+# Temporary files
+temp/
+tmp/
+.pdf-temp/
+**/.pdf-temp/
+
+# Docker files (not needed inside container)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Scripts (for host machine)
+setup.sh
+start.sh
+stop.sh
+
+# Frontend (separate Docker build)
+frontend/
+
+# Electron app
+electron-app/
+
+# Dynamo scripts
+dynamo-scripts/
+
+# Revit outputs
+revit-outputs/
+
+# Confidential test files
+test-drawings/confidential/
+test-drawings/confidential-temp-excluded/
