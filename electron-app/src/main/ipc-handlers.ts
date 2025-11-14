@@ -196,10 +196,10 @@ async function generateReport(results: any[], groundTruth?: string): Promise<str
   const html = generateHTMLReport(results, groundTruth);
 
   // Save to temp file
-  const tmpDir = require('os').tmpdir();
-  const reportPath = require('path').join(tmpDir, `ocr-report-${Date.now()}.html`);
+  const tmpDir = os.tmpdir();
+  const reportPath = path.join(tmpDir, `ocr-report-${Date.now()}.html`);
 
-  await require('fs').promises.writeFile(reportPath, html, 'utf-8');
+  await fs.writeFile(reportPath, html, 'utf-8');
 
   return reportPath;
 }
@@ -262,23 +262,23 @@ ipcMain.handle('process-floor-plan', async (event, params: { imagePath: string; 
     });
 
     // Generate Revit output
-    const fileName = require('path').basename(imagePath);
+    const fileName = path.basename(imagePath);
     const revitOutput = generateRevitOutput(detection, fileName);
 
     // Save outputs to temp directory
-    const tmpDir = require('os').tmpdir();
+    const tmpDir = os.tmpdir();
     const baseFileName = fileName.replace(/\.[^/.]+$/, '');
     const timestamp = Date.now();
 
-    const jsonPath = require('path').join(tmpDir, `${baseFileName}-revit-${timestamp}.json`);
-    const scriptPath = require('path').join(tmpDir, `${baseFileName}-dynamo-${timestamp}.py`);
+    const jsonPath = path.join(tmpDir, `${baseFileName}-revit-${timestamp}.json`);
+    const scriptPath = path.join(tmpDir, `${baseFileName}-dynamo-${timestamp}.py`);
 
     // Save JSON
     saveRevitJSON(revitOutput, jsonPath);
 
     // Generate and save Dynamo script
     const dynamoScript = generateDynamoScript(jsonPath);
-    await require('fs').promises.writeFile(scriptPath, dynamoScript, 'utf-8');
+    await fs.writeFile(scriptPath, dynamoScript, 'utf-8');
 
     event.sender.send('progress-update', {
       step: 'Complete!',

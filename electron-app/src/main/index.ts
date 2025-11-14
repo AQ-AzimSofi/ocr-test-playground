@@ -6,7 +6,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
+const squirrelStartup = await import('electron-squirrel-startup');
+if (squirrelStartup.default) {
   app.quit();
 }
 

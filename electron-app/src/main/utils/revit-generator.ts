@@ -1,4 +1,5 @@
 import type { GeometricObject, GeometricDetectionResult } from '../processors/gemini-geometric-processor';
+import fs from 'fs';
 
 /**
  * Simplified Revit Output Generator for Electron
@@ -222,6 +223,5 @@ export function generateRevitOutput(
  * Save Revit JSON to file
  */
 export function saveRevitJSON(output: RevitOutput, filePath: string): void {
-  const fs = require('fs');
   fs.writeFileSync(filePath, JSON.stringify(output, null, 2), 'utf-8');
 }
