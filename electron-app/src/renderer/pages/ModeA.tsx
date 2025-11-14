@@ -11,16 +11,26 @@ export default function ModeA() {
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
   const [activeCategory, setActiveCategory] = useState<ProcessorCategory>('confidential-safe');
 
-  // Load API keys on mount
+  // Load API keys on mount and when window regains focus
   useEffect(() => {
     loadApiKeys();
+
+    // Reload keys when window regains focus (e.g., after going to Settings)
+    const handleFocus = () => {
+      loadApiKeys();
+    };
+
+    window.addEventListener('focus', handleFocus);
 
     // Listen for progress updates
     const cleanup = window.electronAPI.onProgress((data) => {
       setProgress(data);
     });
 
-    return cleanup;
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      cleanup();
+    };
   }, []);
 
   const loadApiKeys = async () => {
@@ -30,6 +40,7 @@ export default function ModeA() {
 
   const handleSelectFile = async () => {
     const filePath = await window.electronAPI.selectFile([
+      { name: 'All Supported Files', extensions: ['pdf', 'png', 'jpg', 'jpeg'] },
       { name: 'PDF Files', extensions: ['pdf'] },
       { name: 'Images', extensions: ['png', 'jpg', 'jpeg'] },
     ]);
@@ -243,7 +254,10 @@ export default function ModeA() {
                       <p className="text-sm text-gray-600 mt-1">{processor.description}</p>
                       {!available && (
                         <p className="text-xs text-red-600 mt-1">
-                          Missing API keys: {processor.requiresApiKeys.filter(k => !apiKeys[k]).join(', ')}
+                          {processor.id === 'cloud-vision'
+                            ? 'Missing authentication: Configure either Service Account (Project ID + JSON) OR API Key in Settings'
+                            : `Missing API keys: ${processor.requiresApiKeys.filter(k => !apiKeys[k]).join(', ')}`
+                          }
                         </p>
                       )}
                     </div>

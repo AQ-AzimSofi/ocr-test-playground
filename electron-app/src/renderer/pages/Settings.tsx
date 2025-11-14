@@ -14,6 +14,10 @@ export default function Settings() {
   const loadApiKeys = async () => {
     try {
       const keys = await window.electronAPI.getApiKeys();
+      // Set default value for documentAiLocation if not present
+      if (!keys.documentAiLocation) {
+        keys.documentAiLocation = 'us';
+      }
       setApiKeys(keys);
     } catch (error) {
       console.error('Failed to load API keys:', error);
@@ -26,10 +30,10 @@ export default function Settings() {
     setSaving(true);
     setSaved(false);
     try {
-      // Convert ApiKeys to Record<string, string> by filtering out undefined values
+      // Convert ApiKeys to Record<string, string> by filtering out undefined and empty values
       const keysToSave: Record<string, string> = {};
       Object.entries(apiKeys).forEach(([key, value]) => {
-        if (value !== undefined) {
+        if (value !== undefined && value.trim().length > 0) {
           keysToSave[key] = value;
         }
       });
@@ -45,9 +49,37 @@ export default function Settings() {
   };
 
   const handleChange = (key: keyof ApiKeys, value: string) => {
+    const updates: Partial<ApiKeys> = {
+      [key]: value || undefined,
+    };
+
+    // Auto-extract project ID from Cloud Vision service account JSON
+    if (key === 'cloudVisionServiceAccount' && value) {
+      try {
+        const parsed = JSON.parse(value);
+        if (parsed.project_id && (!apiKeys.cloudVisionProjectId || !apiKeys.cloudVisionProjectId.trim())) {
+          updates.cloudVisionProjectId = parsed.project_id;
+        }
+      } catch {
+        // Invalid JSON, ignore
+      }
+    }
+
+    // Auto-extract project ID from Document AI service account JSON
+    if (key === 'documentAiCredentials' && value) {
+      try {
+        const parsed = JSON.parse(value);
+        if (parsed.project_id && (!apiKeys.documentAiProjectId || !apiKeys.documentAiProjectId.trim())) {
+          updates.documentAiProjectId = parsed.project_id;
+        }
+      } catch {
+        // Invalid JSON, ignore
+      }
+    }
+
     setApiKeys((prev) => ({
       ...prev,
-      [key]: value || undefined,
+      ...updates,
     }));
   };
 
@@ -92,6 +124,7 @@ export default function Settings() {
                       placeholder="your-project-id"
                     />
                   </div>
+                  <p className="mt-1 text-xs text-gray-500">Will be auto-filled from the service account JSON if left empty</p>
                 </div>
 
                 <div>
@@ -218,6 +251,7 @@ export default function Settings() {
                       placeholder="your-project-id"
                     />
                   </div>
+                  <p className="mt-1 text-xs text-gray-500">Will be auto-filled from the service account JSON if left empty</p>
                 </div>
 
                 <div>
