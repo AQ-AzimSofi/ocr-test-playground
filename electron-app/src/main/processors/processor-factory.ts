@@ -19,11 +19,31 @@ export async function runProcessor(
     switch (processorId) {
       // ==================== CONFIDENTIAL-SAFE PROCESSORS ====================
       case 'cloud-vision': {
-        if (!apiKeys.googleCloudVision) {
-          throw new Error('Google Cloud Vision API key not configured');
+        // Check for either service account or API key
+        const hasServiceAccount =
+          apiKeys.cloudVisionServiceAccount && apiKeys.cloudVisionProjectId;
+        const hasApiKey = apiKeys.googleCloudVision;
+
+        if (!hasServiceAccount && !hasApiKey) {
+          throw new Error(
+            'Google Cloud Vision credentials not configured. ' +
+            'Please provide either Service Account JSON + Project ID or API Key in Settings.'
+          );
         }
-        const processor = new CloudVisionProcessor(apiKeys.googleCloudVision);
-        return await processor.processImage(filePath);
+
+        const processor = new CloudVisionProcessor({
+          serviceAccountJson: apiKeys.cloudVisionServiceAccount,
+          projectId: apiKeys.cloudVisionProjectId,
+          apiKey: apiKeys.googleCloudVision,
+        });
+
+        try {
+          const result = await processor.processImage(filePath);
+          return result;
+        } finally {
+          // Clean up temp credentials file
+          processor.cleanup();
+        }
       }
 
       case 'azure-read': {

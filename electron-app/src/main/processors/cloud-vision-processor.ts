@@ -1,5 +1,7 @@
 import vision from '@google-cloud/vision';
 import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
 /**
  * Google Cloud Vision processor for Electron app
@@ -28,15 +30,61 @@ export interface CloudVisionResult {
   error?: string;
 }
 
+export interface CloudVisionCredentials {
+  apiKey?: string;
+  serviceAccountJson?: string;
+  projectId?: string;
+}
+
 export class CloudVisionProcessor {
   private client: any; // vision.ImageAnnotatorClient
+  private tempCredentialsPath?: string;
 
-  constructor(apiKey?: string) {
-    // Initialize client with API key if provided
-    // If not provided, will use GOOGLE_APPLICATION_CREDENTIALS env var
-    this.client = new vision.ImageAnnotatorClient(
-      apiKey ? { apiKey } : undefined
-    );
+  constructor(credentials: CloudVisionCredentials) {
+    // Method 1 (Recommended): Service Account JSON
+    if (credentials.serviceAccountJson && credentials.projectId) {
+      // Write service account JSON to temp file
+      const tmpDir = os.tmpdir();
+      this.tempCredentialsPath = path.join(
+        tmpDir,
+        `gcp-credentials-${Date.now()}.json`
+      );
+
+      fs.writeFileSync(
+        this.tempCredentialsPath,
+        credentials.serviceAccountJson,
+        'utf-8'
+      );
+
+      // Initialize client with service account
+      this.client = new vision.ImageAnnotatorClient({
+        keyFilename: this.tempCredentialsPath,
+        projectId: credentials.projectId,
+      });
+    }
+    // Method 2 (Fallback): API Key
+    else if (credentials.apiKey) {
+      this.client = new vision.ImageAnnotatorClient({
+        apiKey: credentials.apiKey,
+      });
+    }
+    // Method 3 (Last resort): Use environment variable
+    else {
+      this.client = new vision.ImageAnnotatorClient();
+    }
+  }
+
+  /**
+   * Clean up temp credentials file
+   */
+  cleanup() {
+    if (this.tempCredentialsPath && fs.existsSync(this.tempCredentialsPath)) {
+      try {
+        fs.unlinkSync(this.tempCredentialsPath);
+      } catch (error) {
+        console.error('Failed to cleanup temp credentials:', error);
+      }
+    }
   }
 
   /**

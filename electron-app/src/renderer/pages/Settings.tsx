@@ -69,22 +69,71 @@ export default function Settings() {
           </div>
 
           <div className="mt-6 space-y-6">
-            {/* Google Cloud Vision */}
-            <div>
-              <label htmlFor="googleCloudVision" className="block text-sm font-medium text-gray-700">
-                Google Cloud Vision API Key
-              </label>
-              <div className="mt-1">
-                <input
-                  type="password"
-                  id="googleCloudVision"
-                  value={apiKeys.googleCloudVision || ''}
-                  onChange={(e) => handleChange('googleCloudVision', e.target.value)}
-                  className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
-                  placeholder="Enter your Google Cloud Vision API key"
-                />
+            {/* Google Cloud Vision - Service Account (Recommended) */}
+            <div className="border-t border-gray-200 pt-6">
+              <h4 className="text-base font-semibold text-gray-900 mb-3">Google Cloud Vision</h4>
+              <p className="text-sm text-gray-600 mb-4">Choose one authentication method:</p>
+
+              {/* Method 1: Service Account (Recommended) */}
+              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                <h5 className="text-sm font-semibold text-blue-900 mb-2">✓ Recommended: Service Account</h5>
+
+                <div className="mb-3">
+                  <label htmlFor="cloudVisionProjectId" className="block text-sm font-medium text-gray-700">
+                    Project ID
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      id="cloudVisionProjectId"
+                      value={apiKeys.cloudVisionProjectId || ''}
+                      onChange={(e) => handleChange('cloudVisionProjectId', e.target.value)}
+                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
+                      placeholder="your-project-id"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="cloudVisionServiceAccount" className="block text-sm font-medium text-gray-700">
+                    Service Account JSON
+                  </label>
+                  <div className="mt-1">
+                    <textarea
+                      id="cloudVisionServiceAccount"
+                      rows={4}
+                      value={apiKeys.cloudVisionServiceAccount || ''}
+                      onChange={(e) => handleChange('cloudVisionServiceAccount', e.target.value)}
+                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border font-mono text-xs"
+                      placeholder='{"type": "service_account", "project_id": "...", ...}'
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Paste the entire JSON content from your service account key file</p>
+                </div>
               </div>
-              <p className="mt-1 text-xs text-gray-500">Required for: Cloud Vision processor</p>
+
+              {/* Method 2: API Key (Alternative) */}
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
+                <h5 className="text-sm font-semibold text-gray-700 mb-2">Alternative: API Key (Simple)</h5>
+                <div>
+                  <label htmlFor="googleCloudVision" className="block text-sm font-medium text-gray-700">
+                    API Key
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="password"
+                      id="googleCloudVision"
+                      value={apiKeys.googleCloudVision || ''}
+                      onChange={(e) => handleChange('googleCloudVision', e.target.value)}
+                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
+                      placeholder="Enter your Google Cloud Vision API key"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Less secure, not recommended for production</p>
+                </div>
+              </div>
+
+              <p className="mt-2 text-xs text-gray-500">Required for: Cloud Vision processor</p>
             </div>
 
             {/* Azure Computer Vision */}

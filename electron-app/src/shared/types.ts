@@ -1,6 +1,8 @@
 // API Keys
 export interface ApiKeys {
-  googleCloudVision?: string;
+  googleCloudVision?: string; // API key (fallback method)
+  cloudVisionServiceAccount?: string; // Service account JSON (recommended)
+  cloudVisionProjectId?: string; // Project ID for service account
   azureComputerVision?: string;
   azureEndpoint?: string;
   googleGemini?: string;
