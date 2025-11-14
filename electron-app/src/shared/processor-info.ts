@@ -156,6 +156,24 @@ export function getProcessorsByCategory(
 }
 
 /**
+ * Helper: Check if Cloud Vision authentication is configured
+ * Cloud Vision accepts EITHER service account OR API key
+ */
+function hasCloudVisionAuth(apiKeys: Record<string, string>): boolean {
+  const hasServiceAccount =
+    !!(apiKeys.cloudVisionServiceAccount &&
+    apiKeys.cloudVisionServiceAccount.trim().length > 0 &&
+    apiKeys.cloudVisionProjectId &&
+    apiKeys.cloudVisionProjectId.trim().length > 0);
+
+  const hasApiKey =
+    !!(apiKeys.googleCloudVision &&
+    apiKeys.googleCloudVision.trim().length > 0);
+
+  return hasServiceAccount || hasApiKey;
+}
+
+/**
  * Check if processor is available based on configured API keys
  */
 export function isProcessorAvailable(
@@ -165,23 +183,13 @@ export function isProcessorAvailable(
   const processor = getProcessorInfo(processorId);
   if (!processor) return false;
 
-  // Special case: Cloud Vision accepts EITHER service account OR API key
-  if (processorId === 'cloud-vision') {
-    const hasServiceAccount =
-      !!(apiKeys.cloudVisionServiceAccount &&
-      apiKeys.cloudVisionServiceAccount.trim().length > 0 &&
-      apiKeys.cloudVisionProjectId &&
-      apiKeys.cloudVisionProjectId.trim().length > 0);
-
-    const hasApiKey =
-      !!(apiKeys.googleCloudVision &&
-      apiKeys.googleCloudVision.trim().length > 0);
-
-    return hasServiceAccount || hasApiKey;
-  }
-
   // Check if all required API keys are configured
   return processor.requiresApiKeys.every((key) => {
+    // Special case: Cloud Vision accepts EITHER service account OR API key
+    if (key === 'googleCloudVision') {
+      return hasCloudVisionAuth(apiKeys);
+    }
+
     const value = apiKeys[key];
     return value !== undefined && value.trim().length > 0;
   });

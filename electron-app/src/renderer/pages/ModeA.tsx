@@ -254,7 +254,7 @@ export default function ModeA() {
                       <p className="text-sm text-gray-600 mt-1">{processor.description}</p>
                       {!available && (
                         <p className="text-xs text-red-600 mt-1">
-                          {processor.id === 'cloud-vision'
+                          {processor.requiresApiKeys.includes('googleCloudVision')
                             ? 'Missing authentication: Configure either Service Account (Project ID + JSON) OR API Key in Settings'
                             : `Missing API keys: ${processor.requiresApiKeys.filter(k => !apiKeys[k]).join(', ')}`
                           }
