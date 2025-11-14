@@ -2,6 +2,7 @@
   "name": "ocr-testing-tool",
   "version": "1.0.0",
   "description": "Standalone OCR Testing Tool with Floor Plan to Revit Conversion",
+  "type": "module",
   "main": "dist-electron/main/index.js",
   "author": "Your Team",
   "license": "MIT",
@@ -14,7 +15,7 @@
     "build:mac": "tsc && vite build && electron-builder --mac",
     "build:linux": "tsc && vite build && electron-builder --linux",
     "preview": "vite preview",
-    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5174 && electron .\"",
+    "electron:dev": "vite",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -50,7 +51,6 @@
     "typescript": "^5.5.3",
     "vite": "^5.3.3",
     "vite-plugin-electron": "^0.28.7",
-    "vite-plugin-electron-renderer": "^0.14.5",
     "wait-on": "^7.2.0"
   },
   "build": {
