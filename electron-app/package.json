@@ -23,6 +23,7 @@
     "@google-cloud/vision": "^4.3.2",
     "@google/generative-ai": "^0.21.0",
     "date-fns": "^4.1.0",
+    "electron-squirrel-startup": "^1.0.1",
     "fast-levenshtein": "^3.0.0",
     "jimp": "^0.22.12",
     "pdf-lib": "^1.17.1",
