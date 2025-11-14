@@ -40,7 +40,7 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     description: 'Advanced word-level OCR with structure analysis',
     category: 'confidential-safe',
     cost: '~0.225 yen per page',
-    requiresApiKeys: ['documentAiProjectId', 'documentAiCredentials'],
+    requiresApiKeys: ['documentAiProjectId', 'documentAiCredentials', 'documentAiProcessorId', 'documentAiLocation'],
     confidentialSafe: true,
   },
 

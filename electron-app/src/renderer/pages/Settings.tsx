@@ -189,39 +189,91 @@ export default function Settings() {
             </div>
 
             {/* Document AI */}
-            <div>
-              <label htmlFor="documentAiProjectId" className="block text-sm font-medium text-gray-700">
-                Document AI Project ID
-              </label>
-              <div className="mt-1">
-                <input
-                  type="text"
-                  id="documentAiProjectId"
-                  value={apiKeys.documentAiProjectId || ''}
-                  onChange={(e) => handleChange('documentAiProjectId', e.target.value)}
-                  className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
-                  placeholder="your-project-id"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="documentAiCredentials" className="block text-sm font-medium text-gray-700">
-                Document AI Service Account JSON
-              </label>
-              <div className="mt-1">
-                <textarea
-                  id="documentAiCredentials"
-                  rows={4}
-                  value={apiKeys.documentAiCredentials || ''}
-                  onChange={(e) => handleChange('documentAiCredentials', e.target.value)}
-                  className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border font-mono text-xs"
-                  placeholder='{"type": "service_account", ...}'
-                />
-              </div>
-              <p className="mt-1 text-xs text-gray-500">
-                Required for: Document AI processor. Paste the entire JSON content from your service account key file.
+            <div className="border-t border-gray-200 pt-6">
+              <h4 className="text-base font-semibold text-gray-900 mb-3">Document AI</h4>
+              <p className="text-sm text-gray-600 mb-4">
+                Create a processor at{' '}
+                <a
+                  href="https://console.cloud.google.com/ai/document-ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-600 hover:underline"
+                >
+                  console.cloud.google.com/ai/document-ai
+                </a>
               </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="documentAiProjectId" className="block text-sm font-medium text-gray-700">
+                    Project ID
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      id="documentAiProjectId"
+                      value={apiKeys.documentAiProjectId || ''}
+                      onChange={(e) => handleChange('documentAiProjectId', e.target.value)}
+                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
+                      placeholder="your-project-id"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="documentAiProcessorId" className="block text-sm font-medium text-gray-700">
+                    Processor ID
+                  </label>
+                  <div className="mt-1">
+                    <input
+                      type="text"
+                      id="documentAiProcessorId"
+                      value={apiKeys.documentAiProcessorId || ''}
+                      onChange={(e) => handleChange('documentAiProcessorId', e.target.value)}
+                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
+                      placeholder="ec2b64ca60bf898f"
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Found in the processor details page (e.g., "ec2b64ca60bf898f")</p>
+                </div>
+
+                <div>
+                  <label htmlFor="documentAiLocation" className="block text-sm font-medium text-gray-700">
+                    Processor Location
+                  </label>
+                  <div className="mt-1">
+                    <select
+                      id="documentAiLocation"
+                      value={apiKeys.documentAiLocation || 'us'}
+                      onChange={(e) => handleChange('documentAiLocation', e.target.value)}
+                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
+                    >
+                      <option value="us">us (United States)</option>
+                      <option value="eu">eu (Europe)</option>
+                      <option value="asia-northeast1">asia-northeast1 (Tokyo)</option>
+                      <option value="asia-southeast1">asia-southeast1 (Singapore)</option>
+                    </select>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Select the location where your processor was created</p>
+                </div>
+
+                <div>
+                  <label htmlFor="documentAiCredentials" className="block text-sm font-medium text-gray-700">
+                    Service Account JSON
+                  </label>
+                  <div className="mt-1">
+                    <textarea
+                      id="documentAiCredentials"
+                      rows={4}
+                      value={apiKeys.documentAiCredentials || ''}
+                      onChange={(e) => handleChange('documentAiCredentials', e.target.value)}
+                      className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border font-mono text-xs"
+                      placeholder='{"type": "service_account", ...}'
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Paste the entire JSON content from your service account key file</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -257,7 +309,10 @@ export default function Settings() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ProcessorStatus
               name="Cloud Vision"
-              available={!!apiKeys.googleCloudVision}
+              available={
+                !!apiKeys.googleCloudVision ||
+                (!!apiKeys.cloudVisionServiceAccount && !!apiKeys.cloudVisionProjectId)
+              }
               category="Confidential-safe"
             />
             <ProcessorStatus
@@ -267,7 +322,12 @@ export default function Settings() {
             />
             <ProcessorStatus
               name="Document AI"
-              available={!!apiKeys.documentAiProjectId && !!apiKeys.documentAiCredentials}
+              available={
+                !!apiKeys.documentAiProjectId &&
+                !!apiKeys.documentAiCredentials &&
+                !!apiKeys.documentAiProcessorId &&
+                !!apiKeys.documentAiLocation
+              }
               category="Confidential-safe"
             />
             <ProcessorStatus name="All Gemini-based" available={!!apiKeys.googleGemini} category="Hybrids & Experimental" />

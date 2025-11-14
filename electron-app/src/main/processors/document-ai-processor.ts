@@ -10,9 +10,17 @@ export class DocumentAIProcessor {
   private client: DocumentProcessorServiceClient;
   private projectId: string;
   private processorId: string;
+  private location: string;
 
-  constructor(projectId: string, credentials: string) {
+  constructor(
+    projectId: string,
+    credentials: string,
+    processorId: string,
+    location: string
+  ) {
     this.projectId = projectId;
+    this.processorId = processorId;
+    this.location = location;
 
     // Parse credentials JSON
     let credentialsObj;
@@ -25,10 +33,6 @@ export class DocumentAIProcessor {
     this.client = new DocumentProcessorServiceClient({
       credentials: credentialsObj,
     });
-
-    // Use default OCR processor ID
-    // In production, you might want to create a specific processor
-    this.processorId = 'default';
   }
 
   /**
@@ -48,7 +52,7 @@ export class DocumentAIProcessor {
       else if (ext === 'jpg' || ext === 'jpeg') mimeType = 'image/jpeg';
 
       const request = {
-        name: `projects/${this.projectId}/locations/us/processors/${this.processorId}`,
+        name: `projects/${this.projectId}/locations/${this.location}/processors/${this.processorId}`,
         rawDocument: {
           content: encodedImage,
           mimeType,

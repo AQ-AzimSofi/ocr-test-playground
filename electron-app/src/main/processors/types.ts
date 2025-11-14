@@ -38,5 +38,7 @@ export interface ProcessorConfig {
     googleGemini?: string;
     documentAiProjectId?: string;
     documentAiCredentials?: string;
+    documentAiProcessorId?: string; // Specific processor instance ID
+    documentAiLocation?: string; // Processor location (us, eu, asia-northeast1, etc.)
   };
 }

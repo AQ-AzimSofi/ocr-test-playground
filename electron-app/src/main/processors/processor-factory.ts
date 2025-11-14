@@ -69,12 +69,22 @@ export async function runProcessor(
       }
 
       case 'document-ai': {
-        if (!apiKeys.documentAiProjectId || !apiKeys.documentAiCredentials) {
-          throw new Error('Document AI credentials not configured');
+        if (
+          !apiKeys.documentAiProjectId ||
+          !apiKeys.documentAiCredentials ||
+          !apiKeys.documentAiProcessorId ||
+          !apiKeys.documentAiLocation
+        ) {
+          throw new Error(
+            'Document AI credentials not fully configured. ' +
+            'Please provide Project ID, Service Account JSON, Processor ID, and Location in Settings.'
+          );
         }
         const processor = new DocumentAIProcessor(
           apiKeys.documentAiProjectId,
-          apiKeys.documentAiCredentials
+          apiKeys.documentAiCredentials,
+          apiKeys.documentAiProcessorId,
+          apiKeys.documentAiLocation
         );
         return await processor.process(filePath);
       }
