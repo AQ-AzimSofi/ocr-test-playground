@@ -38,7 +38,7 @@ export class GeminiGeometricDetector {
   private genAI: GoogleGenerativeAI;
   private model: string;
 
-  constructor(apiKey: string, model: string = 'gemini-2.0-flash-exp') {
+  constructor(apiKey: string, model: string = 'gemini-2.5-flash') {
     if (!apiKey) {
       throw new Error('Gemini API key is required');
     }
@@ -201,7 +201,7 @@ Example output for a simple room:
    * Estimate API cost
    */
   estimateCost(imageCount: number): number {
-    // Gemini 2.0 Flash: ~¥1.50 per image for full analysis
+    // Gemini 2.5 Flash: ~¥1.50 per image for full analysis
     return imageCount * 1.5;
   }
 }
