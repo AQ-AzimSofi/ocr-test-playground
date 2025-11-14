@@ -26,9 +26,6 @@ export default defineConfig({
       {
         // Preload script
         entry: 'src/main/preload.ts',
-        onstart(options) {
-          options.reload();
-        },
         vite: {
           build: {
             outDir: 'dist-electron/preload'
