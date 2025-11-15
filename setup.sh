@@ -12,28 +12,28 @@ echo ""
 
 # Check if Docker is installed
 if ! command -v docker &> /dev/null; then
-    echo "❌ Error: Docker is not installed"
+    echo -e "\033[0;31m[ERROR]\033[0m Docker is not installed"
     echo "Please install Docker Desktop from: https://www.docker.com/products/docker-desktop"
     exit 1
 fi
 
 # Check if Docker Compose is available
 if ! docker compose version &> /dev/null; then
-    echo "❌ Error: Docker Compose is not available"
+    echo -e "\033[0;31m[ERROR]\033[0m Docker Compose is not available"
     echo "Please install Docker Compose or update Docker Desktop"
     exit 1
 fi
 
-echo "✅ Docker is installed and running"
+echo -e "\033[0;32m[OK]\033[0m Docker is installed and running"
 echo ""
 
 # Check if .env.production exists
 if [ ! -f .env.production ]; then
-    echo "📝 Creating .env.production from template..."
+    echo -e "\033[0;34m[CREATE]\033[0m Creating .env.production from template..."
     cp .env.production.example .env.production
-    echo "✅ Created .env.production"
+    echo -e "\033[0;32m[OK]\033[0m Created .env.production"
     echo ""
-    echo "⚠️  IMPORTANT: You need to edit .env.production and add your API keys!"
+    echo -e "\033[0;33m[WARN]\033[0m IMPORTANT: You need to edit .env.production and add your API keys!"
     echo ""
     echo "Required API keys:"
     echo "  1. GOOGLE_GEMINI_API_KEY - Get from: https://aistudio.google.com/app/api-keys"
@@ -61,28 +61,28 @@ if [ ! -f .env.production ]; then
     read -p "Have you updated .env.production with your API keys? (y/n) " -n 1 -r
     echo ""
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "⚠️  Please edit .env.production and add your API keys before proceeding"
+        echo -e "\033[0;33m[WARN]\033[0m Please edit .env.production and add your API keys before proceeding"
         echo "Then run this script again or use ./start.sh to start the application"
         exit 0
     fi
 else
-    echo "✅ .env.production already exists"
+    echo -e "\033[0;32m[OK]\033[0m .env.production already exists"
 fi
 
 echo ""
-echo "🔨 Building Docker images..."
+echo -e "\033[0;36m[BUILD]\033[0m Building Docker images..."
 echo "This may take a few minutes on first run..."
 echo ""
 
 docker compose -f docker-compose.production.yml build
 
 echo ""
-echo "✅ Docker images built successfully"
+echo -e "\033[0;32m[OK]\033[0m Docker images built successfully"
 echo ""
 
 # Check if test-drawings directory exists and has files
 if [ ! -d "test-drawings" ] || [ -z "$(ls -A test-drawings)" ]; then
-    echo "⚠️  Warning: test-drawings directory is empty"
+    echo -e "\033[0;33m[WARN]\033[0m test-drawings directory is empty"
     echo "You can add test drawings to the test-drawings/ directory"
     echo "Example structure:"
     echo "  test-drawings/"
@@ -95,18 +95,18 @@ if [ ! -d "test-drawings" ] || [ -z "$(ls -A test-drawings)" ]; then
     echo ""
 fi
 
-echo "🗄️  Starting database..."
+echo -e "\033[0;36m[START]\033[0m Starting database..."
 docker compose -f docker-compose.production.yml up -d postgres
 
 echo "Waiting for database to be ready..."
 sleep 5
 
 echo ""
-echo "📊 Running database migrations..."
+echo -e "\033[0;34m[STATUS]\033[0m Running database migrations..."
 docker compose -f docker-compose.production.yml run --rm backend npx drizzle-kit migrate
 
 echo ""
-echo "✅ Setup complete!"
+echo -e "\033[0;32m[OK]\033[0m Setup complete!"
 echo ""
 echo "========================================="
 echo "Next Steps:"

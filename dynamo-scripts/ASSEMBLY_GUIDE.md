@@ -208,8 +208,8 @@ Your graph should look like this:
 ## Step 10: Run the Script!
 
 1. Make sure all connections are made (lines between nodes)
-2. Click **Run** (►) button in Dynamo toolbar
-3. Watch the **"✓ Walls Created"** node - it should show a number (e.g., `20` if 20 walls were created)
+2. Click **Run** button in Dynamo toolbar
+3. Watch the **"Walls Created"** node - it should show a number (e.g., `20` if 20 walls were created)
 4. Look at your Revit **3D View** - walls should appear!
 
 ---
@@ -218,10 +218,10 @@ Your graph should look like this:
 
 ### Success Indicators:
 
-- ✓ "Walls Created" Watch shows: `20` (or however many walls were in the JSON)
-- ✓ "Errors" Watch shows: `[]` (empty list, no errors)
-- ✓ Walls visible in Revit 3D view
-- ✓ Walls are positioned correctly (compare with original 2D drawing)
+- "Walls Created" Watch shows: `20` (or however many walls were in the JSON)
+- "Errors" Watch shows: `[]` (empty list, no errors)
+- Walls visible in Revit 3D view
+- Walls are positioned correctly (compare with original 2D drawing)
 
 ### If Something Goes Wrong:
 

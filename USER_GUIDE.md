@@ -98,8 +98,8 @@ A step-by-step guide for using the OCR Test Playground to test and compare OCR p
    - Various hybrid approaches
 
    For your first test, select one or two processors. For example:
-   - ✅ Azure Read (fast and reliable)
-   - ✅ Gemini Geometric (AI-powered)
+   - Azure Read (fast and reliable)
+   - Gemini Geometric (AI-powered)
 
 4. **Select drawings to test**
 
@@ -275,9 +275,9 @@ cp /path/to/sensitive.pdf test-drawings/confidential/sensitive-plan/
 ### Testing Confidential Files
 
 When you select confidential files in the web interface:
-- ❌ Gemini processors are automatically disabled
-- ✅ Only pure OCR processors remain available
-- ⚠️ You'll see a red warning banner
+- Gemini processors are automatically disabled
+- Only pure OCR processors remain available
+- You'll see a red warning banner
 
 Or use the command line:
 ```bash
