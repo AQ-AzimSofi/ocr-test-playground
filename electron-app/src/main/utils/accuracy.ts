@@ -3,10 +3,10 @@
  * Ported from main project's src/lib/utils.ts
  */
 
+// No external or internal imports needed for this utility module
+
 /**
- * Normalize text for consistent comparison
- * - Normalizes Unicode characters (NFKC)
- * - Preserves all whitespace and newlines
+ * Normalize text for consistent comparison (NFKC normalization)
  */
 export function normalizeText(text: string): string {
   return text.normalize('NFKC');
@@ -26,25 +26,18 @@ export function calculateLevenshteinDistance(
   const len1 = str1.length;
   const len2 = str2.length;
 
-  // Memory optimization for very large texts
   const LARGE_TEXT_THRESHOLD = 10000;
   const maxLen = Math.max(len1, len2);
 
   if (maxLen > LARGE_TEXT_THRESHOLD) {
     const samplingRate = Math.ceil(maxLen / LARGE_TEXT_THRESHOLD);
-    return calculateLevenshteinDistanceWithSampling(
-      str1,
-      str2,
-      samplingRate
-    );
+    return calculateLevenshteinDistanceWithSampling(str1, str2, samplingRate);
   }
 
-  // Standard algorithm for normal-sized texts
   const matrix: number[][] = Array(len1 + 1)
     .fill(null)
     .map(() => Array(len2 + 1).fill(0));
 
-  // Initialize first column and row
   for (let i = 0; i <= len1; i++) {
     matrix[i][0] = i;
   }
@@ -52,14 +45,13 @@ export function calculateLevenshteinDistance(
     matrix[0][j] = j;
   }
 
-  // Fill the matrix
   for (let i = 1; i <= len1; i++) {
     for (let j = 1; j <= len2; j++) {
       const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
       matrix[i][j] = Math.min(
-        matrix[i - 1][j] + 1, // deletion
-        matrix[i][j - 1] + 1, // insertion
-        matrix[i - 1][j - 1] + cost // substitution
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
       );
     }
   }
@@ -142,25 +134,13 @@ export function calculateCER(extracted: string, groundTruth: string): number {
 
 /**
  * Normalize text for order-independent comparison
- * - Removes all whitespace (spaces, newlines, tabs)
- * - Converts full-width numbers to half-width (１２３ → 123)
- * - Converts full-width alphabet to half-width (ＡＢＣ → ABC)
- * - Normalizes Unicode (NFKC)
- * - Sorts characters alphabetically
- *
- * This allows comparing "first second" and "second first" as equal (both become "first second")
- * Useful for measuring content completeness regardless of text order
+ * Removes whitespace, converts full-width to half-width, and sorts characters.
+ * Allows comparing "first second" and "second first" as equivalent.
  */
 export function normalizeForOrderIndependentComparison(text: string): string {
-  // Step 1: Unicode normalization (NFKC) - converts full-width to half-width
   let normalized = text.normalize('NFKC');
-
-  // Step 2: Remove all whitespace (spaces, tabs, newlines, etc.)
   normalized = normalized.replace(/\s+/g, '');
-
-  // Step 3: Sort characters alphabetically
   normalized = normalized.split('').sort().join('');
-
   return normalized;
 }
 
@@ -237,8 +217,14 @@ export interface AccuracyMetrics {
   orderIndependentCer: number;
   orderIndependentAccuracy: number;
   orderIndependentEditDistance: number;
-  missingChars: Record<string, number>;
+  missingWords: string[];
+  missingChars: Record<string, { count: number; sourceWords: string[] }>;
   extraChars: Record<string, number>;
+
+  // Character counts for summary display
+  missingCharCount: number;
+  extraCharCount: number;
+  groundTruthCharCount: number;
 }
 
 export function calculateAccuracy(
@@ -273,28 +259,16 @@ export function calculateAccuracy(
   // Order-independent metrics
   const orderIndependent = calculateOrderIndependentCER(extracted, groundTruth);
 
-  // Character frequency analysis
-  const extractedChars = countCharacters(normalizeForOrderIndependentComparison(extracted));
-  const groundTruthChars = countCharacters(normalizeForOrderIndependentComparison(groundTruth));
+  // Character frequency analysis with source tracking
+  const charFreqAnalysis = calculateCharacterFrequencyDifferences(extracted, groundTruth);
+  const missingWords = charFreqAnalysis.missingWords;
+  const missingChars = charFreqAnalysis.missingCharacters;
+  const extraChars = charFreqAnalysis.extraCharacters;
+  const missingCharCount = charFreqAnalysis.missingTotal;
+  const extraCharCount = charFreqAnalysis.extraTotal;
 
-  const missingChars: Record<string, number> = {};
-  const extraChars: Record<string, number> = {};
-
-  // Find missing characters
-  for (const [char, count] of Object.entries(groundTruthChars)) {
-    const extractedCount = extractedChars[char] || 0;
-    if (extractedCount < count) {
-      missingChars[char] = count - extractedCount;
-    }
-  }
-
-  // Find extra characters
-  for (const [char, count] of Object.entries(extractedChars)) {
-    const groundTruthCount = groundTruthChars[char] || 0;
-    if (count > groundTruthCount) {
-      extraChars[char] = count - groundTruthCount;
-    }
-  }
+  // Get ground truth character count (normalized, without whitespace)
+  const groundTruthCharCount = normalizedGroundTruth.length;
 
   return {
     cer,
@@ -305,8 +279,141 @@ export function calculateAccuracy(
     orderIndependentCer: orderIndependent.cer,
     orderIndependentAccuracy: orderIndependent.accuracy,
     orderIndependentEditDistance: orderIndependent.editDistance,
+    missingWords,
     missingChars,
     extraChars,
+    missingCharCount,
+    extraCharCount,
+    groundTruthCharCount,
+  };
+}
+
+/**
+ * Split text into words, handling both space-separated and CJK text
+ */
+function splitIntoWords(text: string): string[] {
+  const words: string[] = [];
+  const segments = text.split(/[\s、。，．！？\n\r]+/);
+
+  for (const segment of segments) {
+    if (segment.trim().length > 0) {
+      words.push(segment.trim());
+    }
+  }
+
+  return words.filter(w => w.length > 0);
+}
+
+/**
+ * Calculate character frequency differences with source word tracking
+ */
+function calculateCharacterFrequencyDifferences(
+  extracted: string,
+  groundTruth: string
+): {
+  missingWords: string[];
+  missingCharacters: Record<string, { count: number; sourceWords: string[] }>;
+  extraCharacters: Record<string, number>;
+  missingTotal: number;
+  extraTotal: number;
+} {
+  const groundTruthWords = splitIntoWords(groundTruth);
+  const extractedWords = splitIntoWords(extracted);
+
+  const extractedFreq = new Map<string, number>();
+  const groundTruthFreq = new Map<string, number>();
+  const groundTruthSources = new Map<string, Set<string>>();
+  const extractedSources = new Map<string, Set<string>>();
+
+  for (const word of groundTruthWords) {
+    for (const char of word) {
+      groundTruthFreq.set(char, (groundTruthFreq.get(char) || 0) + 1);
+      if (!groundTruthSources.has(char)) {
+        groundTruthSources.set(char, new Set());
+      }
+      groundTruthSources.get(char)!.add(word);
+    }
+  }
+
+  for (const word of extractedWords) {
+    for (const char of word) {
+      extractedFreq.set(char, (extractedFreq.get(char) || 0) + 1);
+      if (!extractedSources.has(char)) {
+        extractedSources.set(char, new Set());
+      }
+      extractedSources.get(char)!.add(word);
+    }
+  }
+
+  const missingCharsMap = new Map<string, { count: number; sourceWords: string[] }>();
+  let missingTotal = 0;
+
+  for (const [char, gtCount] of groundTruthFreq) {
+    const exCount = extractedFreq.get(char) || 0;
+    if (exCount < gtCount) {
+      const diff = gtCount - exCount;
+      const sourceWords = Array.from(groundTruthSources.get(char) || []);
+      missingCharsMap.set(char, {
+        count: diff,
+        sourceWords,
+      });
+      missingTotal += diff;
+    }
+  }
+
+  const missingWords: string[] = [];
+  const charsInMissingWords = new Set<string>();
+
+  for (const word of groundTruthWords) {
+    const wordChars = [...word];
+    const allCharsMissing = wordChars.every(char => missingCharsMap.has(char));
+
+    if (allCharsMissing && wordChars.length > 0) {
+      missingWords.push(word);
+      wordChars.forEach(char => charsInMissingWords.add(char));
+    }
+  }
+
+  const missingCharacters: Record<string, { count: number; sourceWords: string[] }> = {};
+
+  for (const [char, data] of missingCharsMap) {
+    if (charsInMissingWords.has(char)) {
+      const remainingSourceWords = data.sourceWords.filter(
+        word => !missingWords.includes(word)
+      );
+
+      if (remainingSourceWords.length > 0) {
+        missingCharacters[char] = {
+          count: data.count,
+          sourceWords: remainingSourceWords.slice(0, 5),
+        };
+      }
+    } else {
+      missingCharacters[char] = {
+        count: data.count,
+        sourceWords: data.sourceWords.slice(0, 5),
+      };
+    }
+  }
+
+  const extraCharacters: Record<string, number> = {};
+  let extraTotal = 0;
+
+  for (const [char, exCount] of extractedFreq) {
+    const gtCount = groundTruthFreq.get(char) || 0;
+    if (exCount > gtCount) {
+      const diff = exCount - gtCount;
+      extraCharacters[char] = diff;
+      extraTotal += diff;
+    }
+  }
+
+  return {
+    missingWords,
+    missingCharacters,
+    extraCharacters,
+    missingTotal,
+    extraTotal,
   };
 }
 

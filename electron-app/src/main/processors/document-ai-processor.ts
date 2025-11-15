@@ -1,5 +1,6 @@
 import { DocumentProcessorServiceClient } from '@google-cloud/documentai';
 import fs from 'fs';
+import sharp from 'sharp';
 import type { ProcessorResult } from './types';
 
 /**
@@ -44,6 +45,11 @@ export class DocumentAIProcessor {
     try {
       const imageBuffer = fs.readFileSync(filePath);
       const encodedImage = imageBuffer.toString('base64');
+
+      // Get actual image dimensions for coordinate conversion
+      const metadata = await sharp(imageBuffer).metadata();
+      const imageWidth = metadata.width || 1000;
+      const imageHeight = metadata.height || 1000;
 
       // Determine MIME type
       const ext = filePath.toLowerCase().split('.').pop();
@@ -100,8 +106,8 @@ export class DocumentAIProcessor {
           boundingBoxes.push({
             text,
             bounds: vertices.map((v) => ({
-              x: (v.x || 0) * 1000, // Normalize to pixel coords
-              y: (v.y || 0) * 1000,
+              x: (v.x || 0) * imageWidth,  // Convert normalized (0-1) to pixel coordinates
+              y: (v.y || 0) * imageHeight,
             })),
             confidence,
             page: pageNum,

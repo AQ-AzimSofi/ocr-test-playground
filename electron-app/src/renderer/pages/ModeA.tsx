@@ -10,6 +10,20 @@ export default function ModeA() {
   const [progress, setProgress] = useState({ step: '', progress: 0, total: 0 });
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
   const [activeCategory, setActiveCategory] = useState<ProcessorCategory>('confidential-safe');
+  const [rateLimitDialog, setRateLimitDialog] = useState<{
+    show: boolean;
+    requestId: string;
+    message: string;
+    retryDelay: number;
+    quotaLimit?: number;
+  } | null>(null);
+  const [queueProgress, setQueueProgress] = useState<{
+    total: number;
+    completed: number;
+    queued: number;
+    processing: number;
+    status: string;
+  } | null>(null);
 
   // Load API keys on mount and when window regains focus
   useEffect(() => {
@@ -27,9 +41,34 @@ export default function ModeA() {
       setProgress(data);
     });
 
+    // Listen for rate limit detection
+    const handleRateLimitDetected = (data: any) => {
+      console.log('[Renderer] Rate limit event received:', data);
+      setRateLimitDialog({
+        show: true,
+        requestId: data.requestId,
+        message: data.error.message,
+        retryDelay: data.error.retryDelay,
+        quotaLimit: data.error.quotaLimit,
+      });
+    };
+
+    // Listen for queue progress updates
+    const handleQueueProgress = (data: any) => {
+      console.log('[Renderer] Queue progress update:', data);
+      setQueueProgress(data);
+    };
+
+    console.log('[Renderer] Registering rate limit event listeners');
+    const cleanupRateLimit = window.electronAPI.onRateLimitDetected(handleRateLimitDetected);
+    const cleanupQueueProgress = window.electronAPI.onQueueProgressUpdate(handleQueueProgress);
+    console.log('[Renderer] Event listeners registered successfully');
+
     return () => {
       window.removeEventListener('focus', handleFocus);
       cleanup();
+      cleanupRateLimit();
+      cleanupQueueProgress();
     };
   }, []);
 
@@ -50,6 +89,29 @@ export default function ModeA() {
     }
   };
 
+  const handleRateLimitDecision = async (decision: 'continue' | 'skip' | 'cancel') => {
+    console.log('[Renderer] User selected decision:', decision);
+    if (!rateLimitDialog) {
+      console.log('[Renderer] WARNING: No rate limit dialog state');
+      return;
+    }
+
+    try {
+      console.log('[Renderer] Sending decision to main process:', {
+        requestId: rateLimitDialog.requestId,
+        decision,
+      });
+      await window.electronAPI.invoke('rate-limit-decision', {
+        requestId: rateLimitDialog.requestId,
+        decision,
+      });
+      console.log('[Renderer] Decision sent successfully, closing dialog');
+      setRateLimitDialog(null);
+    } catch (error) {
+      console.error('[Renderer] Failed to send rate limit decision:', error);
+    }
+  };
+
   const handleProcessorToggle = (processorId: string) => {
     const newSet = new Set(selectedProcessors);
     if (newSet.has(processorId)) {
@@ -61,16 +123,45 @@ export default function ModeA() {
   };
 
   const handleSelectAll = () => {
+    // Select ALL processors across all categories
+    const allCategories: ProcessorCategory[] = ['confidential-safe', 'hybrids', 'experimental'];
+    const allAvailableIds: string[] = [];
+
+    allCategories.forEach(category => {
+      const processors = getProcessorsByCategory(category);
+      const availableIds = processors
+        .filter(p => isProcessorAvailable(p.id, apiKeys))
+        .map(p => p.id);
+      allAvailableIds.push(...availableIds);
+    });
+
+    setSelectedProcessors(new Set(allAvailableIds));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedProcessors(new Set());
+  };
+
+  const handleSelectInTab = () => {
+    // Add current tab's processors to existing selection (additive)
     const categoryProcessors = getProcessorsByCategory(activeCategory);
     const availableIds = categoryProcessors
       .filter(p => isProcessorAvailable(p.id, apiKeys))
       .map(p => p.id);
 
-    setSelectedProcessors(new Set(availableIds));
+    const newSet = new Set(selectedProcessors);
+    availableIds.forEach(id => newSet.add(id));
+    setSelectedProcessors(newSet);
   };
 
-  const handleDeselectAll = () => {
-    setSelectedProcessors(new Set());
+  const handleDeselectInTab = () => {
+    // Remove current tab's processors from selection
+    const categoryProcessors = getProcessorsByCategory(activeCategory);
+    const categoryIds = categoryProcessors.map(p => p.id);
+
+    const newSet = new Set(selectedProcessors);
+    categoryIds.forEach(id => newSet.delete(id));
+    setSelectedProcessors(newSet);
   };
 
   const handleRunTest = async () => {
@@ -220,6 +311,24 @@ export default function ModeA() {
             </button>
           </div>
 
+          {/* Tab-level Selection Buttons */}
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={handleSelectInTab}
+              disabled={processing}
+              className="text-xs px-3 py-1.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed border border-indigo-200"
+            >
+              Select All in Tab
+            </button>
+            <button
+              onClick={handleDeselectInTab}
+              disabled={processing}
+              className="text-xs px-3 py-1.5 text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
+            >
+              Deselect All in Tab
+            </button>
+          </div>
+
           {/* Processor List */}
           <div className="space-y-2">
             {categoryProcessors.map((processor) => {
@@ -315,7 +424,85 @@ export default function ModeA() {
             <li>View the generated HTML report with detailed metrics</li>
           </ol>
         </div>
+
+        {/* Queue Progress */}
+        {queueProgress && queueProgress.total > 0 && (
+          <div className="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-md">
+            <h4 className="font-medium text-purple-900 mb-2">Queue Status</h4>
+            <p className="text-sm text-purple-700 mb-2">{queueProgress.status}</p>
+            <div className="text-xs text-purple-600">
+              Completed: {queueProgress.completed} / {queueProgress.total} |
+              Processing: {queueProgress.processing} |
+              Queued: {queueProgress.queued}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Rate Limit Dialog Modal */}
+      {rateLimitDialog?.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="mb-4">
+              <div className="flex items-center mb-2">
+                <svg className="w-6 h-6 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  API Rate Limit Reached
+                </h3>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">
+                {rateLimitDialog.message}
+              </p>
+              {rateLimitDialog.quotaLimit && (
+                <p className="text-xs text-gray-500 bg-gray-50 p-2 rounded mb-3">
+                  Free tier limit: {rateLimitDialog.quotaLimit} requests/minute
+                </p>
+              )}
+              <p className="text-sm text-gray-700 mb-4">
+                <strong>What would you like to do?</strong>
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => handleRateLimitDecision('continue')}
+                className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors text-left"
+              >
+                <div className="font-semibold">Continue at Slower Rate</div>
+                <div className="text-xs text-blue-100 mt-1">
+                  Reduce concurrency and add delays. Processing will be slower but will complete.
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleRateLimitDecision('skip')}
+                className="w-full px-4 py-3 bg-gray-600 text-white font-medium rounded-md hover:bg-gray-700 transition-colors text-left"
+              >
+                <div className="font-semibold">Skip This Test</div>
+                <div className="text-xs text-gray-100 mt-1">
+                  Skip the current processor and continue with others.
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleRateLimitDecision('cancel')}
+                className="w-full px-4 py-3 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 transition-colors text-left"
+              >
+                <div className="font-semibold">Cancel All Tests</div>
+                <div className="text-xs text-red-100 mt-1">
+                  Stop all processing immediately.
+                </div>
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-500 mt-4 text-center">
+              Suggested wait time: {(rateLimitDialog.retryDelay / 1000).toFixed(1)} seconds
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

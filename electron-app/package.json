@@ -62,7 +62,13 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
+      "node_modules/sharp/**/*",
+      "node_modules/@img/**/*",
       "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/sharp/**/*",
+      "node_modules/@img/**/*"
     ],
     "win": {
       "target": ["nsis"],

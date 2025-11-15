@@ -34,7 +34,7 @@ export default function Settings() {
       const keysToSave: Record<string, string> = {};
       Object.entries(apiKeys).forEach(([key, value]) => {
         if (value !== undefined && value.trim().length > 0) {
-          keysToSave[key] = value;
+          keysToSave[key] = value.trim(); // Trim to remove leading/trailing whitespace
         }
       });
       await window.electronAPI.saveApiKeys(keysToSave);
@@ -108,7 +108,12 @@ export default function Settings() {
 
               {/* Method 1: Service Account (Recommended) */}
               <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-                <h5 className="text-sm font-semibold text-blue-900 mb-2">✓ Recommended: Service Account</h5>
+                <h5 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Recommended: Service Account
+                </h5>
 
                 <div className="mb-3">
                   <label htmlFor="cloudVisionProjectId" className="block text-sm font-medium text-gray-700">
@@ -265,10 +270,10 @@ export default function Settings() {
                       value={apiKeys.documentAiProcessorId || ''}
                       onChange={(e) => handleChange('documentAiProcessorId', e.target.value)}
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
-                      placeholder="ec2b64ca60bf898f"
+                      placeholder="abc123def456"
                     />
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Found in the processor details page (e.g., "ec2b64ca60bf898f")</p>
+                  <p className="mt-1 text-xs text-gray-500">Found in the processor details page (e.g., "abc123def456")</p>
                 </div>
 
                 <div>

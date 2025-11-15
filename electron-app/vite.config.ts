@@ -19,7 +19,7 @@ export default defineConfig({
             target: 'es2022',
             rollupOptions: {
               output: {
-                format: 'es'
+                format: 'cjs'
               },
               external: [
                 // Electron
@@ -42,12 +42,33 @@ export default defineConfig({
                 'querystring',
                 'dns',
                 'child_process',
+                // Node.js built-in modules with node: prefix (ESM standard)
+                'node:crypto',
+                'node:fs',
+                'node:path',
+                'node:http',
+                'node:https',
+                'node:stream',
+                'node:zlib',
+                'node:util',
+                'node:url',
+                'node:net',
+                'node:tls',
+                'node:os',
+                'node:events',
+                'node:buffer',
+                'node:querystring',
+                'node:dns',
+                'node:child_process',
                 // Azure SDK packages (keep in node_modules, don't bundle)
                 /^@azure\/.*/,
                 /^@typespec\/.*/, // Azure SDK dependency that uses crypto
                 // Google Cloud SDK packages (keep in node_modules, don't bundle)
                 /^@google-cloud\/.*/,
-                /^@google\/.*/
+                /^@google\/.*/,
+                // Native modules with .node bindings (keep external for dynamic loading)
+                'sharp',
+                /^@img\/.*/ // Sharp's platform-specific native packages
               ]
             }
           }

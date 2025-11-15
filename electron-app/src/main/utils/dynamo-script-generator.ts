@@ -254,20 +254,20 @@ if not level:
     OUT = [[], [], [], [], stats, error_log]
     raise Exception("No level found")
 
-# Activate symbols if needed
-if door_family and not door_family.IsActive:
-    door_family.Activate()
-if window_family and not window_family.IsActive:
-    window_family.Activate()
-
 # Separate elements by type
 walls_data = [e for e in data['elements'] if e['type'] == 'wall']
 doors_data = [e for e in data['elements'] if e['type'] == 'door']
 windows_data = [e for e in data['elements'] if e['type'] == 'window']
 rooms_data = [e for e in data['elements'] if e['type'] == 'room']
 
-# Start transaction
+# Start transaction (required for all document modifications)
 TransactionManager.Instance.EnsureInTransaction(doc)
+
+# Activate symbols if needed (must be inside transaction)
+if door_family and not door_family.IsActive:
+    door_family.Activate()
+if window_family and not window_family.IsActive:
+    window_family.Activate()
 
 try:
     # 1. Create walls first
@@ -364,10 +364,10 @@ export function generateDynamoInstructions(): string {
 ## What the Script Creates
 
 The script automatically creates:
-- ✅ **Walls** - All wall segments with correct dimensions
-- ✅ **Doors** - Automatically placed on nearest walls
-- ✅ **Windows** - Wall-hosted with sill heights
-- ✅ **Rooms** - Created at polygon centers with labels
+- **Walls** - All wall segments with correct dimensions
+- **Doors** - Automatically placed on nearest walls
+- **Windows** - Wall-hosted with sill heights
+- **Rooms** - Created at polygon centers with labels
 
 ## Output
 

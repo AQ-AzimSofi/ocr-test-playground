@@ -48,7 +48,7 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
   {
     id: 'cloud-vision-gemini-hybrid',
     name: 'Cloud Vision + Gemini Hybrid',
-    description: 'Region-level fusion with AI correction (RECOMMENDED)',
+    description: 'Region-level fusion with AI correction',
     category: 'hybrids',
     cost: '~0.15-0.30 yen per image (depends on low-confidence region count)',
     requiresApiKeys: ['googleCloudVision', 'googleGemini'],

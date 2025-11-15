@@ -2,6 +2,9 @@
  * Common types for all OCR processors
  */
 
+import type { QueueConfig, RateLimitDecision } from '../utils/gemini-queue';
+import type { GeminiRateLimitError } from '../utils/gemini-errors';
+
 export interface BoundingBox {
   text: string;
   bounds: Array<{ x: number; y: number }>;
@@ -17,6 +20,7 @@ export interface ProcessorResult {
   confidence: number;
   processingTime: number;
   cost: number;
+  rateLimitWaitTime?: number; // Time spent waiting for rate limits (milliseconds)
   metadata: {
     granularity?: string;
     model?: string;
@@ -41,4 +45,7 @@ export interface ProcessorConfig {
     documentAiProcessorId?: string; // Specific processor instance ID
     documentAiLocation?: string; // Processor location (us, eu, asia-northeast1, etc.)
   };
+  queueConfig?: Partial<QueueConfig>;
+  onRateLimitDetected?: (error: GeminiRateLimitError) => Promise<RateLimitDecision>;
+  onProgress?: (progress: { total: number; completed: number; status: string }) => void;
 }

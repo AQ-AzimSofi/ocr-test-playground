@@ -3,6 +3,8 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Google Cloud Vision processor for Electron app
  * Simplified version without database - returns results directly

@@ -1,6 +1,11 @@
+// External imports
+import * as crypto from 'crypto';
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+// Polyfill for crypto module to fix Azure SDK compatibility
+(globalThis as any).crypto = crypto;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,5 +65,5 @@ app.on('window-all-closed', () => {
   }
 });
 
-// IPC Handlers will be registered here
+// Internal imports
 import './ipc-handlers';

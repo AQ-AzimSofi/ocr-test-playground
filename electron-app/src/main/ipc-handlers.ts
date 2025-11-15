@@ -1,3 +1,4 @@
+// External imports
 import { ipcMain, dialog, shell, safeStorage } from 'electron';
 import fs from 'fs/promises';
 import path from 'path';
@@ -5,6 +6,8 @@ import os from 'os';
 
 const CONFIG_DIR = path.join(os.homedir(), '.ocr-testing-tool');
 const API_KEYS_FILE = path.join(CONFIG_DIR, 'api-keys.enc');
+
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // Ensure config directory exists
 async function ensureConfigDir() {
@@ -65,7 +68,7 @@ ipcMain.handle('save-api-keys', async (_event, keys: Record<string, string>) => 
 
 // OCR Processing
 ipcMain.handle('process-ocr', async (event, params) => {
-  console.log('OCR processing request:', params);
+  if (isDevelopment) console.log('OCR processing request:', params);
 
   try {
     const { mode, processors, files, textInputs, groundTruth } = params;
@@ -112,8 +115,37 @@ ipcMain.handle('process-ocr', async (event, params) => {
               total: processors.length,
             });
 
-            // Run processor
-            const result = await runProcessor(processorId, imagePaths[0], { apiKeys });
+            // Run processor with rate limit handling
+            const result = await runProcessor(processorId, imagePaths[0], {
+              apiKeys,
+              queueConfig: {
+                concurrency: 2, // Default for free tier
+                delayBetweenBatches: 2000, // 2 seconds
+                maxRetries: 3,
+                autoRetry: true,
+              },
+              onRateLimitDetected: async (error) => {
+                const { RateLimitDecision } = await import('./utils/gemini-queue');
+                const decision = await requestRateLimitDecision(event, error);
+
+                switch (decision) {
+                  case 'continue':
+                    return RateLimitDecision.CONTINUE_SLOWER;
+                  case 'skip':
+                    return RateLimitDecision.SKIP_CURRENT;
+                  case 'cancel':
+                    return RateLimitDecision.CANCEL_ALL;
+                  default:
+                    return RateLimitDecision.CONTINUE_SLOWER;
+                }
+              },
+              onProgress: (progress) => {
+                event.sender.send('queue-progress-update', {
+                  processorId,
+                  ...progress,
+                });
+              },
+            });
 
             // Calculate accuracy if ground truth provided
             let accuracy;
@@ -131,7 +163,9 @@ ipcMain.handle('process-ocr', async (event, params) => {
         }
 
         // Generate HTML report
-        const reportPath = await generateReport(results, groundTruth);
+        // Get the image path from the first result
+        const imagePath = results.length > 0 ? results[0].filePath : undefined;
+        const reportPath = await generateReport(results, groundTruth, imagePath);
 
         return {
           success: true,
@@ -188,12 +222,12 @@ ipcMain.handle('process-ocr', async (event, params) => {
 });
 
 // Helper function to generate HTML report
-async function generateReport(results: any[], groundTruth?: string): Promise<string> {
+async function generateReport(results: any[], groundTruth?: string, imagePath?: string): Promise<string> {
   // Import report generator
   const { generateHTMLReport } = await import('./utils/report-generator');
 
   // Generate report
-  const html = generateHTMLReport(results, groundTruth);
+  const html = generateHTMLReport(results, groundTruth, imagePath);
 
   // Save to temp file
   const tmpDir = os.tmpdir();
@@ -232,7 +266,7 @@ async function loadApiKeys(): Promise<Record<string, string>> {
 
 // Floor Plan Processing
 ipcMain.handle('process-floor-plan', async (event, params: { imagePath: string; apiKey: string }) => {
-  console.log('Floor plan processing request:', params.imagePath);
+  if (isDevelopment) console.log('Floor plan processing request:', params.imagePath);
 
   try {
     const { imagePath, apiKey } = params;
@@ -315,6 +349,69 @@ ipcMain.handle('process-floor-plan', async (event, params: { imagePath: string; 
   }
 });
 
+// Rate Limit Decision System
+// Map to store pending rate limit decisions
+const pendingRateLimitDecisions = new Map<string, {
+  resolve: (decision: string) => void;
+  reject: (error: Error) => void;
+}>();
+
+// Handle rate limit decisions from renderer
+ipcMain.handle('rate-limit-decision', async (_event, { requestId, decision }: { requestId: string; decision: string }) => {
+  if (isDevelopment) console.log('[IPC] Received rate-limit-decision:', { requestId, decision });
+  const pending = pendingRateLimitDecisions.get(requestId);
+  if (pending) {
+    if (isDevelopment) console.log('[IPC] Resolving pending decision');
+    pending.resolve(decision);
+    pendingRateLimitDecisions.delete(requestId);
+  } else {
+    if (isDevelopment) console.log('[IPC] WARNING: No pending decision found for request ID:', requestId);
+  }
+});
+
+// Helper function to request rate limit decision from user
+async function requestRateLimitDecision(
+  event: Electron.IpcMainInvokeEvent,
+  error: any
+): Promise<string> {
+  if (isDevelopment) console.log('[IPC] requestRateLimitDecision called');
+  if (isDevelopment) console.log('[IPC] Error:', {
+    hasGetUserFriendlyMessage: !!error.getUserFriendlyMessage,
+    retryDelay: error.retryDelay,
+    quotaLimit: error.rateLimitInfo?.quotaLimit,
+  });
+
+  return new Promise((resolve, reject) => {
+    const requestId = `rate-limit-${Date.now()}-${Math.random()}`;
+
+    if (isDevelopment) console.log('[IPC] Created request ID:', requestId);
+
+    // Store the promise resolvers
+    pendingRateLimitDecisions.set(requestId, { resolve, reject });
+
+    // Send event to renderer to show dialog
+    const eventData = {
+      requestId,
+      error: {
+        message: error.getUserFriendlyMessage ? error.getUserFriendlyMessage() : error.message,
+        retryDelay: error.retryDelay || 60000,
+        quotaLimit: error.rateLimitInfo?.quotaLimit,
+      },
+    };
+
+    if (isDevelopment) console.log('[IPC] Sending rate-limit-detected event:', eventData);
+    event.sender.send('rate-limit-detected', eventData);
+
+    // Timeout after 5 minutes
+    setTimeout(() => {
+      if (pendingRateLimitDecisions.has(requestId)) {
+        pendingRateLimitDecisions.delete(requestId);
+        reject(new Error('Rate limit decision timeout'));
+      }
+    }, 300000);
+  });
+}
+
 // File System Operations
 ipcMain.handle('select-file', async (_event, filters) => {
   const result = await dialog.showOpenDialog({
@@ -359,4 +456,40 @@ ipcMain.handle('open-path', async (_event, filePath: string) => {
   await shell.openPath(filePath);
 });
 
-console.log('IPC handlers registered');
+ipcMain.handle('show-in-folder', async (_event, filePath: string) => {
+  shell.showItemInFolder(filePath);
+});
+
+ipcMain.handle('read-file-as-base64', async (_event, filePath: string) => {
+  try {
+    const fileBuffer = await fs.readFile(filePath);
+    const base64 = fileBuffer.toString('base64');
+
+    // Detect MIME type from extension
+    const ext = filePath.toLowerCase().split('.').pop();
+    let mimeType = 'application/octet-stream';
+
+    if (ext === 'png') mimeType = 'image/png';
+    else if (ext === 'jpg' || ext === 'jpeg') mimeType = 'image/jpeg';
+    else if (ext === 'gif') mimeType = 'image/gif';
+    else if (ext === 'webp') mimeType = 'image/webp';
+    else if (ext === 'svg') mimeType = 'image/svg+xml';
+
+    return `data:${mimeType};base64,${base64}`;
+  } catch (error) {
+    console.error('Failed to read file as base64:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('read-file-text', async (_event, filePath: string) => {
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    return content;
+  } catch (error) {
+    console.error('Failed to read file as text:', error);
+    throw error;
+  }
+});
+
+if (isDevelopment) console.log('IPC handlers registered');

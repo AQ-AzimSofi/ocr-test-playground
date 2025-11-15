@@ -1,7 +1,17 @@
+// Internal imports
 import { CloudVisionProcessor } from './cloud-vision-processor';
 import { AzureDocumentProcessor } from './azure-processors';
 import { DocumentAIProcessor } from './document-ai-processor';
-import type { ProcessorResult, ProcessorConfig } from './types';
+import { GeminiGeometricDetector } from './gemini-geometric-processor';
+import { CloudVisionGeminiHybridProcessor } from './cloud-vision-gemini-hybrid-processor';
+import { AzureReadGeminiHybridProcessor } from './azure-read-gemini-hybrid-processor';
+import { DocumentAIGeminiHybridProcessor } from './document-ai-gemini-hybrid-processor';
+import { GeminiSelfCalibratingProcessor } from './gemini-self-calibrating-processor';
+
+// Type imports
+import type { ProcessorResult, ProcessorConfig, BoundingBox } from './types';
+
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 /**
  * Processor factory - creates and executes OCR processors
@@ -89,20 +99,234 @@ export async function runProcessor(
         return await processor.process(filePath);
       }
 
-      // ==================== HYBRID & EXPERIMENTAL PROCESSORS ====================
-      // For now, these return stub implementations
-      // TODO: Implement full hybrid logic in future iterations
+      // ==================== EXPERIMENTAL PROCESSORS ====================
 
-      case 'cloud-vision-gemini-hybrid':
-      case 'azure-read-gemini-hybrid':
-      case 'document-ai-gemini-hybrid':
-      case 'gemini-self-calibrating':
+      case 'gemini-geometric': {
+        if (!apiKeys.googleGemini) {
+          throw new Error('Google Gemini API key not configured');
+        }
+
+        const startTime = Date.now();
+        const detector = new GeminiGeometricDetector(apiKeys.googleGemini);
+
+        const result = await detector.detectGeometricObjects(filePath);
+        const processingTime = Date.now() - startTime;
+
+        // Convert geometric objects to bounding boxes
+        const boundingBoxes: BoundingBox[] = result.objects.map(obj => ({
+          text: obj.properties.label || `${obj.type}${obj.subType ? ` (${obj.subType})` : ''}`,
+          bounds: obj.coordinates,
+          confidence: obj.confidence,
+          page: 1,
+        }));
+
+        // Calculate average confidence
+        const avgConfidence = result.objects.length > 0
+          ? result.objects.reduce((sum, obj) => sum + obj.confidence, 0) / result.objects.length
+          : 0;
+
+        // Create readable text summary
+        const textSummary = result.objects.map(obj => {
+          const label = obj.properties.label || obj.subType || obj.type;
+          const coords = obj.coordinates.map(c => `(${c.x},${c.y})`).join(' → ');
+          return `${label}: ${coords}`;
+        }).join('\n');
+
+        return {
+          success: true,
+          tool: processorId,
+          rawText: textSummary,
+          boundingBoxes,
+          confidence: avgConfidence,
+          processingTime,
+          cost: detector.estimateCost(1),
+          metadata: {
+            pageCount: 1,
+            avgConfidence,
+            objectCount: result.objects.length,
+            imageWidth: result.metadata.image_width,
+            imageHeight: result.metadata.image_height,
+            scale: result.metadata.scale,
+            units: result.metadata.units,
+            geometricData: result, // Include full geometric data for advanced use
+          },
+        };
+      }
+
+      // ==================== HYBRID PROCESSORS ====================
+
+      case 'cloud-vision-gemini-hybrid': {
+        // Check for Cloud Vision credentials
+        const hasServiceAccount =
+          apiKeys.cloudVisionServiceAccount && apiKeys.cloudVisionProjectId;
+        const hasApiKey = apiKeys.googleCloudVision;
+
+        if (!hasServiceAccount && !hasApiKey) {
+          throw new Error(
+            'Google Cloud Vision credentials not configured. ' +
+            'Please provide either Service Account JSON + Project ID or API Key in Settings.'
+          );
+        }
+
+        // Check for Gemini API key
+        if (!apiKeys.googleGemini) {
+          throw new Error(
+            'Google Gemini API key not configured. ' +
+            'Please provide Gemini API Key in Settings.'
+          );
+        }
+
+        // Debug: Log Gemini API key status
+        if (isDevelopment) console.log('[DEBUG] cloud-vision-gemini-hybrid - API key check:', {
+          keyExists: !!apiKeys.googleGemini,
+          keyLength: apiKeys.googleGemini?.length,
+          keyType: typeof apiKeys.googleGemini,
+          keyPreview: apiKeys.googleGemini?.substring(0, 15) + '...',
+          allKeysPresent: Object.keys(apiKeys)
+        });
+
+        const processor = new CloudVisionGeminiHybridProcessor(
+          {
+            serviceAccountJson: apiKeys.cloudVisionServiceAccount,
+            projectId: apiKeys.cloudVisionProjectId,
+            apiKey: apiKeys.googleCloudVision,
+          },
+          apiKeys.googleGemini,
+          0.85, // lowConfidenceThreshold
+          {
+            ...config.queueConfig,
+            onRateLimitDetected: config.onRateLimitDetected,
+            onProgress: config.onProgress,
+          }
+        );
+
+        try {
+          const result = await processor.processImage(filePath);
+          return result;
+        } finally {
+          // Clean up temp credentials file
+          processor.cleanup();
+        }
+      }
+
+      case 'azure-read-gemini-hybrid': {
+        // Check for Azure credentials
+        if (!apiKeys.azureComputerVision || !apiKeys.azureEndpoint) {
+          throw new Error(
+            'Azure credentials not configured. ' +
+            'Please provide Azure Cognitive Services Key and Endpoint in Settings.'
+          );
+        }
+
+        // Check for Gemini API key
+        if (!apiKeys.googleGemini) {
+          throw new Error(
+            'Google Gemini API key not configured. ' +
+            'Please provide Gemini API Key in Settings.'
+          );
+        }
+
+        const processor = new AzureReadGeminiHybridProcessor(
+          apiKeys.azureEndpoint,
+          apiKeys.azureComputerVision,
+          apiKeys.googleGemini,
+          0.85, // lowConfidenceThreshold
+          {
+            ...config.queueConfig,
+            onRateLimitDetected: config.onRateLimitDetected,
+            onProgress: config.onProgress,
+          }
+        );
+
+        const result = await processor.processImage(filePath);
+        return result;
+      }
+
+      case 'document-ai-gemini-hybrid': {
+        // Check for Document AI credentials
+        if (
+          !apiKeys.documentAiProjectId ||
+          !apiKeys.documentAiCredentials ||
+          !apiKeys.documentAiProcessorId ||
+          !apiKeys.documentAiLocation
+        ) {
+          throw new Error(
+            'Document AI credentials not fully configured. ' +
+            'Please provide Project ID, Service Account JSON, Processor ID, and Location in Settings.'
+          );
+        }
+
+        // Check for Gemini API key
+        if (!apiKeys.googleGemini) {
+          throw new Error(
+            'Google Gemini API key not configured. ' +
+            'Please provide Gemini API Key in Settings.'
+          );
+        }
+
+        const processor = new DocumentAIGeminiHybridProcessor(
+          apiKeys.documentAiProjectId,
+          apiKeys.documentAiCredentials,
+          apiKeys.documentAiProcessorId,
+          apiKeys.documentAiLocation,
+          apiKeys.googleGemini,
+          {
+            ...config.queueConfig,
+            onRateLimitDetected: config.onRateLimitDetected,
+            onProgress: config.onProgress,
+          }
+        );
+
+        const result = await processor.processImage(filePath);
+        return result;
+      }
+
+      case 'gemini-self-calibrating': {
+        // Check for Cloud Vision credentials
+        const hasServiceAccount =
+          apiKeys.cloudVisionServiceAccount && apiKeys.cloudVisionProjectId;
+        const hasApiKey = apiKeys.googleCloudVision;
+
+        if (!hasServiceAccount && !hasApiKey) {
+          throw new Error(
+            'Google Cloud Vision credentials not configured. ' +
+            'Please provide either Service Account JSON + Project ID or API Key in Settings.'
+          );
+        }
+
+        // Check for Gemini API key
+        if (!apiKeys.googleGemini) {
+          throw new Error(
+            'Google Gemini API key not configured. ' +
+            'Please provide Gemini API Key in Settings.'
+          );
+        }
+
+        const processor = new GeminiSelfCalibratingProcessor(
+          {
+            serviceAccountJson: apiKeys.cloudVisionServiceAccount,
+            projectId: apiKeys.cloudVisionProjectId,
+            apiKey: apiKeys.googleCloudVision,
+          },
+          apiKeys.googleGemini
+        );
+
+        try {
+          const result = await processor.processImage(filePath);
+          return result;
+        } finally {
+          // Clean up temp credentials file
+          processor.cleanup();
+        }
+      }
+
+      // ==================== EXPERIMENTAL PROCESSORS (NOT YET IMPLEMENTED) ====================
+
       case 'hybrid':
       case 'gemini-coordinates':
       case 'gemini-bbox-synthesis':
       case 'gemini-validation-azure':
       case 'region-classifier':
-      case 'gemini-geometric':
         return createStubResult(processorId);
 
       default:
@@ -144,7 +368,7 @@ function createStubResult(processorId: string): ProcessorResult {
       pageCount: 0,
       avgConfidence: 0,
     },
-    error: `Processor '${processorId}' is not yet fully implemented in this version. Currently available processors: cloud-vision, azure-read, azure-layout, document-ai`,
+    error: `Processor '${processorId}' is not yet fully implemented in this version. Currently available processors: cloud-vision, cloud-vision-gemini-hybrid, azure-read, azure-read-gemini-hybrid, azure-layout, document-ai, document-ai-gemini-hybrid, gemini-geometric, gemini-self-calibrating`,
   };
 }
 
@@ -154,9 +378,14 @@ function createStubResult(processorId: string): ProcessorResult {
 export function isProcessorImplemented(processorId: string): boolean {
   const implemented = [
     'cloud-vision',
+    'cloud-vision-gemini-hybrid',
     'azure-read',
+    'azure-read-gemini-hybrid',
     'azure-layout',
     'document-ai',
+    'document-ai-gemini-hybrid',
+    'gemini-geometric',
+    'gemini-self-calibrating',
   ];
   return implemented.includes(processorId);
 }
@@ -167,8 +396,13 @@ export function isProcessorImplemented(processorId: string): boolean {
 export function getImplementedProcessors(): string[] {
   return [
     'cloud-vision',
+    'cloud-vision-gemini-hybrid',
     'azure-read',
+    'azure-read-gemini-hybrid',
     'azure-layout',
     'document-ai',
+    'document-ai-gemini-hybrid',
+    'gemini-geometric',
+    'gemini-self-calibrating',
   ];
 }

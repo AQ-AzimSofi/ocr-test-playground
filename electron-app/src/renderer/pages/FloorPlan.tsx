@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function FloorPlan() {
   const [floorPlanFile, setFloorPlanFile] = useState<string | null>(null);
@@ -7,6 +7,9 @@ export default function FloorPlan() {
   const [result, setResult] = useState<any | null>(null);
   const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
   const [showInstructions, setShowInstructions] = useState(false);
+  const [scriptCopied, setScriptCopied] = useState(false);
+  const [showBoundingBoxes, setShowBoundingBoxes] = useState(true);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Load API keys on mount
   useEffect(() => {
@@ -81,13 +84,162 @@ export default function FloorPlan() {
 
   const handleDownloadJSON = async () => {
     if (!result?.outputs?.jsonPath) return;
-    await window.electronAPI.openPath(result.outputs.jsonPath);
+    await window.electronAPI.showInFolder(result.outputs.jsonPath);
   };
 
   const handleDownloadScript = async () => {
     if (!result?.outputs?.scriptPath) return;
     await window.electronAPI.openPath(result.outputs.scriptPath);
   };
+
+  const handleCopyScript = async () => {
+    if (!result?.outputs?.scriptPath) return;
+
+    try {
+      const scriptContent = await window.electronAPI.readFileText(result.outputs.scriptPath);
+      await navigator.clipboard.writeText(scriptContent);
+      setScriptCopied(true);
+
+      // Reset the "copied" state after 2 seconds
+      setTimeout(() => {
+        setScriptCopied(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to copy script:', error);
+      alert('Failed to copy script to clipboard');
+    }
+  };
+
+  // Render floor plan visualization on canvas
+  const renderFloorPlanCanvas = async () => {
+    if (!canvasRef.current || !result?.revitOutput || !floorPlanFile) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const img = new Image();
+    img.onload = () => {
+      // Set canvas size to match image
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      // Draw original floor plan image
+      ctx.drawImage(img, 0, 0);
+
+      // Draw detected objects (only if showBoundingBoxes is true)
+      if (showBoundingBoxes) {
+        const elements = result.revitOutput.elements || [];
+
+        elements.forEach((element: any) => {
+        const coords = element.geometry?.coordinates_px || [];
+        if (coords.length === 0) return;
+
+        const type = element.type;
+        const confidence = element.confidence || 1;
+
+        // Color scheme based on type
+        let strokeColor = '#000000';
+        let fillColor = 'rgba(0, 0, 0, 0.1)';
+
+        switch (type) {
+          case 'wall':
+            strokeColor = '#9333ea'; // purple
+            fillColor = 'rgba(147, 51, 234, 0.2)';
+            break;
+          case 'door':
+            strokeColor = '#f97316'; // orange
+            fillColor = 'rgba(249, 115, 22, 0.3)';
+            break;
+          case 'window':
+            strokeColor = '#06b6d4'; // cyan
+            fillColor = 'rgba(6, 182, 212, 0.3)';
+            break;
+          case 'room':
+            strokeColor = '#eab308'; // yellow
+            fillColor = 'rgba(234, 179, 8, 0.15)';
+            break;
+        }
+
+        if (element.geometry?.type === 'line' && coords.length === 2) {
+          // Draw walls as lines with thickness
+          const thickness = element.properties?.thickness || 5;
+
+          ctx.beginPath();
+          ctx.moveTo(coords[0].x, coords[0].y);
+          ctx.lineTo(coords[1].x, coords[1].y);
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = Math.max(thickness, 3);
+          ctx.lineCap = 'round';
+          ctx.stroke();
+
+        } else if (element.geometry?.type === 'polygon' && coords.length >= 3) {
+          // Draw rooms as filled polygons
+          ctx.beginPath();
+          ctx.moveTo(coords[0].x, coords[0].y);
+          for (let i = 1; i < coords.length; i++) {
+            ctx.lineTo(coords[i].x, coords[i].y);
+          }
+          ctx.closePath();
+
+          ctx.fillStyle = fillColor;
+          ctx.fill();
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Draw room label if available
+          if (element.properties?.name || element.properties?.label) {
+            const label = element.properties.name || element.properties.label;
+            const centerX = coords.reduce((sum: number, c: any) => sum + c.x, 0) / coords.length;
+            const centerY = coords.reduce((sum: number, c: any) => sum + c.y, 0) / coords.length;
+
+            ctx.fillStyle = '#000000';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, centerX, centerY);
+          }
+
+        } else if (element.geometry?.type === 'point' && coords.length === 1) {
+          // Draw doors/windows as markers
+          const x = coords[0].x;
+          const y = coords[0].y;
+          const size = 10;
+
+          ctx.beginPath();
+          if (type === 'door') {
+            // Draw door as square
+            ctx.rect(x - size, y - size, size * 2, size * 2);
+          } else if (type === 'window') {
+            // Draw window as circle
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+          }
+          ctx.fillStyle = fillColor;
+          ctx.fill();
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      });
+      }
+    };
+
+    // Load floor plan image as base64 data URL
+    try {
+      const dataUrl = await window.electronAPI.readFileAsBase64(floorPlanFile);
+      img.src = dataUrl;
+    } catch (error) {
+      console.error('Failed to load floor plan image:', error);
+    }
+  };
+
+  // Render canvas when result changes
+  useEffect(() => {
+    if (result && result.success) {
+      renderFloorPlanCanvas();
+    }
+  }, [result, floorPlanFile, showBoundingBoxes]);
 
   const hasGeminiKey = Boolean(apiKeys.googleGemini);
 
@@ -170,8 +322,11 @@ export default function FloorPlan() {
         {/* Results */}
         {result && result.success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
-            <h4 className="font-medium text-green-900 mb-3">
-              ✓ Processing Complete!
+            <h4 className="font-medium text-green-900 mb-3 flex items-center gap-2">
+              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Processing Complete!
             </h4>
 
             {/* Detection Statistics */}
@@ -207,20 +362,96 @@ export default function FloorPlan() {
               <p>Cost: ~¥{(result.cost || 0).toFixed(2)}</p>
             </div>
 
+            {/* Floor Plan Visualization Canvas */}
+            <div className="mb-4">
+              <h5 className="font-medium text-green-900 mb-2">Detection Preview:</h5>
+              <div className="border border-green-200 rounded-md overflow-hidden bg-white">
+                <canvas
+                  ref={canvasRef}
+                  className="w-full h-auto"
+                  style={{ maxHeight: '500px', objectFit: 'contain' }}
+                />
+              </div>
+
+              {/* Toggle for Bounding Boxes */}
+              <div className="mt-3 flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showBoundingBoxes}
+                    onChange={(e) => setShowBoundingBoxes(e.target.checked)}
+                    className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <span className="text-sm text-gray-700 font-medium">
+                    Show Detection Regions
+                  </span>
+                </label>
+              </div>
+
+              {/* Legend */}
+              <div className="mt-2 flex flex-wrap gap-3 text-xs">
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: '#9333ea' }}></div>
+                  <span className="text-gray-700">Walls</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: '#f97316' }}></div>
+                  <span className="text-gray-700">Doors</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: '#06b6d4' }}></div>
+                  <span className="text-gray-700">Windows</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: '#eab308' }}></div>
+                  <span className="text-gray-700">Rooms</span>
+                </div>
+              </div>
+            </div>
+
             {/* Download Buttons */}
             <div className="space-y-2">
               <button
                 onClick={handleDownloadJSON}
-                className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm font-medium"
+                className="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm font-medium flex items-center justify-center gap-2"
               >
-                📄 Open Revit JSON File
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+                Show Revit JSON in Folder
               </button>
-              <button
-                onClick={handleDownloadScript}
-                className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm font-medium"
-              >
-                🐍 Open Dynamo Python Script
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDownloadScript}
+                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  Open Python Script to Copy
+                </button>
+                <button
+                  onClick={handleCopyScript}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm font-medium flex items-center justify-center gap-2"
+                  title="Copy script to clipboard"
+                >
+                  {scriptCopied ? (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Copy
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
             <p className="mt-3 text-xs text-green-600">
@@ -235,8 +466,11 @@ export default function FloorPlan() {
             onClick={() => setShowInstructions(!showInstructions)}
             className="flex items-center justify-between w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-md transition-colors"
           >
-            <span className="font-medium text-gray-900">
-              📖 How to import into Revit/Dynamo
+            <span className="font-medium text-gray-900 flex items-center gap-2">
+              <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              How to import into Revit/Dynamo
             </span>
             <span className="text-gray-500">{showInstructions ? '▲' : '▼'}</span>
           </button>
