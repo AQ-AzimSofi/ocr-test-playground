@@ -38,6 +38,7 @@ temp/
 tmp/
 .pdf-temp/
 **/.pdf-temp/
+.claude/
 
 # Test drawings (if you want to keep them out of git)
 # test-drawings/*.pdf

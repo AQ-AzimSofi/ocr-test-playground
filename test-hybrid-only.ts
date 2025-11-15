@@ -23,7 +23,7 @@ if (!drawing) {
 console.log(`\nRunning Hybrid CV+AI on: ${drawingName}\n`);
 const result = await processWithHybridDetector(drawing.filePath, drawing.drawingId);
 
-console.log('\n✓ Complete!');
+console.log('\n[OK] Complete!');
 console.log(`  Objects: ${result.objectCount}`);
 console.log(`  Time: ${(result.processingTime / 1000).toFixed(2)}s`);
 console.log(`  Cost: ¥${result.cost.toFixed(2)}`);
