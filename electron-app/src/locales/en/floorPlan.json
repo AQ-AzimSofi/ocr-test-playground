@@ -1,197 +1,90 @@
 {
-  "title": "Floor Plan → Revit",
-  "description": "Convert floor plans to Revit-compatible models. Extract walls, doors, windows, and rooms automatically using AI-powered analysis.",
+  "title": "Floor Plan to Revit Conversion",
+  "description": "Upload a floor plan image and convert it to Revit-compatible JSON with auto-generated Dynamo Python script.",
   "apiKeyWarning": {
-    "title": "API Key Required",
-    "message": "Google Gemini API key is required for this feature. Please configure it in Settings.",
-    "learnMore": "Learn more about setup"
+    "title": "Google Gemini API key required.",
+    "message": "Please configure it in Settings to use this feature."
   },
   "upload": {
-    "title": "Upload Floor Plan",
-    "description": "Select a floor plan image or PDF",
-    "placeholder": "Click to select a floor plan image (PNG, JPG) or PDF",
-    "supportedFormats": "Supported: PNG, JPG, JPEG, PDF (first page)",
-    "fileSize": "File size: {{size}}",
-    "fileName": "File: {{name}}",
-    "resolutionHint": "Recommended: 300+ DPI for best accuracy"
+    "heading": "1. Upload Floor Plan Image",
+    "buttonText": "Select Image",
+    "selectedLabel": "Selected:",
+    "supportedFormats": "Supported formats: PNG, JPG, JPEG (floor plan drawings)"
   },
-  "processButton": {
-    "process": "Process Floor Plan",
-    "processing": "Processing...",
-    "cancel": "Cancel",
-    "noFile": "Please select a floor plan image"
+  "process": {
+    "heading": "2. Process Floor Plan",
+    "buttonText": "Detect Walls, Doors, Windows & Rooms",
+    "buttonProcessing": "Processing...",
+    "costEstimate": "Estimated cost: ~¥1.50 per image (~$0.01 USD) · Processing time: ~15-30 seconds"
   },
-  "resultsDisplay": {
-    "title": "Detection Results",
-    "summary": "Detection Summary",
-    "walls": {
-      "title": "Walls",
-      "count": "{{count}} walls detected",
-      "length": "Total length: {{length}}mm",
-      "avgThickness": "Average thickness: {{thickness}}mm"
+  "progress": {
+    "title": "Processing...",
+    "step": "{{step}}"
+  },
+  "alerts": {
+    "noFile": "Please select a floor plan image",
+    "noApiKey": "Please configure your Google Gemini API key in Settings",
+    "processingComplete": "Processing complete!\n\nDetected:\n- {{walls}} walls\n- {{doors}} doors\n- {{windows}} windows\n- {{rooms}} rooms\n\nProcessing time: {{time}}s\nCost: ~¥{{cost}}",
+    "processingFailed": "Processing failed:\n{{error}}",
+    "error": "Error: {{message}}",
+    "copyFailed": "Failed to copy script to clipboard"
+  },
+  "results": {
+    "title": "Processing Complete!",
+    "walls": "{{count}}",
+    "wallsLabel": "Walls",
+    "doors": "{{count}}",
+    "doorsLabel": "Doors",
+    "windows": "{{count}}",
+    "windowsLabel": "Windows",
+    "rooms": "{{count}}",
+    "roomsLabel": "Rooms",
+    "processingTime": "Processing time: {{time}}s",
+    "cost": "Cost: ~¥{{cost}}",
+    "previewTitle": "Detection Preview:",
+    "showDetectionRegions": "Show Detection Regions",
+    "legendWalls": "Walls",
+    "legendDoors": "Doors",
+    "legendWindows": "Windows",
+    "legendRooms": "Rooms",
+    "showJsonButton": "Show Revit JSON in Folder",
+    "openScriptButton": "Open Python Script to Copy",
+    "copyButton": "Copy",
+    "copiedButton": "Copied!",
+    "nextStepTitle": "Next Step:",
+    "nextStepDescription": "Open the Dynamo Python script in Revit/Dynamo to create walls, doors, windows, and rooms automatically!"
+  },
+  "instructions": {
+    "toggleButton": "How to import into Revit/Dynamo",
+    "quickStart": {
+      "title": "Quick Start (3 Steps)",
+      "step1": "Open Dynamo in Revit: Go to Manage tab → Visual Programming → Dynamo",
+      "step2": "Create Python Script Node: Search for \"Python Script\" and drag it onto the canvas",
+      "step3": "Paste & Run: Double-click the node, paste the entire generated script, and run it!"
     },
-    "doors": {
-      "title": "Doors",
-      "count": "{{count}} doors detected",
-      "types": "Door types: {{types}}"
+    "whatGetsCreated": {
+      "title": "What Gets Created",
+      "walls": "Walls: All wall segments with correct dimensions and thickness",
+      "doors": "Doors: Automatically placed on nearest walls",
+      "windows": "Windows: Wall-hosted with sill heights",
+      "rooms": "Rooms: Created at polygon centers with labels"
     },
-    "windows": {
-      "title": "Windows",
-      "count": "{{count}} windows detected",
-      "types": "Window types: {{types}}"
+    "features": {
+      "title": "Features",
+      "dualCoords": "Dual Coordinates: Both pixels (original) and millimeters (real-world)",
+      "autoScaling": "Auto-scaling: Calculates mm-per-pixel from dimension text",
+      "autoFamily": "Auto family selection: Uses first available wall/door/window families",
+      "errorHandling": "Error handling: Continues processing even if individual elements fail"
     },
-    "rooms": {
-      "title": "Rooms",
-      "count": "{{count}} rooms detected",
-      "totalArea": "Total area: {{area}}m²",
-      "avgArea": "Average room area: {{area}}m²"
-    },
-    "accuracy": "Detection Accuracy: {{accuracy}}%",
-    "confidence": "Confidence Score: {{confidence}}/100"
+    "tip": "Tip: The JSON path is hardcoded in the Python script, so you can run it directly without connecting input nodes!"
   },
-  "detectionPreview": {
-    "title": "Detection Preview Options",
-    "showWalls": "Show Walls",
-    "showDoors": "Show Doors",
-    "showWindows": "Show Windows",
-    "showRooms": "Show Rooms",
-    "showLabels": "Show Labels",
-    "showDimensions": "Show Dimensions",
-    "zoomIn": "Zoom In",
-    "zoomOut": "Zoom Out",
-    "resetView": "Reset View"
-  },
-  "nextSteps": {
-    "title": "Next Steps",
-    "description": "Your floor plan has been successfully processed. Here's what you can do next:",
-    "steps": [
-      {
-        "number": "1",
-        "title": "Download Revit File",
-        "description": "Download the generated .rvt file and open in Revit"
-      },
-      {
-        "number": "2",
-        "title": "Review in Revit",
-        "description": "Check the imported walls, doors, and windows"
-      },
-      {
-        "number": "3",
-        "title": "Fine-tune Details",
-        "description": "Make any necessary adjustments in Revit"
-      },
-      {
-        "number": "4",
-        "title": "Export to Dynamo",
-        "description": "Use Dynamo scripts for further automation"
-      }
-    ]
-  },
-  "revitImport": {
-    "title": "How to Import into Revit",
-    "steps": [
-      {
-        "number": "1",
-        "description": "Open your Revit project"
-      },
-      {
-        "number": "2",
-        "description": "Click File > Import/Link > Import CAD"
-      },
-      {
-        "number": "3",
-        "description": "Select the downloaded DWG file"
-      },
-      {
-        "number": "4",
-        "description": "Configure import options as needed"
-      },
-      {
-        "number": "5",
-        "description": "Click Open to import the floor plan"
-      }
-    ]
-  },
-  "dynamoExport": {
-    "title": "How to Export to Dynamo",
-    "description": "Automate further processing using Dynamo scripts",
-    "steps": [
-      {
-        "number": "1",
-        "description": "Open Dynamo within your Revit project"
-      },
-      {
-        "number": "2",
-        "description": "Load the generated Dynamo script from the results folder"
-      },
-      {
-        "number": "3",
-        "description": "Review the automation workflow"
-      },
-      {
-        "number": "4",
-        "description": "Click 'Run' to execute the Dynamo script"
-      },
-      {
-        "number": "5",
-        "description": "Review generated elements in Revit"
-      }
-    ]
-  },
-  "whatGetsCreated": {
-    "title": "What Gets Created",
-    "description": "The tool automatically generates the following in Revit:",
-    "items": [
-      {
-        "title": "Walls",
-        "description": "Structural walls based on detected lines and thickness"
-      },
-      {
-        "title": "Doors",
-        "description": "Door instances with appropriate sizes and materials"
-      },
-      {
-        "title": "Windows",
-        "description": "Window instances with detected dimensions"
-      },
-      {
-        "title": "Rooms",
-        "description": "Room boundaries and area calculations"
-      },
-      {
-        "title": "Levels",
-        "description": "Level objects for multi-story planning"
-      },
-      {
-        "title": "Views",
-        "description": "Floor plan and elevation views"
-      }
-    ]
-  },
-  "features": {
-    "title": "Key Features",
-    "items": [
-      "Automatic wall detection and generation",
-      "Door and window recognition with type assignment",
-      "Room boundary detection and area calculation",
-      "Multi-floor support for complex buildings",
-      "Dimension extraction and coordinate system setup",
-      "Material assignment based on detected patterns",
-      "Dynamo script generation for further automation",
-      "DWG export for compatibility with other tools"
-    ]
-  },
-  "tips": {
-    "title": "Tips for Best Results",
-    "items": [
-      "Use high-resolution floor plans (300+ DPI)",
-      "Ensure clear walls with distinct line styles",
-      "Mark doors and windows clearly in the original image",
-      "Include proper scale or dimension information",
-      "Use consistent line weights for accuracy",
-      "Test with a single floor before processing multi-story plans",
-      "Have Revit templates ready before import",
-      "Keep original floor plan for reference during review"
-    ]
+  "howItWorks": {
+    "title": "How it works:",
+    "step1": "Upload your floor plan image (PNG/JPG)",
+    "step2": "AI detects walls, doors, windows, and rooms using Google Gemini vision",
+    "step3": "Coordinates are converted to millimeters using auto-calculated scale",
+    "step4": "Revit JSON is generated with dual coordinates (pixels + mm)",
+    "step5": "Dynamo Python script is auto-generated for easy import",
+    "step6": "Open the script in Revit/Dynamo to create all elements!"
   }
 }

@@ -1,7 +1,10 @@
 {
   "title": "PDF OCRテスト",
-  "description": "様々なOCRプロセッサをPDFドキュメントでテストして比較します。グラウンドトゥルーステキストを選択し、プロセッサを選んで、異なるアルゴリズム間の精度を分析します。",
+  "description": "PDFまたは画像ファイルをアップロードし、複数のOCRプロセッサでテストします。精度指標のためにグラウンドトゥルースを提供してください。",
   "upload": {
+    "heading": "1. ファイルをアップロード",
+    "selectButton": "PDF/画像を選択",
+    "selected": "選択済み:",
     "title": "PDFをアップロード",
     "description": "分析するPDFファイルを選択",
     "placeholder": "クリックしてPDFファイルを選択",
@@ -10,20 +13,30 @@
     "fileName": "ファイル: {{name}}"
   },
   "groundTruth": {
+    "heading": "2. グラウンドトゥルースを入力（オプション）",
+    "placeholder": "精度指標を計算するために正しいテキストをここに貼り付けてください...",
+    "description": "グラウンドトゥルースは、CER、精度、再現率、その他の精度指標を計算するために使用されます。",
     "title": "グラウンドトゥルース",
-    "description": "比較用の正しい/期待されるOCR出力",
-    "placeholder": "グラウンドトゥルーステキストをここに貼り付けてください...",
     "charCount": "{{count}}文字",
     "instructions": "正しいOCR出力を表すテキストを入力してください。これは精度指標を計算するために使用されます。"
+  },
+  "processors": {
+    "heading": "3. プロセッサを選択",
+    "selectAll": "すべて選択",
+    "deselectAll": "すべて選択解除",
+    "selectInTab": "タブ内をすべて選択",
+    "deselectInTab": "タブ内をすべて選択解除",
+    "tabs": {
+      "confidentialSafe": "機密情報対応 (4)",
+      "hybrids": "ハイブリッド (4)",
+      "experimental": "実験的 (6)"
+    },
+    "missingApiKey": "不足しているAPIキー: {{keys}}",
+    "missingAuth": "認証が不足しています: 設定でサービスアカウント（プロジェクトID + JSON）またはAPIキーのいずれかを設定してください"
   },
   "processorSelection": {
     "title": "プロセッサを選択",
     "description": "テストするOCRプロセッサを選択",
-    "tabs": {
-      "confidentialSafe": "機密情報対応",
-      "hybrids": "ハイブリッドプロセッサ",
-      "experimental": "実験的"
-    },
     "categories": {
       "confidentialSafe": "機密情報対応（ローカルデータ）",
       "hybrids": "ハイブリッドプロセッサ（AI強化）",
@@ -33,23 +46,40 @@
     "selectedCount": "{{count}}個のプロセッサが選択されています"
   },
   "costEstimate": {
+    "heading": "コスト推定",
+    "processorsSelected": "{{count}}個のプロセッサが選択されています",
+    "processorsSelected_other": "{{count}}個のプロセッサが選択されています",
+    "note": "{{note}}",
     "title": "コスト推定",
     "description": "選択したプロセッサの推定APIコスト",
     "perImage": "1画像あたり",
     "total": "総コスト推定",
-    "varies": "コストは画像のコンテンツによって異なります",
-    "note": "{{note}}"
+    "varies": "コストは画像のコンテンツによって異なります"
+  },
+  "buttons": {
+    "runTest": "テストを実行",
+    "processing": "処理中..."
   },
   "runButton": {
     "run": "テストを実行",
     "running": "テストを実行中...",
     "cancel": "キャンセル",
     "noProcessors": "少なくとも1つのプロセッサを選択してください",
-    "noGroundTruth": "グラウンドトゥルーステキストを入力してください",
+    "noGroundTruth": "それでも続行しますか？",
     "noFile": "PDFファイルを選択してください"
   },
   "rateLimit": {
-    "title": "レート制限設定",
+    "title": "APIレート制限に達しました",
+    "message": "{{message}}",
+    "freeTierLimit": "無料枠の制限: {{limit}}リクエスト/分",
+    "question": "どうしますか？",
+    "continueSlower": "低速で続行",
+    "continueSlowerDesc": "並行処理を減らして遅延を追加します。処理は遅くなりますが、完了します。",
+    "skipTest": "このテストをスキップ",
+    "skipTestDesc": "現在のプロセッサをスキップして、他のプロセッサを続行します。",
+    "cancelAll": "すべてのテストをキャンセル",
+    "cancelAllDesc": "すべての処理を即座に停止します。",
+    "suggestedWait": "推奨待機時間: {{seconds}}秒",
     "description": "APIレート制限を管理してスロットリングを回避",
     "rateLimitExceeded": "レート制限に達しました",
     "waitTime": "もう一度実行する前に{{seconds}}秒待機してください",
@@ -67,9 +97,11 @@
     "processorSkipped": "レート制限によりプロセッサがスキップされました"
   },
   "queueProgress": {
+    "heading": "キューステータス",
+    "status": "{{status}}",
+    "details": "完了: {{completed}} / {{total}} | 処理中: {{processing}} | キュー: {{queued}}",
     "title": "処理キュー",
     "position": "位置: {{current}}/{{total}}",
-    "status": "ステータス: {{status}}",
     "statuses": {
       "queued": "キュー中",
       "processing": "処理中",
@@ -84,9 +116,12 @@
     "missingApiKeys": "APIキーが不足しています",
     "missingApiKeysDesc": "以下のプロセッサはAPIキーが設定されていないため実行できません: {{processors}}。設定で設定してください。",
     "missingFile": "PDFファイルが選択されていません",
-    "missingFileDesc": "テストするPDFファイルを選択してください。",
+    "missingFileDesc": "ファイルと少なくとも1つのプロセッサを選択してください",
     "missingGroundTruth": "グラウンドトゥルースが提供されていません",
-    "missingGroundTruthDesc": "比較用のグラウンドトゥルーステキストを入力してください。",
+    "missingGroundTruthDesc": "グラウンドトゥルースが提供されていません。精度指標を取得できません。",
+    "testCompleted": "テストが正常に完了しました！\n\nレポートの保存先:\n{{path}}",
+    "testFailed": "テストに失敗しました:\n{{error}}",
+    "generalError": "エラー: {{message}}",
     "fileNotFound": "ファイルが見つかりません",
     "fileNotFoundDesc": "選択したPDFファイルが見つかりません。",
     "invalidPdf": "無効なPDF",
@@ -97,7 +132,12 @@
     "networkErrorDesc": "APIサービスへの接続に失敗しました。インターネット接続を確認してください。"
   },
   "howItWorks": {
-    "title": "使用方法",
+    "title": "使用方法:",
+    "step1": "PDFまたは画像ファイルをアップロード",
+    "step2": "オプションで精度計算のためにグラウンドトゥルーステキストを提供",
+    "step3": "テストする1つ以上のOCRプロセッサを選択",
+    "step4": "「テストを実行」をクリックしてファイルを処理",
+    "step5": "詳細な指標を含む生成されたHTMLレポートを表示",
     "steps": [
       {
         "number": "1",
@@ -130,5 +170,9 @@
         "description": "精度指標とプロセッサ出力を表示"
       }
     ]
+  },
+  "progress": {
+    "heading": "処理中...",
+    "step": "{{step}}"
   }
 }

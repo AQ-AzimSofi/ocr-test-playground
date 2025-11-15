@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function FloorPlan() {
+  const { t } = useTranslation('floorPlan');
   const [floorPlanFile, setFloorPlanFile] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [progress, setProgress] = useState({ step: '', progress: 0, total: 0 });
@@ -41,12 +43,12 @@ export default function FloorPlan() {
 
   const handleProcess = async () => {
     if (!floorPlanFile) {
-      alert('Please select a floor plan image');
+      alert(t('alerts.noFile'));
       return;
     }
 
     if (!apiKeys.googleGemini) {
-      alert('Please configure your Google Gemini API key in Settings');
+      alert(t('alerts.noApiKey'));
       return;
     }
 
@@ -62,20 +64,20 @@ export default function FloorPlan() {
       if (processResult.success) {
         setResult(processResult);
         alert(
-          `Processing complete!\n\n` +
-          `Detected:\n` +
-          `- ${processResult.detection?.walls || 0} walls\n` +
-          `- ${processResult.detection?.doors || 0} doors\n` +
-          `- ${processResult.detection?.windows || 0} windows\n` +
-          `- ${processResult.detection?.rooms || 0} rooms\n\n` +
-          `Processing time: ${((processResult.processingTime || 0) / 1000).toFixed(1)}s\n` +
-          `Cost: ~¥${(processResult.cost || 0).toFixed(2)}`
+          t('alerts.processingComplete', {
+            walls: processResult.detection?.walls || 0,
+            doors: processResult.detection?.doors || 0,
+            windows: processResult.detection?.windows || 0,
+            rooms: processResult.detection?.rooms || 0,
+            time: ((processResult.processingTime || 0) / 1000).toFixed(1),
+            cost: (processResult.cost || 0).toFixed(2)
+          })
         );
       } else {
-        alert(`Processing failed:\n${processResult.error}`);
+        alert(t('alerts.processingFailed', { error: processResult.error }));
       }
     } catch (error: any) {
-      alert(`Error: ${error.message}`);
+      alert(t('alerts.error', { message: error.message }));
     } finally {
       setProcessing(false);
       setProgress({ step: '', progress: 0, total: 0 });
@@ -106,7 +108,7 @@ export default function FloorPlan() {
       }, 2000);
     } catch (error) {
       console.error('Failed to copy script:', error);
-      alert('Failed to copy script to clipboard');
+      alert(t('alerts.copyFailed'));
     }
   };
 
@@ -247,17 +249,17 @@ export default function FloorPlan() {
     <div className="px-4 py-6 sm:px-0">
       <div className="bg-white shadow sm:rounded-lg p-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          Floor Plan to Revit Conversion
+          {t('title')}
         </h2>
         <p className="text-gray-600 mb-6">
-          Upload a floor plan image and convert it to Revit-compatible JSON with auto-generated Dynamo Python script.
+          {t('description')}
         </p>
 
         {/* API Key Warning */}
         {!hasGeminiKey && (
           <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
             <p className="text-sm text-yellow-700">
-              <strong>Google Gemini API key required.</strong> Please configure it in Settings to use this feature.
+              <strong>{t('apiKeyWarning.title')}</strong> {t('apiKeyWarning.message')}
             </p>
           </div>
         )}
@@ -265,7 +267,7 @@ export default function FloorPlan() {
         {/* File Upload Section */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">
-            1. Upload Floor Plan Image
+            {t('upload.heading')}
           </h3>
           <div className="flex items-center gap-3">
             <button
@@ -273,40 +275,40 @@ export default function FloorPlan() {
               disabled={processing}
               className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Select Image
+              {t('upload.buttonText')}
             </button>
             {floorPlanFile && (
               <span className="text-sm text-gray-600">
-                Selected: <span className="font-medium">{floorPlanFile.split('/').pop() || floorPlanFile.split('\\').pop()}</span>
+                {t('upload.selectedLabel')} <span className="font-medium">{floorPlanFile.split('/').pop() || floorPlanFile.split('\\').pop()}</span>
               </span>
             )}
           </div>
           <p className="mt-2 text-xs text-gray-500">
-            Supported formats: PNG, JPG, JPEG (floor plan drawings)
+            {t('upload.supportedFormats')}
           </p>
         </div>
 
         {/* Process Button */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">
-            2. Process Floor Plan
+            {t('process.heading')}
           </h3>
           <button
             onClick={handleProcess}
             disabled={processing || !floorPlanFile || !hasGeminiKey}
             className="w-full px-6 py-3 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {processing ? 'Processing...' : 'Detect Walls, Doors, Windows & Rooms'}
+            {processing ? t('process.buttonProcessing') : t('process.buttonText')}
           </button>
           <p className="mt-2 text-xs text-gray-500">
-            Estimated cost: ~¥1.50 per image (~$0.01 USD) · Processing time: ~15-30 seconds
+            {t('process.costEstimate')}
           </p>
         </div>
 
         {/* Progress */}
         {processing && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-            <h4 className="font-medium text-blue-900 mb-2">Processing...</h4>
+            <h4 className="font-medium text-blue-900 mb-2">{t('progress.title')}</h4>
             <p className="text-sm text-blue-700 mb-2">{progress.step}</p>
             {progress.total > 0 && (
               <div className="w-full bg-blue-200 rounded-full h-2">
@@ -326,45 +328,45 @@ export default function FloorPlan() {
               <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Processing Complete!
+              {t('results.title')}
             </h4>
 
             {/* Detection Statistics */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               <div className="bg-white p-3 rounded border border-green-200">
                 <div className="text-2xl font-bold text-green-700">
-                  {result.detection?.walls || 0}
+                  {t('results.walls', { count: result.detection?.walls || 0 })}
                 </div>
-                <div className="text-xs text-gray-600">Walls</div>
+                <div className="text-xs text-gray-600">{t('results.wallsLabel')}</div>
               </div>
               <div className="bg-white p-3 rounded border border-green-200">
                 <div className="text-2xl font-bold text-green-700">
-                  {result.detection?.doors || 0}
+                  {t('results.doors', { count: result.detection?.doors || 0 })}
                 </div>
-                <div className="text-xs text-gray-600">Doors</div>
+                <div className="text-xs text-gray-600">{t('results.doorsLabel')}</div>
               </div>
               <div className="bg-white p-3 rounded border border-green-200">
                 <div className="text-2xl font-bold text-green-700">
-                  {result.detection?.windows || 0}
+                  {t('results.windows', { count: result.detection?.windows || 0 })}
                 </div>
-                <div className="text-xs text-gray-600">Windows</div>
+                <div className="text-xs text-gray-600">{t('results.windowsLabel')}</div>
               </div>
               <div className="bg-white p-3 rounded border border-green-200">
                 <div className="text-2xl font-bold text-green-700">
-                  {result.detection?.rooms || 0}
+                  {t('results.rooms', { count: result.detection?.rooms || 0 })}
                 </div>
-                <div className="text-xs text-gray-600">Rooms</div>
+                <div className="text-xs text-gray-600">{t('results.roomsLabel')}</div>
               </div>
             </div>
 
             <div className="text-sm text-green-700 mb-4">
-              <p>Processing time: {((result.processingTime || 0) / 1000).toFixed(1)}s</p>
-              <p>Cost: ~¥{(result.cost || 0).toFixed(2)}</p>
+              <p>{t('results.processingTime', { time: ((result.processingTime || 0) / 1000).toFixed(1) })}</p>
+              <p>{t('results.cost', { cost: (result.cost || 0).toFixed(2) })}</p>
             </div>
 
             {/* Floor Plan Visualization Canvas */}
             <div className="mb-4">
-              <h5 className="font-medium text-green-900 mb-2">Detection Preview:</h5>
+              <h5 className="font-medium text-green-900 mb-2">{t('results.previewTitle')}</h5>
               <div className="border border-green-200 rounded-md overflow-hidden bg-white">
                 <canvas
                   ref={canvasRef}
@@ -383,7 +385,7 @@ export default function FloorPlan() {
                     className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
                   />
                   <span className="text-sm text-gray-700 font-medium">
-                    Show Detection Regions
+                    {t('results.showDetectionRegions')}
                   </span>
                 </label>
               </div>
@@ -392,19 +394,19 @@ export default function FloorPlan() {
               <div className="mt-2 flex flex-wrap gap-3 text-xs">
                 <div className="flex items-center gap-1">
                   <div className="w-4 h-4 rounded" style={{ backgroundColor: '#9333ea' }}></div>
-                  <span className="text-gray-700">Walls</span>
+                  <span className="text-gray-700">{t('results.legendWalls')}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-4 h-4 rounded" style={{ backgroundColor: '#f97316' }}></div>
-                  <span className="text-gray-700">Doors</span>
+                  <span className="text-gray-700">{t('results.legendDoors')}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-4 h-4 rounded" style={{ backgroundColor: '#06b6d4' }}></div>
-                  <span className="text-gray-700">Windows</span>
+                  <span className="text-gray-700">{t('results.legendWindows')}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <div className="w-4 h-4 rounded" style={{ backgroundColor: '#eab308' }}></div>
-                  <span className="text-gray-700">Rooms</span>
+                  <span className="text-gray-700">{t('results.legendRooms')}</span>
                 </div>
               </div>
             </div>
@@ -418,7 +420,7 @@ export default function FloorPlan() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                 </svg>
-                Show Revit JSON in Folder
+                {t('results.showJsonButton')}
               </button>
               <div className="flex gap-2">
                 <button
@@ -428,7 +430,7 @@ export default function FloorPlan() {
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                   </svg>
-                  Open Python Script to Copy
+                  {t('results.openScriptButton')}
                 </button>
                 <button
                   onClick={handleCopyScript}
@@ -440,14 +442,14 @@ export default function FloorPlan() {
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
-                      Copied!
+                      {t('results.copiedButton')}
                     </>
                   ) : (
                     <>
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
-                      Copy
+                      {t('results.copyButton')}
                     </>
                   )}
                 </button>
@@ -455,7 +457,7 @@ export default function FloorPlan() {
             </div>
 
             <p className="mt-3 text-xs text-green-600">
-              <strong>Next Step:</strong> Open the Dynamo Python script in Revit/Dynamo to create walls, doors, windows, and rooms automatically!
+              <strong>{t('results.nextStepTitle')}</strong> {t('results.nextStepDescription')}
             </p>
           </div>
         )}
@@ -470,7 +472,7 @@ export default function FloorPlan() {
               <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
-              How to import into Revit/Dynamo
+              {t('instructions.toggleButton')}
             </span>
             <span className="text-gray-500">{showInstructions ? '▲' : '▼'}</span>
           </button>
@@ -478,43 +480,37 @@ export default function FloorPlan() {
           {showInstructions && (
             <div className="mt-3 p-4 bg-gray-50 rounded-md text-sm text-gray-700 space-y-3">
               <div>
-                <h4 className="font-semibold text-gray-900 mb-2">Quick Start (3 Steps)</h4>
+                <h4 className="font-semibold text-gray-900 mb-2">{t('instructions.quickStart.title')}</h4>
                 <ol className="list-decimal list-inside space-y-2">
-                  <li>
-                    <strong>Open Dynamo in Revit:</strong> Go to Manage tab → Visual Programming → Dynamo
-                  </li>
-                  <li>
-                    <strong>Create Python Script Node:</strong> Search for "Python Script" and drag it onto the canvas
-                  </li>
-                  <li>
-                    <strong>Paste & Run:</strong> Double-click the node, paste the entire generated script, and run it!
-                  </li>
+                  <li>{t('instructions.quickStart.step1')}</li>
+                  <li>{t('instructions.quickStart.step2')}</li>
+                  <li>{t('instructions.quickStart.step3')}</li>
                 </ol>
               </div>
 
               <div className="border-t border-gray-300 pt-3">
-                <h4 className="font-semibold text-gray-900 mb-2">What Gets Created</h4>
+                <h4 className="font-semibold text-gray-900 mb-2">{t('instructions.whatGetsCreated.title')}</h4>
                 <ul className="list-disc list-inside space-y-1">
-                  <li><strong>Walls:</strong> All wall segments with correct dimensions and thickness</li>
-                  <li><strong>Doors:</strong> Automatically placed on nearest walls</li>
-                  <li><strong>Windows:</strong> Wall-hosted with sill heights</li>
-                  <li><strong>Rooms:</strong> Created at polygon centers with labels</li>
+                  <li>{t('instructions.whatGetsCreated.walls')}</li>
+                  <li>{t('instructions.whatGetsCreated.doors')}</li>
+                  <li>{t('instructions.whatGetsCreated.windows')}</li>
+                  <li>{t('instructions.whatGetsCreated.rooms')}</li>
                 </ul>
               </div>
 
               <div className="border-t border-gray-300 pt-3">
-                <h4 className="font-semibold text-gray-900 mb-2">Features</h4>
+                <h4 className="font-semibold text-gray-900 mb-2">{t('instructions.features.title')}</h4>
                 <ul className="list-disc list-inside space-y-1">
-                  <li><strong>Dual Coordinates:</strong> Both pixels (original) and millimeters (real-world)</li>
-                  <li><strong>Auto-scaling:</strong> Calculates mm-per-pixel from dimension text</li>
-                  <li><strong>Auto family selection:</strong> Uses first available wall/door/window families</li>
-                  <li><strong>Error handling:</strong> Continues processing even if individual elements fail</li>
+                  <li>{t('instructions.features.dualCoords')}</li>
+                  <li>{t('instructions.features.autoScaling')}</li>
+                  <li>{t('instructions.features.autoFamily')}</li>
+                  <li>{t('instructions.features.errorHandling')}</li>
                 </ul>
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-3">
                 <p className="text-xs text-blue-700">
-                  <strong>Tip:</strong> The JSON path is hardcoded in the Python script, so you can run it directly without connecting input nodes!
+                  {t('instructions.tip')}
                 </p>
               </div>
             </div>
@@ -523,14 +519,14 @@ export default function FloorPlan() {
 
         {/* Info Box */}
         <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-md">
-          <h4 className="font-medium text-gray-900 mb-2">How it works:</h4>
+          <h4 className="font-medium text-gray-900 mb-2">{t('howItWorks.title')}</h4>
           <ol className="text-sm text-gray-600 list-decimal list-inside space-y-1">
-            <li>Upload your floor plan image (PNG/JPG)</li>
-            <li>AI detects walls, doors, windows, and rooms using Google Gemini vision</li>
-            <li>Coordinates are converted to millimeters using auto-calculated scale</li>
-            <li>Revit JSON is generated with dual coordinates (pixels + mm)</li>
-            <li>Dynamo Python script is auto-generated for easy import</li>
-            <li>Open the script in Revit/Dynamo to create all elements!</li>
+            <li>{t('howItWorks.step1')}</li>
+            <li>{t('howItWorks.step2')}</li>
+            <li>{t('howItWorks.step3')}</li>
+            <li>{t('howItWorks.step4')}</li>
+            <li>{t('howItWorks.step5')}</li>
+            <li>{t('howItWorks.step6')}</li>
           </ol>
         </div>
       </div>

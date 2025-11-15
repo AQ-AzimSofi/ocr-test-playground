@@ -1,7 +1,10 @@
 {
   "title": "PDF OCR Testing",
-  "description": "Test and compare various OCR processors on PDF documents. Select ground truth text, choose processors, and analyze accuracy across different algorithms.",
+  "description": "Upload a PDF or image file and test it with multiple OCR processors. Provide ground truth for accuracy metrics.",
   "upload": {
+    "heading": "1. Upload File",
+    "selectButton": "Select PDF/Image",
+    "selected": "Selected:",
     "title": "Upload PDF",
     "description": "Select a PDF file to analyze",
     "placeholder": "Click to select a PDF file",
@@ -10,20 +13,30 @@
     "fileName": "File: {{name}}"
   },
   "groundTruth": {
+    "heading": "2. Enter Ground Truth (Optional)",
+    "placeholder": "Paste the correct text here to calculate accuracy metrics...",
+    "description": "Ground truth is used to calculate CER, precision, recall, and other accuracy metrics.",
     "title": "Ground Truth",
-    "description": "The correct/expected OCR output for comparison",
-    "placeholder": "Paste the ground truth text here...",
     "charCount": "{{count}} characters",
     "instructions": "Enter the text that represents the correct OCR output. This will be used to calculate accuracy metrics."
+  },
+  "processors": {
+    "heading": "3. Select Processors",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "selectInTab": "Select All in Tab",
+    "deselectInTab": "Deselect All in Tab",
+    "tabs": {
+      "confidentialSafe": "Confidential-Safe (4)",
+      "hybrids": "Hybrids (4)",
+      "experimental": "Experimental (6)"
+    },
+    "missingApiKey": "Missing API keys: {{keys}}",
+    "missingAuth": "Missing authentication: Configure either Service Account (Project ID + JSON) OR API Key in Settings"
   },
   "processorSelection": {
     "title": "Select Processors",
     "description": "Choose which OCR processors to test",
-    "tabs": {
-      "confidentialSafe": "Confidential-Safe",
-      "hybrids": "Hybrid Processors",
-      "experimental": "Experimental"
-    },
     "categories": {
       "confidentialSafe": "Confidential-Safe (Local Data)",
       "hybrids": "Hybrid Processors (AI-Enhanced)",
@@ -33,23 +46,40 @@
     "selectedCount": "{{count}} processor(s) selected"
   },
   "costEstimate": {
+    "heading": "Cost Estimate",
+    "processorsSelected": "{{count}} processor selected",
+    "processorsSelected_other": "{{count}} processors selected",
+    "note": "{{note}}",
     "title": "Cost Estimate",
     "description": "Estimated API costs for selected processors",
     "perImage": "Per image",
     "total": "Total cost estimate",
-    "varies": "Cost varies based on image content",
-    "note": "{{note}}"
+    "varies": "Cost varies based on image content"
+  },
+  "buttons": {
+    "runTest": "Run Test",
+    "processing": "Processing..."
   },
   "runButton": {
     "run": "Run Test",
     "running": "Running Tests...",
     "cancel": "Cancel",
     "noProcessors": "Please select at least one processor",
-    "noGroundTruth": "Please enter ground truth text",
+    "noGroundTruth": "Continue anyway?",
     "noFile": "Please select a PDF file"
   },
   "rateLimit": {
-    "title": "Rate Limit Configuration",
+    "title": "API Rate Limit Reached",
+    "message": "{{message}}",
+    "freeTierLimit": "Free tier limit: {{limit}} requests/minute",
+    "question": "What would you like to do?",
+    "continueSlower": "Continue at Slower Rate",
+    "continueSlowerDesc": "Reduce concurrency and add delays. Processing will be slower but will complete.",
+    "skipTest": "Skip This Test",
+    "skipTestDesc": "Skip the current processor and continue with others.",
+    "cancelAll": "Cancel All Tests",
+    "cancelAllDesc": "Stop all processing immediately.",
+    "suggestedWait": "Suggested wait time: {{seconds}} seconds",
     "description": "Manage API rate limits to avoid throttling",
     "rateLimitExceeded": "Rate limit exceeded",
     "waitTime": "Please wait {{seconds}} seconds before running again",
@@ -67,9 +97,11 @@
     "processorSkipped": "Processor skipped due to rate limit"
   },
   "queueProgress": {
+    "heading": "Queue Status",
+    "status": "{{status}}",
+    "details": "Completed: {{completed}} / {{total}} | Processing: {{processing}} | Queued: {{queued}}",
     "title": "Processing Queue",
     "position": "Position: {{current}}/{{total}}",
-    "status": "Status: {{status}}",
     "statuses": {
       "queued": "Queued",
       "processing": "Processing",
@@ -84,9 +116,12 @@
     "missingApiKeys": "Missing API Keys",
     "missingApiKeysDesc": "The following processors cannot run because their API keys are not configured: {{processors}}. Please configure them in Settings.",
     "missingFile": "No PDF File Selected",
-    "missingFileDesc": "Please select a PDF file to test.",
+    "missingFileDesc": "Please select a file and at least one processor",
     "missingGroundTruth": "No Ground Truth Provided",
-    "missingGroundTruthDesc": "Please enter the ground truth text for comparison.",
+    "missingGroundTruthDesc": "No ground truth provided. You will not get accuracy metrics.",
+    "testCompleted": "Test completed successfully!\n\nReport saved to:\n{{path}}",
+    "testFailed": "Test failed:\n{{error}}",
+    "generalError": "Error: {{message}}",
     "fileNotFound": "File not found",
     "fileNotFoundDesc": "The selected PDF file could not be found.",
     "invalidPdf": "Invalid PDF",
@@ -97,7 +132,12 @@
     "networkErrorDesc": "Failed to connect to the API service. Please check your internet connection."
   },
   "howItWorks": {
-    "title": "How It Works",
+    "title": "How it works:",
+    "step1": "Upload your PDF or image file",
+    "step2": "Optionally provide ground truth text for accuracy calculation",
+    "step3": "Select one or more OCR processors to test",
+    "step4": "Click \"Run Test\" to process the file",
+    "step5": "View the generated HTML report with detailed metrics",
     "steps": [
       {
         "number": "1",
@@ -130,5 +170,9 @@
         "description": "View accuracy metrics and processor output"
       }
     ]
+  },
+  "progress": {
+    "heading": "Processing...",
+    "step": "{{step}}"
   }
 }

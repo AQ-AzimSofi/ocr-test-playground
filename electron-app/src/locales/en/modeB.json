@@ -1,90 +1,69 @@
 {
-  "title": "Text Comparison",
-  "description": "Compare OCR processor outputs and validate text extraction accuracy. Analyze differences between processors and measure confidence levels.",
+  "title": "Text Comparison (Lite Mode)",
+  "description": "Compare multiple OCR outputs against a single ground truth without uploading files. Just copy-paste your text and get comprehensive accuracy metrics.",
   "groundTruth": {
-    "title": "Ground Truth Text",
-    "description": "The reference text for comparison",
-    "placeholder": "Paste the ground truth text here...",
-    "charCount": "{{count}} characters"
+    "heading": "1. Enter Ground Truth",
+    "placeholder": "Paste the correct text here...",
+    "characterCount": "{{count}} characters"
   },
   "processorInputs": {
-    "title": "Processor Outputs",
-    "description": "Enter the OCR output from different processors",
-    "addProcessor": "Add Processor",
-    "processorName": "Processor Name",
-    "processorOutput": "OCR Output",
-    "outputPlaceholder": "Paste the processor output here...",
-    "confidence": "Confidence",
-    "confidencePlaceholder": "e.g., 95%",
-    "accuracy": "Accuracy: {{accuracy}}%"
+    "heading": "2. Add Processor Outputs",
+    "addButton": "+ Add Processor",
+    "processorLabel": "Processor #{{number}}",
+    "removeButton": "Remove",
+    "namePlaceholder": "e.g., Google Cloud Vision, Azure Read, Custom OCR...",
+    "textPlaceholder": "Paste the OCR'd text from this processor...",
+    "nameLabel": "Processor Name / Label",
+    "textLabel": "OCR Output Text",
+    "characterCount": "{{count}} characters",
+    "minProcessorAlert": "You must have at least one processor input"
+  },
+  "buttons": {
+    "runComparison": "Run Comparison",
+    "processing": "Processing..."
+  },
+  "alerts": {
+    "noGroundTruth": "Please enter ground truth text",
+    "noProcessorInput": "Please enter at least one processor output with text",
+    "comparisonSuccess": "Comparison completed successfully!\n\nReport saved to:\n{{reportPath}}",
+    "comparisonFailed": "Comparison failed:\n{{error}}",
+    "error": "Error: {{message}}"
   },
   "features": {
-    "title": "Features",
+    "title": "Features:",
     "items": [
       {
-        "title": "Side-by-Side Comparison",
-        "description": "View ground truth and processor outputs together"
+        "label": "Order-Dependent Metrics:",
+        "description": "CER, precision, recall, F1 score, edit distance"
       },
       {
-        "title": "Difference Highlighting",
-        "description": "Automatically highlights differences between texts"
+        "label": "Order-Independent Metrics:",
+        "description": "Alphabetically sorted comparison - measures content completeness regardless of text order"
       },
       {
-        "title": "Accuracy Calculation",
-        "description": "Calculate accuracy metrics based on character-level comparison"
+        "label": "Character-Level Diff:",
+        "description": "Visual comparison showing insertions, deletions, and substitutions"
       },
       {
-        "title": "Word-Level Analysis",
-        "description": "Analyze accuracy at the word level"
+        "label": "Side-by-Side Comparison:",
+        "description": "OCR output vs ground truth aligned by lines"
       },
       {
-        "title": "Confidence Tracking",
-        "description": "Track confidence levels from each processor"
-      },
-      {
-        "title": "Export Results",
-        "description": "Export comparison results as JSON or CSV"
+        "label": "HTML Report:",
+        "description": "Same comprehensive report format as PDF testing mode"
       }
     ]
   },
   "howItWorks": {
-    "title": "How It Works",
+    "title": "How it works:",
     "steps": [
-      {
-        "number": "1",
-        "title": "Enter Ground Truth",
-        "description": "Paste the reference/correct text"
-      },
-      {
-        "number": "2",
-        "title": "Add Processors",
-        "description": "Add OCR outputs from different processors"
-      },
-      {
-        "number": "3",
-        "title": "Compare Results",
-        "description": "System automatically highlights differences"
-      },
-      {
-        "number": "4",
-        "title": "Analyze Metrics",
-        "description": "Review accuracy percentages and confidence levels"
-      },
-      {
-        "number": "5",
-        "title": "Export Data",
-        "description": "Download comparison results for reporting"
-      }
+      "Enter your ground truth (the correct text)",
+      "For each processor you want to test, add an input and paste its OCR'd text",
+      "Click \"Run Comparison\" to calculate all metrics",
+      "View the generated HTML report with detailed comparison"
     ]
   },
   "tips": {
-    "title": "Tips for Best Results",
-    "items": [
-      "Ensure ground truth text is accurate and complete",
-      "Include confidence levels from processor metadata when available",
-      "Use consistent formatting across processor outputs",
-      "Test with diverse document types for comprehensive comparison",
-      "Consider whitespace and special characters in comparisons"
-    ]
+    "text": "You can test as many processors as you want by clicking \"+ Add Processor\""
   }
 }

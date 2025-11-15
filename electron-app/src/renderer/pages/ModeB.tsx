@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ProcessorInput {
   id: string;
@@ -7,6 +8,7 @@ interface ProcessorInput {
 }
 
 export default function ModeB() {
+  const { t } = useTranslation('modeB');
   const [groundTruth, setGroundTruth] = useState('');
   const [processorInputs, setProcessorInputs] = useState<ProcessorInput[]>([
     { id: '1', processor: '', text: '' },
@@ -20,7 +22,7 @@ export default function ModeB() {
 
   const removeProcessorInput = (id: string) => {
     if (processorInputs.length === 1) {
-      alert('You must have at least one processor input');
+      alert(t('processorInputs.minProcessorAlert'));
       return;
     }
     setProcessorInputs(processorInputs.filter((p) => p.id !== id));
@@ -35,7 +37,7 @@ export default function ModeB() {
   const handleRunComparison = async () => {
     // Validation
     if (!groundTruth.trim()) {
-      alert('Please enter ground truth text');
+      alert(t('alerts.noGroundTruth'));
       return;
     }
 
@@ -44,7 +46,7 @@ export default function ModeB() {
     );
 
     if (validInputs.length === 0) {
-      alert('Please enter at least one processor output with text');
+      alert(t('alerts.noProcessorInput'));
       return;
     }
 
@@ -62,15 +64,15 @@ export default function ModeB() {
       });
 
       if (result.success && result.reportPath) {
-        alert(`Comparison completed successfully!\n\nReport saved to:\n${result.reportPath}`);
+        alert(t('alerts.comparisonSuccess', { reportPath: result.reportPath }));
 
         // Open the report
         await window.electronAPI.openPath(result.reportPath);
       } else {
-        alert(`Comparison failed:\n${result.error}`);
+        alert(t('alerts.comparisonFailed', { error: result.error }));
       }
     } catch (error: any) {
-      alert(`Error: ${error.message}`);
+      alert(t('alerts.error', { message: error.message }));
     } finally {
       setProcessing(false);
     }
@@ -80,27 +82,26 @@ export default function ModeB() {
     <div className="px-4 py-6 sm:px-0">
       <div className="bg-white shadow sm:rounded-lg p-6">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
-          Text Comparison (Lite Mode)
+          {t('title')}
         </h2>
         <p className="text-gray-600 mb-6">
-          Compare multiple OCR outputs against a single ground truth without uploading files.
-          Just copy-paste your text and get comprehensive accuracy metrics.
+          {t('description')}
         </p>
 
         {/* Ground Truth Section */}
         <div className="mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-3">
-            1. Enter Ground Truth
+            {t('groundTruth.heading')}
           </h3>
           <textarea
             value={groundTruth}
             onChange={(e) => setGroundTruth(e.target.value)}
             disabled={processing}
             className="w-full h-40 px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 font-mono text-sm"
-            placeholder="Paste the correct text here..."
+            placeholder={t('groundTruth.placeholder')}
           />
           <p className="mt-1 text-xs text-gray-500">
-            {groundTruth.length} characters
+            {t('groundTruth.characterCount', { count: groundTruth.length })}
           </p>
         </div>
 
@@ -108,14 +109,14 @@ export default function ModeB() {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-semibold text-gray-900">
-              2. Add Processor Outputs
+              {t('processorInputs.heading')}
             </h3>
             <button
               onClick={addProcessorInput}
               disabled={processing}
               className="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
             >
-              + Add Processor
+              {t('processorInputs.addButton')}
             </button>
           </div>
 
@@ -124,20 +125,20 @@ export default function ModeB() {
               <div key={input.id} className="p-4 border border-gray-200 rounded-lg">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-medium text-gray-700">
-                    Processor #{index + 1}
+                    {t('processorInputs.processorLabel', { number: index + 1 })}
                   </h4>
                   <button
                     onClick={() => removeProcessorInput(input.id)}
                     disabled={processing || processorInputs.length === 1}
                     className="text-sm text-red-600 hover:text-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Remove
+                    {t('processorInputs.removeButton')}
                   </button>
                 </div>
 
                 <div className="mb-3">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Processor Name / Label
+                    {t('processorInputs.nameLabel')}
                   </label>
                   <input
                     type="text"
@@ -146,14 +147,14 @@ export default function ModeB() {
                       updateProcessorInput(input.id, 'processor', e.target.value)
                     }
                     disabled={processing}
-                    placeholder="e.g., Google Cloud Vision, Azure Read, Custom OCR..."
+                    placeholder={t('processorInputs.namePlaceholder')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 text-sm"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    OCR Output Text
+                    {t('processorInputs.textLabel')}
                   </label>
                   <textarea
                     value={input.text}
@@ -161,11 +162,11 @@ export default function ModeB() {
                       updateProcessorInput(input.id, 'text', e.target.value)
                     }
                     disabled={processing}
-                    placeholder="Paste the OCR'd text from this processor..."
+                    placeholder={t('processorInputs.textPlaceholder')}
                     className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 font-mono text-sm"
                   />
                   <p className="mt-1 text-xs text-gray-500">
-                    {input.text.length} characters
+                    {t('processorInputs.characterCount', { count: input.text.length })}
                   </p>
                 </div>
               </div>
@@ -179,50 +180,30 @@ export default function ModeB() {
           disabled={processing || !groundTruth.trim()}
           className="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {processing ? 'Processing...' : 'Run Comparison'}
+          {processing ? t('buttons.processing') : t('buttons.runComparison')}
         </button>
 
         {/* Info */}
         <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-md">
-          <h4 className="font-medium text-gray-900 mb-2">Features:</h4>
+          <h4 className="font-medium text-gray-900 mb-2">{t('features.title')}</h4>
           <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
-            <li>
-              <strong>Order-Dependent Metrics:</strong> CER, precision, recall,
-              F1 score, edit distance
-            </li>
-            <li>
-              <strong>Order-Independent Metrics:</strong> Alphabetically sorted
-              comparison - measures content completeness regardless of text order
-            </li>
-            <li>
-              <strong>Character-Level Diff:</strong> Visual comparison showing
-              insertions, deletions, and substitutions
-            </li>
-            <li>
-              <strong>Side-by-Side Comparison:</strong> OCR output vs ground
-              truth aligned by lines
-            </li>
-            <li>
-              <strong>HTML Report:</strong> Same comprehensive report format as
-              PDF testing mode
-            </li>
+            {t('features.items', { returnObjects: true }).map((item: any, index: number) => (
+              <li key={index}>
+                <strong>{item.label}</strong> {item.description}
+              </li>
+            ))}
           </ul>
         </div>
 
         <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-          <h4 className="font-medium text-blue-900 mb-2">How it works:</h4>
+          <h4 className="font-medium text-blue-900 mb-2">{t('howItWorks.title')}</h4>
           <ol className="text-sm text-blue-700 list-decimal list-inside space-y-1">
-            <li>Enter your ground truth (the correct text)</li>
-            <li>
-              For each processor you want to test, add an input and paste its
-              OCR'd text
-            </li>
-            <li>Click "Run Comparison" to calculate all metrics</li>
-            <li>View the generated HTML report with detailed comparison</li>
+            {t('howItWorks.steps', { returnObjects: true }).map((step: string, index: number) => (
+              <li key={index}>{step}</li>
+            ))}
           </ol>
           <p className="text-xs text-blue-600 mt-2">
-            <strong>Tip:</strong> You can test as many processors as you want
-            by clicking "+ Add Processor"
+            <strong>Tip:</strong> {t('tips.text')}
           </p>
         </div>
       </div>

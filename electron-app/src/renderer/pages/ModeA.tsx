@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getProcessorsByCategory, estimateCost, isProcessorAvailable } from '@shared/processor-info';
 import type { ProcessorCategory } from '@shared/types';
 
 export default function ModeA() {
+  const { t } = useTranslation('modeA');
   const [selectedProcessors, setSelectedProcessors] = useState<Set<string>>(new Set());
   const [pdfFile, setPdfFile] = useState<string | null>(null);
   const [groundTruth, setGroundTruth] = useState('');
@@ -166,13 +168,13 @@ export default function ModeA() {
 
   const handleRunTest = async () => {
     if (!pdfFile || selectedProcessors.size === 0) {
-      alert('Please select a file and at least one processor');
+      alert(t('errors.missingFileDesc'));
       return;
     }
 
     if (!groundTruth.trim()) {
       const confirm = window.confirm(
-        'No ground truth provided. You will not get accuracy metrics. Continue anyway?'
+        t('errors.missingGroundTruthDesc') + ' ' + t('runButton.noGroundTruth')
       );
       if (!confirm) return;
     }
@@ -194,15 +196,15 @@ export default function ModeA() {
       });
 
       if (result.success && result.reportPath) {
-        alert(`Test completed successfully!\n\nReport saved to:\n${result.reportPath}`);
+        alert(t('errors.testCompleted', { path: result.reportPath }));
 
         // Open the report
         await window.electronAPI.openPath(result.reportPath);
       } else {
-        alert(`Test failed:\n${result.error}`);
+        alert(t('errors.testFailed', { error: result.error }));
       }
     } catch (error: any) {
-      alert(`Error: ${error.message}`);
+      alert(t('errors.generalError', { message: error.message }));
     } finally {
       setProcessing(false);
       setProgress({ step: '', progress: 0, total: 0 });
@@ -216,25 +218,25 @@ export default function ModeA() {
   return (
     <div className="px-4 py-6 sm:px-0">
       <div className="bg-white shadow sm:rounded-lg p-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">PDF OCR Testing</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">{t('title')}</h2>
         <p className="text-gray-600 mb-6">
-          Upload a PDF or image file and test it with multiple OCR processors. Provide ground truth for accuracy metrics.
+          {t('description')}
         </p>
 
         {/* File Upload Section */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">1. Upload File</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('upload.heading')}</h3>
           <div className="flex items-center gap-3">
             <button
               onClick={handleSelectFile}
               disabled={processing}
               className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Select PDF/Image
+              {t('upload.selectButton')}
             </button>
             {pdfFile && (
               <span className="text-sm text-gray-600">
-                Selected: <span className="font-medium">{pdfFile.split('/').pop()}</span>
+                {t('upload.selected')} <span className="font-medium">{pdfFile.split('/').pop()}</span>
               </span>
             )}
           </div>
@@ -242,37 +244,37 @@ export default function ModeA() {
 
         {/* Ground Truth Section */}
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">2. Enter Ground Truth (Optional)</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">{t('groundTruth.heading')}</h3>
           <textarea
             value={groundTruth}
             onChange={(e) => setGroundTruth(e.target.value)}
             disabled={processing}
             className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 font-mono text-sm"
-            placeholder="Paste the correct text here to calculate accuracy metrics..."
+            placeholder={t('groundTruth.placeholder')}
           />
           <p className="mt-1 text-xs text-gray-500">
-            Ground truth is used to calculate CER, precision, recall, and other accuracy metrics.
+            {t('groundTruth.description')}
           </p>
         </div>
 
         {/* Processor Selection */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold text-gray-900">3. Select Processors</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('processors.heading')}</h3>
             <div className="flex gap-2">
               <button
                 onClick={handleSelectAll}
                 disabled={processing}
                 className="text-sm px-3 py-1 text-indigo-600 hover:bg-indigo-50 rounded-md disabled:opacity-50"
               >
-                Select All
+                {t('processors.selectAll')}
               </button>
               <button
                 onClick={handleDeselectAll}
                 disabled={processing}
                 className="text-sm px-3 py-1 text-gray-600 hover:bg-gray-50 rounded-md disabled:opacity-50"
               >
-                Deselect All
+                {t('processors.deselectAll')}
               </button>
             </div>
           </div>
@@ -287,7 +289,7 @@ export default function ModeA() {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Confidential-Safe (4)
+              {t('processors.tabs.confidentialSafe')}
             </button>
             <button
               onClick={() => setActiveCategory('hybrids')}
@@ -297,7 +299,7 @@ export default function ModeA() {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Hybrids (4)
+              {t('processors.tabs.hybrids')}
             </button>
             <button
               onClick={() => setActiveCategory('experimental')}
@@ -307,7 +309,7 @@ export default function ModeA() {
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              Experimental (6)
+              {t('processors.tabs.experimental')}
             </button>
           </div>
 
@@ -318,14 +320,14 @@ export default function ModeA() {
               disabled={processing}
               className="text-xs px-3 py-1.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed border border-indigo-200"
             >
-              Select All in Tab
+              {t('processors.selectInTab')}
             </button>
             <button
               onClick={handleDeselectInTab}
               disabled={processing}
               className="text-xs px-3 py-1.5 text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed border border-gray-200"
             >
-              Deselect All in Tab
+              {t('processors.deselectInTab')}
             </button>
           </div>
 
@@ -357,15 +359,15 @@ export default function ModeA() {
                     />
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
-                        <h4 className="font-medium text-gray-900">{processor.name}</h4>
-                        <span className="text-xs text-gray-500">{processor.cost}</span>
+                        <h4 className="font-medium text-gray-900">{t(`processors:${processor.id}.name`)}</h4>
+                        <span className="text-xs text-gray-500">{t(`processors:${processor.id}.cost`)}</span>
                       </div>
-                      <p className="text-sm text-gray-600 mt-1">{processor.description}</p>
+                      <p className="text-sm text-gray-600 mt-1">{t(`processors:${processor.id}.description`)}</p>
                       {!available && (
                         <p className="text-xs text-red-600 mt-1">
                           {processor.requiresApiKeys.includes('googleCloudVision')
-                            ? 'Missing authentication: Configure either Service Account (Project ID + JSON) OR API Key in Settings'
-                            : `Missing API keys: ${processor.requiresApiKeys.filter(k => !apiKeys[k]).join(', ')}`
+                            ? t('processors.missingAuth')
+                            : t('processors.missingApiKey', { keys: processor.requiresApiKeys.filter(k => !apiKeys[k]).join(', ') })
                           }
                         </p>
                       )}
@@ -380,19 +382,19 @@ export default function ModeA() {
         {/* Cost Estimate */}
         {selectedProcessors.size > 0 && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-            <h4 className="font-medium text-blue-900 mb-1">Cost Estimate</h4>
+            <h4 className="font-medium text-blue-900 mb-1">{t('costEstimate.heading')}</h4>
             <p className="text-sm text-blue-700">
-              {selectedProcessors.size} processor{selectedProcessors.size > 1 ? 's' : ''} selected
+              {t('costEstimate.processorsSelected', { count: selectedProcessors.size })}
             </p>
-            <p className="text-sm text-blue-700">{costEstimate.note}</p>
+            <p className="text-sm text-blue-700">{t('costEstimate.note', { note: costEstimate.note })}</p>
           </div>
         )}
 
         {/* Progress */}
         {processing && (
           <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-            <h4 className="font-medium text-yellow-900 mb-2">Processing...</h4>
-            <p className="text-sm text-yellow-700 mb-2">{progress.step}</p>
+            <h4 className="font-medium text-yellow-900 mb-2">{t('progress.heading')}</h4>
+            <p className="text-sm text-yellow-700 mb-2">{t('progress.step', { step: progress.step })}</p>
             {progress.total > 0 && (
               <div className="w-full bg-yellow-200 rounded-full h-2">
                 <div
@@ -410,30 +412,33 @@ export default function ModeA() {
           disabled={processing || !pdfFile || selectedProcessors.size === 0}
           className="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {processing ? 'Processing...' : 'Run Test'}
+          {processing ? t('buttons.processing') : t('buttons.runTest')}
         </button>
 
         {/* Info */}
         <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-md">
-          <h4 className="font-medium text-gray-900 mb-2">How it works:</h4>
+          <h4 className="font-medium text-gray-900 mb-2">{t('howItWorks.title')}</h4>
           <ol className="text-sm text-gray-600 list-decimal list-inside space-y-1">
-            <li>Upload your PDF or image file</li>
-            <li>Optionally provide ground truth text for accuracy calculation</li>
-            <li>Select one or more OCR processors to test</li>
-            <li>Click "Run Test" to process the file</li>
-            <li>View the generated HTML report with detailed metrics</li>
+            <li>{t('howItWorks.step1')}</li>
+            <li>{t('howItWorks.step2')}</li>
+            <li>{t('howItWorks.step3')}</li>
+            <li>{t('howItWorks.step4')}</li>
+            <li>{t('howItWorks.step5')}</li>
           </ol>
         </div>
 
         {/* Queue Progress */}
         {queueProgress && queueProgress.total > 0 && (
           <div className="mt-6 p-4 bg-purple-50 border border-purple-200 rounded-md">
-            <h4 className="font-medium text-purple-900 mb-2">Queue Status</h4>
-            <p className="text-sm text-purple-700 mb-2">{queueProgress.status}</p>
+            <h4 className="font-medium text-purple-900 mb-2">{t('queueProgress.heading')}</h4>
+            <p className="text-sm text-purple-700 mb-2">{t('queueProgress.status', { status: queueProgress.status })}</p>
             <div className="text-xs text-purple-600">
-              Completed: {queueProgress.completed} / {queueProgress.total} |
-              Processing: {queueProgress.processing} |
-              Queued: {queueProgress.queued}
+              {t('queueProgress.details', {
+                completed: queueProgress.completed,
+                total: queueProgress.total,
+                processing: queueProgress.processing,
+                queued: queueProgress.queued
+              })}
             </div>
           </div>
         )}
@@ -449,19 +454,19 @@ export default function ModeA() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <h3 className="text-lg font-semibold text-gray-900">
-                  API Rate Limit Reached
+                  {t('rateLimit.title')}
                 </h3>
               </div>
               <p className="text-sm text-gray-600 mb-3">
-                {rateLimitDialog.message}
+                {t('rateLimit.message', { message: rateLimitDialog.message })}
               </p>
               {rateLimitDialog.quotaLimit && (
                 <p className="text-xs text-gray-500 bg-gray-50 p-2 rounded mb-3">
-                  Free tier limit: {rateLimitDialog.quotaLimit} requests/minute
+                  {t('rateLimit.freeTierLimit', { limit: rateLimitDialog.quotaLimit })}
                 </p>
               )}
               <p className="text-sm text-gray-700 mb-4">
-                <strong>What would you like to do?</strong>
+                <strong>{t('rateLimit.question')}</strong>
               </p>
             </div>
 
@@ -470,9 +475,9 @@ export default function ModeA() {
                 onClick={() => handleRateLimitDecision('continue')}
                 className="w-full px-4 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors text-left"
               >
-                <div className="font-semibold">Continue at Slower Rate</div>
+                <div className="font-semibold">{t('rateLimit.continueSlower')}</div>
                 <div className="text-xs text-blue-100 mt-1">
-                  Reduce concurrency and add delays. Processing will be slower but will complete.
+                  {t('rateLimit.continueSlowerDesc')}
                 </div>
               </button>
 
@@ -480,9 +485,9 @@ export default function ModeA() {
                 onClick={() => handleRateLimitDecision('skip')}
                 className="w-full px-4 py-3 bg-gray-600 text-white font-medium rounded-md hover:bg-gray-700 transition-colors text-left"
               >
-                <div className="font-semibold">Skip This Test</div>
+                <div className="font-semibold">{t('rateLimit.skipTest')}</div>
                 <div className="text-xs text-gray-100 mt-1">
-                  Skip the current processor and continue with others.
+                  {t('rateLimit.skipTestDesc')}
                 </div>
               </button>
 
@@ -490,15 +495,15 @@ export default function ModeA() {
                 onClick={() => handleRateLimitDecision('cancel')}
                 className="w-full px-4 py-3 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 transition-colors text-left"
               >
-                <div className="font-semibold">Cancel All Tests</div>
+                <div className="font-semibold">{t('rateLimit.cancelAll')}</div>
                 <div className="text-xs text-red-100 mt-1">
-                  Stop all processing immediately.
+                  {t('rateLimit.cancelAllDesc')}
                 </div>
               </button>
             </div>
 
             <p className="text-xs text-gray-500 mt-4 text-center">
-              Suggested wait time: {(rateLimitDialog.retryDelay / 1000).toFixed(1)} seconds
+              {t('rateLimit.suggestedWait', { seconds: (rateLimitDialog.retryDelay / 1000).toFixed(1) })}
             </p>
           </div>
         </div>

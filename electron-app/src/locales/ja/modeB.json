@@ -1,90 +1,69 @@
 {
-  "title": "テキスト比較",
-  "description": "OCRプロセッサの出力を比較し、テキスト抽出精度を検証します。プロセッサ間の違いを分析し、信頼度レベルを測定します。",
+  "title": "テキスト比較（ライトモード）",
+  "description": "ファイルをアップロードせずに、複数のOCR出力を単一の正解データと比較できます。テキストをコピー＆ペーストするだけで、包括的な精度指標が得られます。",
   "groundTruth": {
-    "title": "グラウンドトゥルーステキスト",
-    "description": "比較用の参照テキスト",
-    "placeholder": "グラウンドトゥルーステキストをここに貼り付けてください...",
-    "charCount": "{{count}}文字"
+    "heading": "1. 正解データを入力",
+    "placeholder": "正しいテキストをここに貼り付けてください...",
+    "characterCount": "{{count}} 文字"
   },
   "processorInputs": {
-    "title": "プロセッサ出力",
-    "description": "異なるプロセッサからのOCR出力を入力",
-    "addProcessor": "プロセッサを追加",
-    "processorName": "プロセッサ名",
-    "processorOutput": "OCR出力",
-    "outputPlaceholder": "プロセッサの出力をここに貼り付けてください...",
-    "confidence": "信頼度",
-    "confidencePlaceholder": "例: 95%",
-    "accuracy": "精度: {{accuracy}}%"
+    "heading": "2. プロセッサ出力を追加",
+    "addButton": "+ プロセッサを追加",
+    "processorLabel": "プロセッサ #{{number}}",
+    "removeButton": "削除",
+    "namePlaceholder": "例：Google Cloud Vision、Azure Read、カスタムOCR...",
+    "textPlaceholder": "このプロセッサからのOCRテキストを貼り付けてください...",
+    "nameLabel": "プロセッサ名 / ラベル",
+    "textLabel": "OCR出力テキスト",
+    "characterCount": "{{count}} 文字",
+    "minProcessorAlert": "少なくとも1つのプロセッサ入力が必要です"
+  },
+  "buttons": {
+    "runComparison": "比較を実行",
+    "processing": "処理中..."
+  },
+  "alerts": {
+    "noGroundTruth": "正解データテキストを入力してください",
+    "noProcessorInput": "テキストを含む少なくとも1つのプロセッサ出力を入力してください",
+    "comparisonSuccess": "比較が正常に完了しました！\n\nレポートが保存されました：\n{{reportPath}}",
+    "comparisonFailed": "比較に失敗しました：\n{{error}}",
+    "error": "エラー：{{message}}"
   },
   "features": {
-    "title": "機能",
+    "title": "機能：",
     "items": [
       {
-        "title": "並べて比較",
-        "description": "グラウンドトゥルースとプロセッサ出力を並べて表示"
+        "label": "順序依存メトリクス：",
+        "description": "CER、精度、再現率、F1スコア、編集距離"
       },
       {
-        "title": "差分ハイライト",
-        "description": "テキスト間の違いを自動的にハイライト"
+        "label": "順序非依存メトリクス：",
+        "description": "アルファベット順でソートされた比較 - テキストの順序に関係なくコンテンツの完全性を測定"
       },
       {
-        "title": "精度計算",
-        "description": "文字レベルの比較に基づいて精度指標を計算"
+        "label": "文字レベルの差分：",
+        "description": "挿入、削除、置換を示す視覚的な比較"
       },
       {
-        "title": "単語レベル分析",
-        "description": "単語レベルで精度を分析"
+        "label": "並列比較：",
+        "description": "OCR出力と正解データを行ごとに整列して表示"
       },
       {
-        "title": "信頼度追跡",
-        "description": "各プロセッサからの信頼度レベルを追跡"
-      },
-      {
-        "title": "結果をエクスポート",
-        "description": "比較結果をJSONまたはCSVとしてエクスポート"
+        "label": "HTMLレポート：",
+        "description": "PDFテストモードと同じ包括的なレポート形式"
       }
     ]
   },
   "howItWorks": {
-    "title": "使用方法",
+    "title": "使い方：",
     "steps": [
-      {
-        "number": "1",
-        "title": "グラウンドトゥルースを入力",
-        "description": "参照/正しいテキストを貼り付け"
-      },
-      {
-        "number": "2",
-        "title": "プロセッサを追加",
-        "description": "異なるプロセッサからのOCR出力を追加"
-      },
-      {
-        "number": "3",
-        "title": "結果を比較",
-        "description": "システムが自動的に違いをハイライト"
-      },
-      {
-        "number": "4",
-        "title": "指標を分析",
-        "description": "精度パーセンテージと信頼度レベルを確認"
-      },
-      {
-        "number": "5",
-        "title": "データをエクスポート",
-        "description": "比較結果をダウンロードしてレポーティング"
-      }
+      "正解データ（正しいテキスト）を入力します",
+      "テストしたい各プロセッサについて、入力を追加してOCRテキストを貼り付けます",
+      "「比較を実行」をクリックして、すべてのメトリクスを計算します",
+      "詳細な比較を含む生成されたHTMLレポートを表示します"
     ]
   },
   "tips": {
-    "title": "最良の結果を得るためのヒント",
-    "items": [
-      "グラウンドトゥルーステキストが正確で完全であることを確認",
-      "利用可能な場合、プロセッサメタデータから信頼度レベルを含める",
-      "プロセッサ出力間で一貫したフォーマットを使用",
-      "包括的な比較のために異なるドキュメントタイプでテスト",
-      "比較では空白と特殊文字を考慮"
-    ]
+    "text": "「+ プロセッサを追加」をクリックすることで、必要な数のプロセッサをテストできます"
   }
 }
