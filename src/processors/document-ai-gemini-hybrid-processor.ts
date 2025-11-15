@@ -1,7 +1,10 @@
+// External imports
+import sharp from 'sharp';
+
+// Internal imports
 import { geminiClient } from '../lib/gemini-client.js';
 import { documentAIClient } from '../lib/document-ai-client.js';
 import { db, extractionResults } from '../db/index.js';
-import sharp from 'sharp';
 import { parseGeminiValidation } from '../utils/gemini-parser.js';
 import {
   synthesizeBboxForText,
@@ -11,18 +14,20 @@ import {
 } from '../utils/bbox-estimator.js';
 import { cropImageRegion } from '../utils/image-cropper.js';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Process drawing using Document AI + Gemini validation workflow
- * 1. Run Document AI for baseline OCR with word-level tokens
- * 2. Ask Gemini to validate and find missing text
- * 3. Crop and re-process regions with missing text
- * 4. Synthesize bboxes for Gemini-found text
+ * Uses Document AI for baseline extraction, then Gemini validates and finds missing text.
+ * Synthesizes bounding boxes for additional text detected by Gemini.
  */
 export async function processWithDocumentAIGeminiHybrid(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`  Processing with Document AI + Gemini Hybrid (Validation)...`);
+  if (isDevelopment) {
+    console.log(`  Processing with Document AI + Gemini Hybrid (Validation)...`);
+  }
   const startTime = Date.now();
 
   try {
@@ -31,13 +36,16 @@ export async function processWithDocumentAIGeminiHybrid(
     const imageWidth = metadata.width || 1000;
     const imageHeight = metadata.height || 1000;
 
-    // Step 1: Run Document AI for baseline OCR
-    console.log(`  Running Document AI (baseline)...`);
+    if (isDevelopment) {
+      console.log(`  Running Document AI (baseline)...`);
+    }
     const docAIResult = await documentAIClient.analyzeDocument(imagePath);
 
-    console.log(
-      `  Document AI extracted: ${docAIResult.content.length} chars, ${docAIResult.words.length} words`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Document AI extracted: ${docAIResult.content.length} chars, ${docAIResult.words.length} words`
+      );
+    }
 
     // Convert Document AI words to our bbox format
     const docAIBboxes: BoundingBox[] = docAIResult.words.map((word) => ({
@@ -46,8 +54,9 @@ export async function processWithDocumentAIGeminiHybrid(
       confidence: word.confidence,
     }));
 
-    // Step 2: Ask Gemini to validate Document AI's results
-    console.log(`  Asking Gemini to validate Document AI results...`);
+    if (isDevelopment) {
+      console.log(`  Asking Gemini to validate Document AI results...`);
+    }
 
     const validationPrompt = `You are a quality assurance system for OCR.
 
@@ -81,23 +90,28 @@ IMPORTANT:
       validationPrompt
     );
 
-    console.log(
-      `  Gemini validation response preview: ${validationResponse.substring(0, 300)}...`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Gemini validation response preview: ${validationResponse.substring(0, 300)}...`
+      );
+    }
 
-    // Step 3: Parse validation results
     const validation = parseGeminiValidation(validationResponse);
 
-    console.log(
-      `  Gemini found: ${validation.missingText.length} missing, ${validation.incorrectText.length} incorrect`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Gemini found: ${validation.missingText.length} missing, ${validation.incorrectText.length} incorrect`
+      );
+    }
 
     // If no issues found, return Document AI results as-is
     if (
       validation.missingText.length === 0 &&
       validation.incorrectText.length === 0
     ) {
-      console.log(`  No issues found - using Document AI results as-is`);
+      if (isDevelopment) {
+        console.log(`  No issues found - using Document AI results as-is`);
+      }
 
       const processingTime = Date.now() - startTime;
       const docAICost = documentAIClient.estimateCost(docAIResult.pages.length);
@@ -148,7 +162,6 @@ IMPORTANT:
       };
     }
 
-    // Step 4: Process missing and incorrect text
     const synthesizedBboxes: Array<{
       text: string;
       bounds: Array<{ x: number; y: number }>;
@@ -159,11 +172,9 @@ IMPORTANT:
 
     let additionalGeminiCalls = 0;
 
-    // Process missing text
     for (const missing of validation.missingText) {
       console.log(`  Processing missing text: "${missing.text}"`);
 
-      // Try to estimate position from description
       let estimatedPosition = undefined;
       if (missing.locationDescription) {
         estimatedPosition = descriptionToApproximatePosition(
@@ -178,8 +189,7 @@ IMPORTANT:
           `  Estimated position from description: (${estimatedPosition.x.toFixed(0)}, ${estimatedPosition.y.toFixed(0)})`
         );
 
-        // Crop region around estimated position
-        const cropSize = 200; // Pixels
+        const cropSize = 200;
         const cropRegion = {
           bounds: [
             {
@@ -239,8 +249,6 @@ IMPORTANT:
           );
         } catch (error) {
           console.warn(`  Failed to extract missing text region:`, error);
-
-          // Fallback: synthesize bbox without crop
           const fallbackBbox = synthesizeBboxForText(
             missing.text,
             docAIBboxes,
@@ -263,7 +271,6 @@ IMPORTANT:
           });
         }
       } else {
-        // No location description - synthesize bbox based on context
         console.log(`  No location description, using context-based synthesis`);
 
         const synthesizedBbox = synthesizeBboxForText(
@@ -287,17 +294,14 @@ IMPORTANT:
       }
     }
 
-    // Process incorrect text
     for (const incorrect of validation.incorrectText) {
       console.log(
         `  Correcting: "${incorrect.found}" -> "${incorrect.shouldBe}"`
       );
 
-      // Find the Document AI bbox that matches the incorrect text
       const match = fuzzyMatchTextToBbox(incorrect.found, docAIBboxes, 0.5);
 
       if (match) {
-        // Update the text in place (will replace Document AI's version)
         synthesizedBboxes.push({
           text: incorrect.shouldBe,
           bounds: match.bbox.bounds,
@@ -316,7 +320,6 @@ IMPORTANT:
       }
     }
 
-    // Step 5: Merge Document AI bboxes with synthesized ones
     const allBboxes = [
       ...docAIResult.words.map((word) => ({
         text: word.text,
@@ -328,7 +331,6 @@ IMPORTANT:
       ...synthesizedBboxes,
     ];
 
-    // Rebuild full text (Document AI + synthesized)
     const finalText =
       docAIResult.content +
       '\n' +

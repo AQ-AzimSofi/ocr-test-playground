@@ -9,6 +9,8 @@ import { generateVisualVerificationFromResult } from '../utils/visual-verifier.j
 import * as path from 'path';
 import * as fs from 'fs';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Complete Revit Processing Pipeline
  *
@@ -21,20 +23,24 @@ import * as fs from 'fs';
  * End-to-end workflow: 2D Drawing → Geometric Objects + Dimensions → Revit JSON/CSV
  */
 export async function processForRevit(imagePath: string, drawingId: string) {
-  console.log(`\n${'='.repeat(70)}`);
-  console.log(`COMPLETE REVIT PROCESSING PIPELINE`);
-  console.log(`${'='.repeat(70)}\n`);
-  console.log(`Drawing: ${drawingId}`);
-  console.log(`Path: ${imagePath}\n`);
+  if (isDevelopment) {
+    console.log(`\n${'='.repeat(70)}`);
+    console.log(`COMPLETE REVIT PROCESSING PIPELINE`);
+    console.log(`${'='.repeat(70)}\n`);
+    console.log(`Drawing: ${drawingId}`);
+    console.log(`Path: ${imagePath}\n`);
+  }
 
   const startTime = Date.now();
 
   try {
     // STEP 1: Detect geometric objects using Gemini
-    console.log(
-      'STEP 1: Detecting geometric objects (walls, doors, windows)...'
-    );
-    console.log('-'.repeat(70));
+    if (isDevelopment) {
+      console.log(
+        'STEP 1: Detecting geometric objects (walls, doors, windows)...'
+      );
+      console.log('-'.repeat(70));
+    }
     const geometricResult = await processWithGeminiGeometric(
       imagePath,
       drawingId
@@ -44,20 +50,24 @@ export async function processForRevit(imagePath: string, drawingId: string) {
       throw new Error('Geometric detection failed');
     }
 
-    console.log(`\nDetected ${geometricResult.objectCount} objects`);
+    if (isDevelopment) console.log(`\nDetected ${geometricResult.objectCount} objects`);
 
     // STEP 2: Extract text and dimensions using Cloud Vision
-    console.log(
-      `\n\nSTEP 2: Extracting dimension text using Cloud Vision OCR...`
-    );
-    console.log('-'.repeat(70));
+    if (isDevelopment) {
+      console.log(
+        `\n\nSTEP 2: Extracting dimension text using Cloud Vision OCR...`
+      );
+      console.log('-'.repeat(70));
+    }
     const boundingBoxes =
       await cloudVisionClient.extractTextWithBoundingBoxes(imagePath);
-    console.log(`\nExtracted ${boundingBoxes.length} text boxes`);
+    if (isDevelopment) console.log(`\nExtracted ${boundingBoxes.length} text boxes`);
 
     // STEP 3: Associate dimensions with geometric objects
-    console.log(`\n\nSTEP 3: Associating dimensions with geometric objects...`);
-    console.log('-'.repeat(70));
+    if (isDevelopment) {
+      console.log(`\n\nSTEP 3: Associating dimensions with geometric objects...`);
+      console.log('-'.repeat(70));
+    }
     const associations = await associateDimensionsWithObjects(
       geometricResult.extractionResultId,
       boundingBoxes,
@@ -65,20 +75,24 @@ export async function processForRevit(imagePath: string, drawingId: string) {
       200 // max distance in pixels
     );
 
-    console.log(`\nCreated ${associations.size} dimension associations`);
+    if (isDevelopment) console.log(`\nCreated ${associations.size} dimension associations`);
 
     // STEP 4: Update object properties with dimension values
-    console.log(
-      `\n\nSTEP 4: Updating object properties with dimension values...`
-    );
-    console.log('-'.repeat(70));
+    if (isDevelopment) {
+      console.log(
+        `\n\nSTEP 4: Updating object properties with dimension values...`
+      );
+      console.log('-'.repeat(70));
+    }
     await updateObjectsWithDimensions(associations);
 
     // STEP 5: Generate Revit output files
-    console.log(
-      `\n\nSTEP 5: Generating Revit-compatible outputs (JSON + CSV)...`
-    );
-    console.log('-'.repeat(70));
+    if (isDevelopment) {
+      console.log(
+        `\n\nSTEP 5: Generating Revit-compatible outputs (JSON + CSV)...`
+      );
+      console.log('-'.repeat(70));
+    }
 
     // Create output directory
     const outputDir = path.join(process.cwd(), 'revit-outputs');
@@ -105,23 +119,25 @@ export async function processForRevit(imagePath: string, drawingId: string) {
     const totalTime = Date.now() - startTime;
 
     // Final summary
-    console.log(`\n\n${'='.repeat(70)}`);
-    console.log(`PROCESSING COMPLETE`);
-    console.log(`${'='.repeat(70)}\n`);
-    console.log(`Total processing time: ${(totalTime / 1000).toFixed(2)}s`);
-    console.log(
-      `Total cost: ¥${(geometricResult.cost + cloudVisionClient.estimateCost(1)).toFixed(2)}\n`
-    );
+    if (isDevelopment) {
+      console.log(`\n\n${'='.repeat(70)}`);
+      console.log(`PROCESSING COMPLETE`);
+      console.log(`${'='.repeat(70)}\n`);
+      console.log(`Total processing time: ${(totalTime / 1000).toFixed(2)}s`);
+      console.log(
+        `Total cost: ¥${(geometricResult.cost + cloudVisionClient.estimateCost(1)).toFixed(2)}\n`
+      );
 
-    console.log(`Generated Files:`);
-    console.log(`  - Revit JSON: ${outputs.jsonPath}`);
-    console.log(`  - Revit CSV:  ${outputs.csvPath}\n`);
-    // console.log(`  - Annotated Image: ${annotatedImagePath}\n`);
+      console.log(`Generated Files:`);
+      console.log(`  - Revit JSON: ${outputs.jsonPath}`);
+      console.log(`  - Revit CSV:  ${outputs.csvPath}\n`);
+      // console.log(`  - Annotated Image: ${annotatedImagePath}\n`);
 
-    console.log(`Next Steps:`);
-    console.log(`  1. Open Dynamo in Revit`);
-    console.log(`  2. Load the JSON file: ${outputs.jsonPath}`);
-    console.log(`  3. Run the Dynamo script to generate 3D model\n`);
+      console.log(`Next Steps:`);
+      console.log(`  1. Open Dynamo in Revit`);
+      console.log(`  2. Load the JSON file: ${outputs.jsonPath}`);
+      console.log(`  3. Run the Dynamo script to generate 3D model\n`);
+    }
 
     return {
       success: true,
@@ -137,7 +153,7 @@ export async function processForRevit(imagePath: string, drawingId: string) {
       totalCost: geometricResult.cost + cloudVisionClient.estimateCost(1),
     };
   } catch (error) {
-    console.error(`\nRevit processing failed:`, error);
+    if (isDevelopment) console.error(`\nRevit processing failed:`, error);
     throw error;
   }
 }

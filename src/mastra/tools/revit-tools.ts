@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { getRevitMCPClient } from '../clients/revit-mcp-client';
 import type { GeometricElement } from '../../types';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Revit MCP Tools
  *
@@ -240,9 +242,11 @@ export const createElementsBatchTool = createTool({
       level,
       stopOnError,
       onProgress: (progress) => {
-        console.log(
-          `Creating element ${progress.current}/${progress.total}: ${progress.element.type} (${progress.element.id})`
-        );
+        if (isDevelopment) {
+          console.log(
+            `Creating element ${progress.current}/${progress.total}: ${progress.element.type} (${progress.element.id})`
+          );
+        }
       },
     });
 

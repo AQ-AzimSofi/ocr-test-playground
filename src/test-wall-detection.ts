@@ -63,7 +63,7 @@ async function testWallDetection(drawingName: string) {
       })
       .returning();
 
-    console.log(`✓ Created drawing: ${drawingName}`);
+    console.log(`[OK] Created drawing: ${drawingName}`);
   }
 
   const imagePath = drawing.filePath;
@@ -158,13 +158,13 @@ async function testWallDetection(drawingName: string) {
 
   results.forEach((r) => {
     const approach = r.approach.padEnd(20);
-    const success = r.success ? ' ✓ ' : ' ✗ ';
+    const success = r.success ? '[OK]' : '[FAIL]';
     const objects = r.objectCount.toString().padStart(7);
     const time = (r.processingTime / 1000).toFixed(2).padStart(8);
     const cost = `¥${r.cost.toFixed(2)}`.padStart(8);
     const notes = r.error ? `Error: ${r.error}` : '';
 
-    console.log(`${approach} | ${success}   | ${objects} | ${time} | ${cost} | ${notes}`);
+    console.log(`${approach} | ${success} | ${objects} | ${time} | ${cost} | ${notes}`);
   });
 
   console.log('\n' + '='.repeat(80));
@@ -200,10 +200,10 @@ const drawingName = args[0] || 'just-box-sample';
 
 testWallDetection(drawingName)
   .then(() => {
-    console.log('\n✓ Wall detection test completed!\n');
+    console.log('\n[OK] Wall detection test completed!\n');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('\n✗ Test failed:', error);
+    console.error('\n[FAIL] Test failed:', error);
     process.exit(1);
   });

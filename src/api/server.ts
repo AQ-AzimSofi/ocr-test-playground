@@ -1,15 +1,20 @@
 #!/usr/bin/env node
 
+// External imports
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+
+// Internal imports
 import { drawingsRoutes } from './routes/drawings.js';
 import { resultsRoutes } from './routes/results.js';
 import { testRunsRoutes } from './routes/test-runs.js';
 import { geometricObjectsRoutes } from './routes/geometric-objects.js';
 import { verificationRoutes } from './routes/verification.js';
+
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,29 +67,31 @@ const start = async () => {
 
     await fastify.listen({ port, host });
 
-    console.log('');
-    console.log('OCR Visualization API Server');
-    console.log('================================');
-    console.log(`Server listening on: http://localhost:${port}`);
-    console.log(`Static files: http://localhost:${port}/static/drawings/`);
-    console.log(`Health check: http://localhost:${port}/health`);
-    console.log('');
-    console.log('API Endpoints:');
-    console.log(`  GET    /api/drawings                                    - List all drawings`);
-    console.log(`  GET    /api/drawings/:id                                - Get drawing by ID`);
-    console.log(`  GET    /api/drawings/:id/results                        - Get all OCR results for drawing`);
-    console.log(`  GET    /api/results/:id                                 - Get specific result with bounding boxes`);
-    console.log(`  GET    /api/test-runs                                   - List all test runs`);
-    console.log(`  GET    /api/test-runs/:id                               - Get test run with comparison data`);
-    console.log(`  GET    /api/geometric-objects/result/:resultId          - Get geometric objects for result`);
-    console.log(`  GET    /api/geometric-objects/result/:resultId/walls    - Get walls for result`);
-    console.log(`  GET    /api/geometric-objects/result/:resultId/rooms    - Get rooms for result`);
-    console.log(`  GET    /api/geometric-objects/drawing/:drawingId        - Get geometric objects for drawing`);
-    console.log(`  POST   /api/verification/:resultId/verify-bbox          - Mark bbox as correct/incorrect`);
-    console.log(`  POST   /api/verification/:resultId/missing-text         - Add missing text entry`);
-    console.log(`  GET    /api/verification/:resultId/stats                - Get verification statistics`);
-    console.log(`  DELETE /api/verification/:resultId/missing-text/:id     - Delete missing text entry`);
-    console.log('');
+    if (isDevelopment) {
+      console.log('');
+      console.log('OCR Visualization API Server');
+      console.log('================================');
+      console.log(`Server listening on: http://localhost:${port}`);
+      console.log(`Static files: http://localhost:${port}/static/drawings/`);
+      console.log(`Health check: http://localhost:${port}/health`);
+      console.log('');
+      console.log('API Endpoints:');
+      console.log(`  GET    /api/drawings                                    - List all drawings`);
+      console.log(`  GET    /api/drawings/:id                                - Get drawing by ID`);
+      console.log(`  GET    /api/drawings/:id/results                        - Get all OCR results for drawing`);
+      console.log(`  GET    /api/results/:id                                 - Get specific result with bounding boxes`);
+      console.log(`  GET    /api/test-runs                                   - List all test runs`);
+      console.log(`  GET    /api/test-runs/:id                               - Get test run with comparison data`);
+      console.log(`  GET    /api/geometric-objects/result/:resultId          - Get geometric objects for result`);
+      console.log(`  GET    /api/geometric-objects/result/:resultId/walls    - Get walls for result`);
+      console.log(`  GET    /api/geometric-objects/result/:resultId/rooms    - Get rooms for result`);
+      console.log(`  GET    /api/geometric-objects/drawing/:drawingId        - Get geometric objects for drawing`);
+      console.log(`  POST   /api/verification/:resultId/verify-bbox          - Mark bbox as correct/incorrect`);
+      console.log(`  POST   /api/verification/:resultId/missing-text         - Add missing text entry`);
+      console.log(`  GET    /api/verification/:resultId/stats                - Get verification statistics`);
+      console.log(`  DELETE /api/verification/:resultId/missing-text/:id     - Delete missing text entry`);
+      console.log('');
+    }
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

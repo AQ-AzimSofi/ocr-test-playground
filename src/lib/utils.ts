@@ -2,6 +2,8 @@
  * Utility functions for character-level OCR evaluation
  */
 
+// No external or internal imports needed for this utility module
+
 /**
  * Normalize text for consistent comparison
  * - Normalizes Unicode characters (NFKC)

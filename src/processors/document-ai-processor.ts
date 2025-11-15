@@ -1,6 +1,8 @@
 import { documentAIClient } from '../lib/document-ai-client.js';
 import { db, extractionResults } from '../db/index.js';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Standalone Google Cloud Document AI Processor
  *
@@ -13,7 +15,9 @@ export async function processWithDocumentAI(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`  Processing with Document AI (standalone)...`);
+  if (isDevelopment) {
+    console.log(`  Processing with Document AI (standalone)...`);
+  }
   const startTime = Date.now();
 
   try {
@@ -22,9 +26,11 @@ export async function processWithDocumentAI(
       imagePath
     );
 
-    console.log(
-      `  Document AI: ${docAIResult.words.length} words, ${docAIResult.content.length} chars`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Document AI: ${docAIResult.words.length} words, ${docAIResult.content.length} chars`
+      );
+    }
 
     // Calculate average confidence
     const avgConfidence =
@@ -65,14 +71,16 @@ export async function processWithDocumentAI(
       })
       .returning();
 
-    console.log(
-      `  Document AI completed in ${(processingTime / 1000).toFixed(2)}s`
-    );
-    console.log(`     Text: ${docAIResult.content.length} chars`);
-    console.log(
-      `     Words: ${docAIResult.words.length} (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`
-    );
-    console.log(`     Cost: ${estimatedCost.toFixed(2)} yen`);
+    if (isDevelopment) {
+      console.log(
+        `  Document AI completed in ${(processingTime / 1000).toFixed(2)}s`
+      );
+      console.log(`     Text: ${docAIResult.content.length} chars`);
+      console.log(
+        `     Words: ${docAIResult.words.length} (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`
+      );
+      console.log(`     Cost: ${estimatedCost.toFixed(2)} yen`);
+    }
 
     return {
       success: true,

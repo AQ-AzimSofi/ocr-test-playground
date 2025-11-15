@@ -7,6 +7,8 @@ import {
   type PDFChunkInfo,
 } from '../utils/pdf-splitter.js';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Google Cloud Document AI client wrapper
  * Uses Document AI processors for advanced OCR with word-level confidence
@@ -120,18 +122,22 @@ export class DocumentAIClient {
       }
 
       // Split PDF into chunks
-      console.log(
-        `  PDF has ${totalPages} pages, splitting into ${Math.ceil(totalPages / pagesPerChunk)} chunks of ${pagesPerChunk} pages...`
-      );
+      if (isDevelopment) {
+        console.log(
+          `  PDF has ${totalPages} pages, splitting into ${Math.ceil(totalPages / pagesPerChunk)} chunks of ${pagesPerChunk} pages...`
+        );
+      }
       chunks = await splitPDFIntoChunks(imagePath, pagesPerChunk);
 
       // Process each chunk
       const chunkResults = [];
       for (let i = 0; i < chunks.length; i++) {
         const chunk = chunks[i];
-        console.log(
-          `  Processing chunk ${i + 1}/${chunks.length} (pages ${chunk.startPage}-${chunk.endPage})...`
-        );
+        if (isDevelopment) {
+          console.log(
+            `  Processing chunk ${i + 1}/${chunks.length} (pages ${chunk.startPage}-${chunk.endPage})...`
+          );
+        }
 
         const chunkResult = await this.analyzeDocument(chunk.filePath);
 
@@ -152,9 +158,11 @@ export class DocumentAIClient {
       const mergedPages = chunkResults.flatMap((r) => r.pages);
       const mergedWords = chunkResults.flatMap((r) => r.words);
 
-      console.log(
-        `  Successfully processed ${chunks.length} chunks (${totalPages} total pages)`
-      );
+      if (isDevelopment) {
+        console.log(
+          `  Successfully processed ${chunks.length} chunks (${totalPages} total pages)`
+        );
+      }
 
       return {
         content: mergedContent,

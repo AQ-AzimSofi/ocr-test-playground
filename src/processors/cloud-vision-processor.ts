@@ -1,3 +1,4 @@
+// Internal imports
 import { cloudVisionClient } from '../lib/cloud-vision-client.js';
 import { db, extractionResults } from '../db/index.js';
 import {
@@ -5,6 +6,8 @@ import {
   convertPdfToImages,
   cleanupTempImages,
 } from '../utils/pdf-converter.js';
+
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 /**
  * Standalone Cloud Vision Processor
@@ -18,7 +21,9 @@ export async function processWithCloudVision(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`  Processing with Cloud Vision (standalone)...`);
+  if (isDevelopment) {
+    console.log(`  Processing with Cloud Vision (standalone)...`);
+  }
   const startTime = Date.now();
 
   // Check if input is a PDF and convert to images if needed
@@ -27,14 +32,18 @@ export async function processWithCloudVision(
   let tempImagePaths: string[] = [];
 
   if (isPdfFile(imagePath)) {
-    console.log(`  Detected PDF file - converting to images...`);
+    if (isDevelopment) {
+      console.log(`  Detected PDF file - converting to images...`);
+    }
     try {
       imagePaths = await convertPdfToImages(imagePath);
       tempImagePaths = imagePaths; // Track for cleanup
       isMultiPage = true;
-      console.log(`  ✓ Converted ${imagePaths.length} PDF pages to PNG`);
+      if (isDevelopment) {
+        console.log(`  [OK] Converted ${imagePaths.length} PDF pages to PNG`);
+      }
     } catch (error) {
-      console.error(`  ✗ Failed to convert PDF to images:`, error);
+      console.error(`  [ERROR] Failed to convert PDF to images:`, error);
       throw new Error(`PDF conversion failed: ${error}`);
     }
   }
@@ -54,7 +63,7 @@ export async function processWithCloudVision(
       const pageNum = i + 1;
       const currentImagePath = imagePaths[i];
 
-      if (isMultiPage) {
+      if (isMultiPage && isDevelopment) {
         console.log(
           `  Processing page ${pageNum}/${imagePaths.length} with Cloud Vision...`
         );
@@ -75,18 +84,20 @@ export async function processWithCloudVision(
       // Update cost estimate
       totalCost += cloudVisionClient.estimateCost(1);
 
-      if (isMultiPage) {
+      if (isMultiPage && isDevelopment) {
         console.log(
-          `    ✓ Page ${pageNum}: ${bboxes.length} regions, ${bboxes.map((b) => b.text).join(' ').length} chars`
+          `    [OK] Page ${pageNum}: ${bboxes.length} regions, ${bboxes.map((b) => b.text).join(' ').length} chars`
         );
       }
     }
 
     const rawText = allBboxes.map((b) => b.text).join('\n');
 
-    console.log(
-      `  Cloud Vision: ${allBboxes.length} regions, ${rawText.length} chars`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Cloud Vision: ${allBboxes.length} regions, ${rawText.length} chars`
+      );
+    }
 
     // Calculate average confidence
     const avgConfidence =
@@ -123,17 +134,19 @@ export async function processWithCloudVision(
       })
       .returning();
 
-    console.log(
-      `  Cloud Vision completed in ${(processingTime / 1000).toFixed(2)}s`
-    );
-    console.log(`     Text: ${rawText.length} chars`);
-    console.log(
-      `     Regions: ${allBboxes.length} (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`
-    );
-    if (isMultiPage) {
-      console.log(`     Pages: ${imagePaths.length}`);
+    if (isDevelopment) {
+      console.log(
+        `  Cloud Vision completed in ${(processingTime / 1000).toFixed(2)}s`
+      );
+      console.log(`     Text: ${rawText.length} chars`);
+      console.log(
+        `     Regions: ${allBboxes.length} (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`
+      );
+      if (isMultiPage) {
+        console.log(`     Pages: ${imagePaths.length}`);
+      }
+      console.log(`     Cost: ${totalCost.toFixed(2)} yen`);
     }
-    console.log(`     Cost: ${totalCost.toFixed(2)} yen`);
 
     return {
       success: true,
@@ -150,7 +163,9 @@ export async function processWithCloudVision(
   } finally {
     // Clean up temporary images if PDF was converted
     if (tempImagePaths.length > 0) {
-      console.log(`  Cleaning up temporary images...`);
+      if (isDevelopment) {
+        console.log(`  Cleaning up temporary images...`);
+      }
       cleanupTempImages(tempImagePaths);
     }
   }

@@ -3,6 +3,8 @@ import { db, extractionResults } from '../db/index.js';
 import { sanitizePdf } from '../utils/pdf-sanitizer.js';
 import * as path from 'path';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Standalone Azure Layout Processor
  *
@@ -17,7 +19,9 @@ export async function processWithAzureLayout(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`  Processing with Azure Layout (standalone)...`);
+  if (isDevelopment) {
+    console.log(`  Processing with Azure Layout (standalone)...`);
+  }
   const startTime = Date.now();
 
   // Sanitize PDF if it's a PDF file
@@ -26,7 +30,9 @@ export async function processWithAzureLayout(
     try {
       const sanitizedPath = await sanitizePdf(imagePath);
       if (sanitizedPath !== imagePath) {
-        console.log(`  PDF sanitized to fix metadata issues`);
+        if (isDevelopment) {
+          console.log(`  PDF sanitized to fix metadata issues`);
+        }
         workingPath = sanitizedPath;
       }
     } catch (error) {
@@ -39,9 +45,11 @@ export async function processWithAzureLayout(
     const result = await azureDocumentClient.analyzeLayout(workingPath);
     const rawText = result.content;
 
-    console.log(
-      `  Azure Layout: ${result.lines.length} lines, ${rawText.length} chars`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Azure Layout: ${result.lines.length} lines, ${rawText.length} chars`
+      );
+    }
 
     // Calculate average confidence (may be undefined for some lines)
     const confidences = result.lines
@@ -92,20 +100,22 @@ export async function processWithAzureLayout(
       })
       .returning();
 
-    console.log(
-      `  Azure Layout completed in ${(processingTime / 1000).toFixed(2)}s`
-    );
-    console.log(`     Text: ${rawText.length} chars`);
-    console.log(
-      `     Lines: ${result.lines.length} (${linesWithConfidence} with confidence, ${linesWithoutConfidence} without)`
-    );
-    console.log(
-      `     Avg confidence: ${avgConfidence !== undefined ? (avgConfidence * 100).toFixed(1) + '%' : 'N/A'}`
-    );
-    console.log(
-      `     Structure: ${result.tables?.length || 0} tables, ${result.paragraphs?.length || 0} paragraphs`
-    );
-    console.log(`     Cost: ${estimatedCost.toFixed(2)} yen`);
+    if (isDevelopment) {
+      console.log(
+        `  Azure Layout completed in ${(processingTime / 1000).toFixed(2)}s`
+      );
+      console.log(`     Text: ${rawText.length} chars`);
+      console.log(
+        `     Lines: ${result.lines.length} (${linesWithConfidence} with confidence, ${linesWithoutConfidence} without)`
+      );
+      console.log(
+        `     Avg confidence: ${avgConfidence !== undefined ? (avgConfidence * 100).toFixed(1) + '%' : 'N/A'}`
+      );
+      console.log(
+        `     Structure: ${result.tables?.length || 0} tables, ${result.paragraphs?.length || 0} paragraphs`
+      );
+      console.log(`     Cost: ${estimatedCost.toFixed(2)} yen`);
+    }
 
     return {
       success: true,

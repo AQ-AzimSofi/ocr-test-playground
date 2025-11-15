@@ -7,6 +7,8 @@ import { isPdfFile } from '../utils/pdf-converter.js';
 
 dotenv.config({ path: '.env.development' });
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Hybrid wall detector combining OpenCV + Gemini AI
  *
@@ -60,23 +62,25 @@ export class HybridWallDetector {
    * Hybrid detection: CV for detection, AI for classification
    */
   async detectWallsAndRooms(imagePath: string): Promise<HybridDetectionResult> {
-    console.log('  [Hybrid Detector] Stage 1: Computer Vision detection...');
+    if (isDevelopment) console.log('  [Hybrid Detector] Stage 1: Computer Vision detection...');
 
     // Stage 1: CV detection
     const cvResult = await wallLineDetector.detectWalls(imagePath);
 
-    console.log(
-      `  [Hybrid Detector] CV found: ${cvResult.walls.length} walls, ${cvResult.rooms.length} rooms`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  [Hybrid Detector] CV found: ${cvResult.walls.length} walls, ${cvResult.rooms.length} rooms`
+      );
+    }
 
     // Stage 2: AI classification
-    console.log('  [Hybrid Detector] Stage 2: AI classification...');
+    if (isDevelopment) console.log('  [Hybrid Detector] Stage 2: AI classification...');
     const aiStartTime = Date.now();
 
     const classifiedWalls = await this.classifyWalls(imagePath, cvResult.walls);
 
     // Stage 2.5: Re-detect rooms with perimeter filtering using classified exterior walls
-    console.log('  [Hybrid Detector] Stage 2.5: Filtering interior rooms...');
+    if (isDevelopment) console.log('  [Hybrid Detector] Stage 2.5: Filtering interior rooms...');
     const exteriorWalls = classifiedWalls
       .filter((w) => w.classification.type === 'exterior-wall')
       .map((w) => w.line);
@@ -87,18 +91,22 @@ export class HybridWallDetector {
         imagePath,
         exteriorWalls
       );
-      console.log(
-        `  [Hybrid Detector] Filtered to ${filteredRooms.length} interior rooms (was ${cvResult.rooms.length})`
-      );
+      if (isDevelopment) {
+        console.log(
+          `  [Hybrid Detector] Filtered to ${filteredRooms.length} interior rooms (was ${cvResult.rooms.length})`
+        );
+      }
     }
 
     const classifiedRooms = await this.classifyRooms(imagePath, filteredRooms);
 
     const aiClassificationTime = Date.now() - aiStartTime;
 
-    console.log(
-      `  [Hybrid Detector] AI classification completed in ${(aiClassificationTime / 1000).toFixed(2)}s`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  [Hybrid Detector] AI classification completed in ${(aiClassificationTime / 1000).toFixed(2)}s`
+      );
+    }
 
     return {
       walls: classifiedWalls,
@@ -210,7 +218,7 @@ Return ONLY the JSON object, no markdown code blocks.`;
         };
       });
     } catch (error) {
-      console.warn('  [Hybrid Detector] AI classification failed, using defaults:', error);
+      if (isDevelopment) console.warn('  [Hybrid Detector] AI classification failed, using defaults:', error);
 
       // Fallback: use position-based heuristics
       return walls.map((wall) => ({
@@ -325,7 +333,7 @@ Return ONLY the JSON object, no markdown code blocks.`;
         };
       });
     } catch (error) {
-      console.warn('  [Hybrid Detector] AI room classification failed, using defaults:', error);
+      if (isDevelopment) console.warn('  [Hybrid Detector] AI room classification failed, using defaults:', error);
 
       // Fallback: rooms without labels
       return rooms.map((room) => ({
@@ -359,12 +367,12 @@ export async function processWithHybridDetector(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`  Processing with Hybrid Wall Detector...`);
+  if (isDevelopment) console.log(`  Processing with Hybrid Wall Detector...`);
 
   // Skip PDF files - hybrid detector only supports image formats
   if (isPdfFile(imagePath)) {
     const errorMessage = 'Hybrid Wall Detector does not support PDF files. Only PNG/JPEG images are supported.';
-    console.log(`  [SKIPPED] ${errorMessage}`);
+    if (isDevelopment) console.log(`  [SKIPPED] ${errorMessage}`);
 
     // Return a failed result without throwing
     return {
@@ -440,22 +448,24 @@ export async function processWithHybridDetector(
       })
       .returning();
 
-    console.log(
-      `  Hybrid Detector completed in ${(processingTime / 1000).toFixed(2)}s`
-    );
-    console.log(
-      `     Detected ${result.walls.length} walls, ${result.rooms.length} rooms`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Hybrid Detector completed in ${(processingTime / 1000).toFixed(2)}s`
+      );
+      console.log(
+        `     Detected ${result.walls.length} walls, ${result.rooms.length} rooms`
+      );
 
-    // Count wall types
-    const wallTypes: Record<string, number> = {};
-    result.walls.forEach((w) => {
-      wallTypes[w.classification.type] =
-        (wallTypes[w.classification.type] || 0) + 1;
-    });
-    Object.entries(wallTypes).forEach(([type, count]) => {
-      console.log(`       - ${count} ${type}(s)`);
-    });
+      // Count wall types
+      const wallTypes: Record<string, number> = {};
+      result.walls.forEach((w) => {
+        wallTypes[w.classification.type] =
+          (wallTypes[w.classification.type] || 0) + 1;
+      });
+      Object.entries(wallTypes).forEach(([type, count]) => {
+        console.log(`       - ${count} ${type}(s)`);
+      });
+    }
 
     // Save each detected object to geometric_objects table
     const geometricObjectIds: string[] = [];
@@ -533,7 +543,7 @@ export async function processWithHybridDetector(
       metadata: result.metadata,
     };
   } catch (error) {
-    console.error(`  Hybrid Detector failed:`, error);
+    if (isDevelopment) console.error(`  Hybrid Detector failed:`, error);
     throw error;
   }
 }

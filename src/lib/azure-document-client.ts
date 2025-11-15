@@ -4,6 +4,8 @@ import {
 } from '@azure/ai-form-recognizer';
 import * as fs from 'fs';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Azure AI Document Intelligence client wrapper
  * Uses the prebuilt-layout model optimized for technical drawings and documents
@@ -130,7 +132,7 @@ export class AzureDocumentClient {
 
     // If we already have 4 or more points, return as-is
     if (points.length >= 4) {
-      if (debugEnabled) {
+      if (debugEnabled && isDevelopment) {
         console.log(
           `[Azure] Bbox already has ${inputLength} points (no normalization needed)`
         );
@@ -149,7 +151,7 @@ export class AzureDocumentClient {
       ];
 
       // Debug log for 2-point to 4-point conversion
-      if (debugEnabled) {
+      if (debugEnabled && isDevelopment) {
         console.log(
           `[Azure] Normalized bbox: ${inputLength} points -> ${normalized.length} points`
         );

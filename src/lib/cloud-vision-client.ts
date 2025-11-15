@@ -1,5 +1,8 @@
+// External imports
 import vision from '@google-cloud/vision';
 import * as fs from 'fs';
+
+// Internal imports
 import { isPdfFile } from '../utils/pdf-converter.js';
 
 /**

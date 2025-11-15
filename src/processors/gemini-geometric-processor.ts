@@ -5,6 +5,8 @@ import { db, extractionResults, geometricObjects } from '../db/index.js';
 
 dotenv.config({ path: '.env.development' });
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Gemini-based geometric object detector for architectural drawings
  * Detects walls, doors, windows, and other structural elements using AI
@@ -190,10 +192,12 @@ Example output for a simple room:
       const parsed = JSON.parse(jsonText) as GeometricDetectionResult;
       return parsed;
     } catch (error) {
-      console.error(
-        'Failed to parse Gemini geometric detection response:',
-        rawText
-      );
+      if (isDevelopment) {
+        console.error(
+          'Failed to parse Gemini geometric detection response:',
+          rawText
+        );
+      }
       throw new Error(
         `Gemini returned invalid JSON: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -220,7 +224,7 @@ export async function processWithGeminiGeometric(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`  Processing with Gemini Geometric Detector...`);
+  if (isDevelopment) console.log(`  Processing with Gemini Geometric Detector...`);
   const startTime = Date.now();
 
   try {
@@ -275,19 +279,21 @@ export async function processWithGeminiGeometric(
       })
       .returning();
 
-    console.log(
-      `  Gemini Geometric completed in ${(processingTime / 1000).toFixed(2)}s`
-    );
-    console.log(`     Detected ${result.objects.length} objects:`);
+    if (isDevelopment) {
+      console.log(
+        `  Gemini Geometric completed in ${(processingTime / 1000).toFixed(2)}s`
+      );
+      console.log(`     Detected ${result.objects.length} objects:`);
 
-    // Count objects by type
-    const typeCounts: Record<string, number> = {};
-    result.objects.forEach((obj) => {
-      typeCounts[obj.type] = (typeCounts[obj.type] || 0) + 1;
-    });
-    Object.entries(typeCounts).forEach(([type, count]) => {
-      console.log(`       - ${count} ${type}(s)`);
-    });
+      // Count objects by type
+      const typeCounts: Record<string, number> = {};
+      result.objects.forEach((obj) => {
+        typeCounts[obj.type] = (typeCounts[obj.type] || 0) + 1;
+      });
+      Object.entries(typeCounts).forEach(([type, count]) => {
+        console.log(`       - ${count} ${type}(s)`);
+      });
+    }
 
     // Save each geometric object to the geometric_objects table
     const geometricObjectIds: string[] = [];
@@ -333,7 +339,7 @@ export async function processWithGeminiGeometric(
       metadata: result.metadata,
     };
   } catch (error) {
-    console.error(`  Gemini Geometric failed:`, error);
+    if (isDevelopment) console.error(`  Gemini Geometric failed:`, error);
     throw error;
   }
 }

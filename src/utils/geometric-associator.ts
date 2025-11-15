@@ -1,6 +1,8 @@
 import { db, geometricObjects, elementRelationships } from '../db/index.js';
 import { eq } from 'drizzle-orm';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Geometric Object and Dimension Association Utility
  * Matches extracted dimension text to geometric objects based on spatial proximity
@@ -144,7 +146,7 @@ export async function associateDimensionsWithObjects(
     .where(eq(geometricObjects.extractionResultId, extractionResultId));
 
   if (objects.length === 0) {
-    console.log('  No geometric objects found for association');
+    if (isDevelopment) console.log('  No geometric objects found for association');
     return new Map();
   }
 
@@ -153,9 +155,11 @@ export async function associateDimensionsWithObjects(
     isDimensionText(bbox.text)
   );
 
-  console.log(
-    `  Found ${dimensionBoxes.length} dimension text boxes to associate`
-  );
+  if (isDevelopment) {
+    console.log(
+      `  Found ${dimensionBoxes.length} dimension text boxes to associate`
+    );
+  }
 
   const associations = new Map<
     string,
@@ -210,9 +214,11 @@ export async function associateDimensionsWithObjects(
         },
       });
 
-      console.log(
-        `    Associated "${dimBox.text}" with ${nearestObject.objectType} (distance: ${minDistance.toFixed(1)}px, confidence: ${(confidence * 100).toFixed(1)}%)`
-      );
+      if (isDevelopment) {
+        console.log(
+          `    Associated "${dimBox.text}" with ${nearestObject.objectType} (distance: ${minDistance.toFixed(1)}px, confidence: ${(confidence * 100).toFixed(1)}%)`
+        );
+      }
     }
   }
 
@@ -264,5 +270,7 @@ export async function updateObjectsWithDimensions(
       .where(eq(geometricObjects.id, objectId));
   }
 
-  console.log(`  Updated ${associations.size} objects with dimension values`);
+  if (isDevelopment) {
+    console.log(`  Updated ${associations.size} objects with dimension values`);
+  }
 }

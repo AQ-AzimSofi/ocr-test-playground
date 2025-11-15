@@ -7,6 +7,8 @@ import {
   type CropRegion,
 } from '../utils/image-cropper.js';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Azure Layout + Gemini Hybrid Processor (Line-Level Fusion)
  *
@@ -25,18 +27,22 @@ export async function processWithAzureLayoutGeminiHybrid(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(
-    `  Processing with Azure Layout + Gemini Hybrid (Line-Level Fusion)...`
-  );
+  if (isDevelopment) {
+    console.log(
+      `  Processing with Azure Layout + Gemini Hybrid (Line-Level Fusion)...`
+    );
+  }
   const startTime = Date.now();
 
   try {
     const azureResult = await azureDocumentClient.analyzeLayout(imagePath);
     const azureText = azureResult.content;
 
-    console.log(
-      `  Azure Layout: ${azureResult.lines.length} lines, ${azureText.length} chars`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Azure Layout: ${azureResult.lines.length} lines, ${azureText.length} chars`
+      );
+    }
 
     const LOW_CONFIDENCE_THRESHOLD = 0.85;
 
@@ -69,25 +75,31 @@ export async function processWithAzureLayoutGeminiHybrid(
           confidences.length
         : undefined;
 
-    console.log(
-      `  High confidence: ${highConfidenceLines.length} lines (>=${LOW_CONFIDENCE_THRESHOLD * 100}%)`
-    );
-    console.log(
-      `  Low confidence: ${lowConfidenceLines.length} lines (${lowConfidencePercentage.toFixed(1)}%)`
-    );
-    console.log(`  Average confidence: ${avgConfidence !== undefined ? (avgConfidence * 100).toFixed(1) + '%' : 'N/A'}`);
+    if (isDevelopment) {
+      console.log(
+        `  High confidence: ${highConfidenceLines.length} lines (>=${LOW_CONFIDENCE_THRESHOLD * 100}%)`
+      );
+      console.log(
+        `  Low confidence: ${lowConfidenceLines.length} lines (${lowConfidencePercentage.toFixed(1)}%)`
+      );
+      console.log(`  Average confidence: ${avgConfidence !== undefined ? (avgConfidence * 100).toFixed(1) + '%' : 'N/A'}`);
+    }
 
     let croppedLines = [];
     let geminiCorrectedTexts = new Map<number, string>();
     let geminiCost = 0;
 
     if (lowConfidenceLines.length > 0) {
-      console.log(
-        `  Cropping ${lowConfidenceLines.length} low-confidence lines...`
-      );
+      if (isDevelopment) {
+        console.log(
+          `  Cropping ${lowConfidenceLines.length} low-confidence lines...`
+        );
+      }
       croppedLines = await batchCropRegions(imagePath, lowConfidenceLines, 8);
 
-      console.log(`  Sending ${croppedLines.length} lines to Gemini...`);
+      if (isDevelopment) {
+        console.log(`  Sending ${croppedLines.length} lines to Gemini...`);
+      }
 
       const geminiInputs = croppedLines.map((cropped) => ({
         base64: cropped.base64,
@@ -103,11 +115,15 @@ export async function processWithAzureLayoutGeminiHybrid(
       });
 
       geminiCost = geminiClient.estimateCost(lowConfidenceLines.length, true);
-      console.log(`  Gemini corrected ${geminiCorrectedTexts.size} lines`);
+      if (isDevelopment) {
+        console.log(`  Gemini corrected ${geminiCorrectedTexts.size} lines`);
+      }
     } else {
-      console.log(
-        `  All lines have high confidence - no Gemini correction needed!`
-      );
+      if (isDevelopment) {
+        console.log(
+          `  All lines have high confidence - no Gemini correction needed!`
+        );
+      }
     }
 
     const allLines = azureResult.lines.map(
@@ -229,22 +245,24 @@ export async function processWithAzureLayoutGeminiHybrid(
       })
       .returning();
 
-    console.log(
-      `  Azure Layout + Gemini Hybrid completed in ${(processingTime / 1000).toFixed(2)}s`
-    );
-    console.log(`     Final text: ${finalText.length} chars`);
-    console.log(
-      `     Azure Layout: ${azureResult.lines.length} lines (avg confidence: ${avgConfidence !== undefined ? (avgConfidence * 100).toFixed(1) + '%' : 'N/A'})`
-    );
-    console.log(
-      `     Distribution: ${confidenceRanges.excellent} excellent, ${confidenceRanges.good} good, ${confidenceRanges.medium} medium, ${confidenceRanges.low + confidenceRanges.veryLow} low`
-    );
-    console.log(
-      `     Gemini corrections: ${geminiCorrectedTexts.size}/${lowConfidenceLines.length} low-confidence lines`
-    );
-    console.log(
-      `     Cost: ${estimatedCost.toFixed(2)} yen (saved ${(geminiClient.estimateCost(1, false) - geminiCost).toFixed(2)} yen vs full Gemini)`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Azure Layout + Gemini Hybrid completed in ${(processingTime / 1000).toFixed(2)}s`
+      );
+      console.log(`     Final text: ${finalText.length} chars`);
+      console.log(
+        `     Azure Layout: ${azureResult.lines.length} lines (avg confidence: ${avgConfidence !== undefined ? (avgConfidence * 100).toFixed(1) + '%' : 'N/A'})`
+      );
+      console.log(
+        `     Distribution: ${confidenceRanges.excellent} excellent, ${confidenceRanges.good} good, ${confidenceRanges.medium} medium, ${confidenceRanges.low + confidenceRanges.veryLow} low`
+      );
+      console.log(
+        `     Gemini corrections: ${geminiCorrectedTexts.size}/${lowConfidenceLines.length} low-confidence lines`
+      );
+      console.log(
+        `     Cost: ${estimatedCost.toFixed(2)} yen (saved ${(geminiClient.estimateCost(1, false) - geminiCost).toFixed(2)} yen vs full Gemini)`
+      );
+    }
 
     return {
       success: true,

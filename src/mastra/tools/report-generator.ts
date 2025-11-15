@@ -1,7 +1,10 @@
+// External imports
 import { createTool } from '@mastra/core';
 import { z } from 'zod';
 import * as fs from 'fs';
 import * as path from 'path';
+
+// Internal imports
 import { formatTime, formatCost } from '../../lib/utils.js';
 
 /**
@@ -69,6 +72,7 @@ export const reportGeneratorTool = createTool({
         avgOrderIndependentAccuracy: number;
         avgCharacterAccuracy: number;
         avgCharacterSetCoverage: number;
+        avgEditDistance: number;
         avgProcessingTime: number;
         totalCost: number;
         testCount: number;
@@ -83,6 +87,7 @@ export const reportGeneratorTool = createTool({
           avgOrderIndependentAccuracy: 0,
           avgCharacterAccuracy: 0,
           avgCharacterSetCoverage: 0,
+          avgEditDistance: 0,
           avgProcessingTime: 0,
           totalCost: 0,
           testCount: 0,
@@ -98,6 +103,7 @@ export const reportGeneratorTool = createTool({
         result.metrics.orderIndependentAccuracy || 0;
       stats.avgCharacterAccuracy += result.metrics.characterAccuracy;
       stats.avgCharacterSetCoverage += result.metrics.characterSetCoverage;
+      stats.avgEditDistance += result.metrics.editDistance || 0;
       stats.avgProcessingTime += result.metrics.processingTimeMs;
       stats.totalCost += result.metrics.apiCost;
       stats.testCount += 1;
@@ -114,6 +120,7 @@ export const reportGeneratorTool = createTool({
       stats.avgCharacterAccuracy = stats.avgCharacterAccuracy / stats.testCount;
       stats.avgCharacterSetCoverage =
         stats.avgCharacterSetCoverage / stats.testCount;
+      stats.avgEditDistance = stats.avgEditDistance / stats.testCount;
       stats.avgProcessingTime = stats.avgProcessingTime / stats.testCount;
     }
 
@@ -370,28 +377,155 @@ function generateHTMLReport(
       font-family: monospace;
       font-size: 0.9em;
     }
+
+    /* Table of Contents Sidebar */
+    .toc {
+      position: fixed;
+      left: 20px;
+      top: 100px;
+      width: 220px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-height: calc(100vh - 140px);
+      overflow-y: auto;
+    }
+
+    .toc h3 {
+      margin: 0 0 10px 0;
+      font-size: 1em;
+      color: #2196F3;
+      border-bottom: 2px solid #ddd;
+      padding-bottom: 8px;
+    }
+
+    .toc ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .toc li {
+      margin: 0;
+      padding: 0;
+    }
+
+    .toc a {
+      display: block;
+      padding: 6px 8px;
+      color: #666;
+      text-decoration: none;
+      font-size: 0.9em;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .toc a:hover {
+      background: #f0f0f0;
+      color: #2196F3;
+    }
+
+    /* Scroll to Top Button */
+    .scroll-top {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 50px;
+      height: 50px;
+      background-color: #2196F3;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      z-index: 1000;
+      text-decoration: none;
+      outline: none;
+    }
+
+    .scroll-top:hover {
+      background-color: #1976D2;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(33, 150, 243, 0.5);
+    }
+
+    .scroll-top:active {
+      transform: translateY(-1px);
+    }
+
+    .scroll-top svg {
+      display: block;
+      width: 24px;
+      height: 24px;
+    }
+
+    @media print {
+      .toc,
+      .scroll-top {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Table of Contents -->
+  <nav class="toc">
+    <h3>Table of Contents</h3>
+    <ul>
+      <li><a href="#summary">Summary</a></li>
+      <li><a href="#info">About Metrics</a></li>
+      <li><a href="#tool-comparison">Tool Comparison</a></li>
+      <li><a href="#detailed-results">Detailed Results</a></li>
+      <li><a href="#character-differences">Character Differences</a></li>
+    </ul>
+  </nav>
+
+  <!-- Scroll to Top Button -->
+  <button class="scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Scroll to top">
+    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+  </button>
+
+
   <h1>Character-Level OCR Test Report</h1>
   <p>Test Run ID: <code>${testRunId}</code></p>
   <p>Generated: ${new Date().toLocaleString()}</p>
 
-  <div class="info-box">
-    <h3>About Character-Level OCR Metrics</h3>
-    <ul>
-      <li><strong>Position-Sensitive CER:</strong> Industry-standard metric that considers character order. Lower is better (0.0 = perfect)</li>
-      <li><strong>Order-Independent CER:</strong> Measures content completeness ignoring text order (full-width normalized, whitespace removed, characters sorted). Lower is better (0.0 = perfect)</li>
-      <li><strong>Order-Independent Accuracy:</strong> Content accuracy percentage ignoring order. Higher is better (0-100%)</li>
-      <li><strong>Character Accuracy:</strong> Position-based accuracy. Higher is better (0-100%)</li>
-      <li><strong>Character Set Coverage:</strong> Percentage of unique characters found. Higher is better (0-100%)</li>
-      <li><strong>Edit Distance:</strong> Number of insertions, deletions, or substitutions needed to transform extracted text to ground truth (Levenshtein distance). Lower is better.</li>
-      <li><strong>Order-Independent Edit Distance:</strong> Edit distance after sorting characters (ignores order). Shows content completeness regardless of sequence. Lower is better.</li>
-    </ul>
-    <p><em>Note: Order-independent metrics treat "first second" and "second first" as equal, useful for comparing content completeness.</em></p>
+  <div class="info-box" id="info">
+    <h3>About OCR Evaluation Metrics</h3>
+
+    <div style="margin-bottom: 1.5em;">
+      <h4 style="margin-bottom: 0.5em; color: #2196F3;">
+        Extraction Accuracy
+      </h4>
+      <p style="margin: 0.5em 0;">Measures content completeness regardless of character order. Higher is better (0-100%)</p>
+      <div style="background: white; padding: 1em; border-radius: 4px; border-left: 3px solid #4CAF50;">
+        <p style="margin: 0 0 0.5em 0;"><strong>How it's calculated:</strong></p>
+        <ul style="margin: 0.5em 0; padding-left: 1.2em; line-height: 1.6;">
+          <li>Removes all whitespace</li>
+          <li>Sorts characters alphabetically</li>
+          <li>Compares content regardless of order</li>
+        </ul>
+        <div style="background: #f9fafb; padding: 0.6em; border-radius: 4px; font-family: monospace; font-size: 0.9em; margin-top: 0.5em;">
+          <div style="color: #374151;">"first second" = "second first"</div>
+          <div style="color: #6b7280; margin-top: 0.2em;">Both → "cdefinorsst"</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h4 style="margin-bottom: 0.5em; color: #2196F3;">Edit Distance</h4>
+      <p style="margin: 0;">Number of character insertions, deletions, or substitutions needed to transform extracted text to ground truth (Levenshtein distance). Lower is better.</p>
+    </div>
   </div>
 
-  <div class="summary">
+  <div class="summary" id="summary">
     <h2>Summary</h2>
     <ul>
       <li><strong>Best Overall Tool (Lowest CER):</strong> <span class="highlight">${summary.bestOverallTool}</span></li>
@@ -402,16 +536,13 @@ function generateHTMLReport(
     </ul>
   </div>
 
-  <h2>Tool Performance Comparison</h2>
+  <h2 id="tool-comparison">Tool Performance Comparison</h2>
   <table>
     <thead>
       <tr>
         <th>Tool</th>
-        <th>Position-Sensitive CER</th>
-        <th>Order-Independent CER</th>
-        <th>Order-Independent Accuracy</th>
-        <th>Char Accuracy</th>
-        <th>Char Set Coverage</th>
+        <th>Extraction Accuracy</th>
+        <th>Avg Edit Distance</th>
         <th>Avg Processing Time</th>
         <th>Total Cost</th>
         <th>Tests</th>
@@ -429,11 +560,8 @@ function generateHTMLReport(
           return `
         <tr>
           <td><strong>${tool}</strong></td>
-          <td><span class="metric" style="${getMetricStyle(stats.avgCER, 'cer')}">${(stats.avgCER * 100).toFixed(2)}%</span></td>
-          <td><span class="metric" style="${getMetricStyle(stats.avgOrderIndependentCER, 'cer')}">${(stats.avgOrderIndependentCER * 100).toFixed(2)}%</span></td>
-          <td><span class="metric" style="${getMetricStyle(stats.avgOrderIndependentAccuracy, 'accuracy')}">${stats.avgOrderIndependentAccuracy.toFixed(1)}%</span></td>
-          <td><span class="metric" style="${getMetricStyle(stats.avgCharacterAccuracy, 'accuracy')}">${stats.avgCharacterAccuracy.toFixed(1)}%</span></td>
-          <td><span class="metric" style="${getMetricStyle(stats.avgCharacterSetCoverage, 'coverage')}">${stats.avgCharacterSetCoverage.toFixed(1)}%</span></td>
+          <td><span class="metric" style="${getMetricStyle(stats.avgOrderIndependentAccuracy, 'accuracy')}; font-weight: 700; font-size: 1.1em;"><strong>${stats.avgOrderIndependentAccuracy.toFixed(1)}%</strong></span></td>
+          <td><span class="metric">${stats.avgEditDistance ? stats.avgEditDistance.toFixed(0) : 'N/A'}</span></td>
           <td><span class="metric" style="${getMetricStyle(normalizedTime, 'time')}">${formatTime(stats.avgProcessingTime)}</span></td>
           <td>${formatCost(stats.totalCost)}</td>
           <td>${stats.testCount}</td>
@@ -444,7 +572,7 @@ function generateHTMLReport(
     </tbody>
   </table>
 
-  <h2>Detailed Results</h2>
+  <h2 id="detailed-results">Detailed Results</h2>
   <table>
     <thead>
       <tr>
@@ -492,7 +620,7 @@ function generateHTMLReport(
     </tbody>
   </table>
 
-  <h2>Character Differences by Drawing</h2>
+  <h2 id="character-differences">Character Differences by Drawing</h2>
   <p>Order-independent character frequency analysis showing which specific characters each processor missed or added extra.</p>
   ${generateCharacterDifferencesSection(testResults)}
 
@@ -544,28 +672,57 @@ function generateCharacterDifferencesSection(testResults: any[]): string {
                 `;
               }
 
-              // Format missing characters
+              // Format missing content (words + characters)
               let missingHtml = '';
-              if (analysis.missingTotal > 0) {
-                const missingList = Object.entries(analysis.missingCharacters)
-                  .sort((a: any, b: any) => b[1] - a[1])
-                  .map(([char, count]: any) => `<span style="background: #ffebee; padding: 2px 6px; margin: 2px; border-radius: 3px; font-family: monospace;">'${char}'×${count}</span>`)
-                  .join(' ');
-                missingHtml = `${missingList} <strong>(${analysis.missingTotal} total)</strong>`;
+              const hasMissingWords = analysis.missingWords && analysis.missingWords.length > 0;
+              const hasMissingChars = Object.keys(analysis.missingCharacters || {}).length > 0;
+
+              if (hasMissingWords || hasMissingChars || analysis.missingTotal > 0) {
+                const parts: string[] = [];
+
+                // Show missing words first
+                if (hasMissingWords) {
+                  const wordsHtml = analysis.missingWords
+                    .map((word: string) => `<span style="background: #ffe0e0; padding: 3px 8px; margin: 2px; border-radius: 3px; font-family: monospace; font-weight: bold; border: 1px solid #ffb0b0;">"${word}"</span>`)
+                    .join(' ');
+                  parts.push(`<div style="margin-bottom: 4px;"><strong>Words:</strong> ${wordsHtml}</div>`);
+                }
+
+                // Show missing characters
+                if (hasMissingChars) {
+                  const charsList = Object.entries(analysis.missingCharacters)
+                    .sort((a: any, b: any) => {
+                      const countA = typeof b[1] === 'number' ? b[1] : b[1].count;
+                      const countB = typeof a[1] === 'number' ? a[1] : a[1].count;
+                      return countA - countB;
+                    })
+                    .map(([char, data]: any) => {
+                      const count = typeof data === 'number' ? data : data.count;
+                      const sourceWords = typeof data === 'object' && data.sourceWords ? data.sourceWords : [];
+                      const sourcesText = sourceWords.length > 0
+                        ? ` <span style="color: #666; font-size: 0.85em;">(from: ${sourceWords.map((w: string) => `"${w}"`).join(', ')}${sourceWords.length === 5 ? '...' : ''})</span>`
+                        : '';
+                      return `<span style="background: #ffebee; padding: 2px 6px; margin: 2px; border-radius: 3px; font-family: monospace;">'${char}'×${count}${sourcesText}</span>`;
+                    })
+                    .join(' ');
+                  parts.push(`<div><strong>Chars:</strong> ${charsList}</div>`);
+                }
+
+                missingHtml = parts.join('') + ` <strong>(${analysis.missingTotal} total)</strong>`;
               } else {
-                missingHtml = '<span style="color: #4CAF50;">✓ None</span>';
+                missingHtml = '<span style="color: #4CAF50;">None</span>';
               }
 
-              // Format extra characters
+              // Format extra characters (no source words)
               let extraHtml = '';
               if (analysis.extraTotal > 0) {
                 const extraList = Object.entries(analysis.extraCharacters)
-                  .sort((a: any, b: any) => b[1] - a[1])
+                  .sort((a: any, b: any) => (b[1] as number) - (a[1] as number))
                   .map(([char, count]: any) => `<span style="background: #fff3e0; padding: 2px 6px; margin: 2px; border-radius: 3px; font-family: monospace;">'${char}'×${count}</span>`)
                   .join(' ');
                 extraHtml = `${extraList} <strong>(${analysis.extraTotal} total)</strong>`;
               } else {
-                extraHtml = '<span style="color: #4CAF50;">✓ None</span>';
+                extraHtml = '<span style="color: #4CAF50;">None</span>';
               }
 
               return `

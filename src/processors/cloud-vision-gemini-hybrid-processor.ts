@@ -1,3 +1,4 @@
+// Internal imports
 import { cloudVisionClient } from '../lib/cloud-vision-client.js';
 import { geminiClient } from '../lib/gemini-client.js';
 import { db, extractionResults } from '../db/index.js';
@@ -7,27 +8,25 @@ import {
   type CropRegion,
 } from '../utils/image-cropper.js';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Cloud Vision + Gemini Hybrid Processor (Region-Level Fusion)
  *
- * NEW STRATEGY (Region-Level Fusion):
- * 1. Run Cloud Vision → Get all regions with confidence
- * 2. Keep high-confidence regions as-is (≥0.85)
- * 3. Crop low-confidence regions from image
- * 4. Send crops to Gemini for re-extraction
- * 5. Replace low-confidence text with Gemini results
- * 6. Combine: High-conf original + Gemini-corrected = Final result
- *
- * This is TRUE HYBRID FUSION - combines best of both tools!
+ * Combines Cloud Vision's region detection with Gemini's text correction.
+ * High-confidence regions (≥0.85) are kept as-is; low-confidence regions are
+ * cropped and re-extracted by Gemini, then merged into the final result.
  */
 
 export async function processWithCloudVisionGeminiHybrid(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(
-    `  Processing with Cloud Vision + Gemini Hybrid (Region-Level Fusion)...`
-  );
+  if (isDevelopment) {
+    console.log(
+      `  Processing with Cloud Vision + Gemini Hybrid (Region-Level Fusion)...`
+    );
+  }
   const startTime = Date.now();
 
   try {
@@ -35,9 +34,11 @@ export async function processWithCloudVisionGeminiHybrid(
       await cloudVisionClient.extractTextWithBoundingBoxes(imagePath);
     const cloudVisionText = cloudVisionBBoxes.map((b) => b.text).join('\n');
 
-    console.log(
-      `  Cloud Vision: ${cloudVisionBBoxes.length} regions, ${cloudVisionText.length} chars`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Cloud Vision: ${cloudVisionBBoxes.length} regions, ${cloudVisionText.length} chars`
+      );
+    }
 
     const LOW_CONFIDENCE_THRESHOLD = 0.85;
 
@@ -62,28 +63,34 @@ export async function processWithCloudVisionGeminiHybrid(
     const lowConfidencePercentage =
       (lowConfidenceRegions.length / cloudVisionBBoxes.length) * 100;
 
-    console.log(
-      `  High confidence: ${highConfidenceRegions.length} regions (>=${LOW_CONFIDENCE_THRESHOLD * 100}%)`
-    );
-    console.log(
-      `  Low confidence: ${lowConfidenceRegions.length} regions (${lowConfidencePercentage.toFixed(1)}%)`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  High confidence: ${highConfidenceRegions.length} regions (>=${LOW_CONFIDENCE_THRESHOLD * 100}%)`
+      );
+      console.log(
+        `  Low confidence: ${lowConfidenceRegions.length} regions (${lowConfidencePercentage.toFixed(1)}%)`
+      );
+    }
 
     let croppedRegions = [];
     let geminiCorrectedTexts = new Map<number, string>();
     let geminiCost = 0;
 
     if (lowConfidenceRegions.length > 0) {
-      console.log(
-        `  Cropping ${lowConfidenceRegions.length} low-confidence regions...`
-      );
+      if (isDevelopment) {
+        console.log(
+          `  Cropping ${lowConfidenceRegions.length} low-confidence regions...`
+        );
+      }
       croppedRegions = await batchCropRegions(
         imagePath,
         lowConfidenceRegions,
         10
       );
 
-      console.log(`  Sending ${croppedRegions.length} regions to Gemini...`);
+      if (isDevelopment) {
+        console.log(`  Sending ${croppedRegions.length} regions to Gemini...`);
+      }
 
       const geminiInputs = croppedRegions.map((cropped) => ({
         base64: cropped.base64,
@@ -99,11 +106,15 @@ export async function processWithCloudVisionGeminiHybrid(
       });
 
       geminiCost = geminiClient.estimateCost(lowConfidenceRegions.length, true);
-      console.log(`  Gemini corrected ${geminiCorrectedTexts.size} regions`);
+      if (isDevelopment) {
+        console.log(`  Gemini corrected ${geminiCorrectedTexts.size} regions`);
+      }
     } else {
-      console.log(
-        `  All regions have high confidence - no Gemini correction needed!`
-      );
+      if (isDevelopment) {
+        console.log(
+          `  All regions have high confidence - no Gemini correction needed!`
+        );
+      }
     }
 
     const allRegions = cloudVisionBBoxes.map(
@@ -180,19 +191,21 @@ export async function processWithCloudVisionGeminiHybrid(
       })
       .returning();
 
-    console.log(
-      `  Cloud Vision + Gemini Hybrid completed in ${(processingTime / 1000).toFixed(2)}s`
-    );
-    console.log(`     Final text: ${finalText.length} chars`);
-    console.log(
-      `     Cloud Vision: ${cloudVisionBBoxes.length} regions (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`
-    );
-    console.log(
-      `     Gemini corrections: ${geminiCorrectedTexts.size}/${lowConfidenceRegions.length} low-confidence regions`
-    );
-    console.log(
-      `     Cost: ${estimatedCost.toFixed(2)} yen (saved ${(geminiClient.estimateCost(1, false) - geminiCost).toFixed(2)} yen vs full Gemini)`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Cloud Vision + Gemini Hybrid completed in ${(processingTime / 1000).toFixed(2)}s`
+      );
+      console.log(`     Final text: ${finalText.length} chars`);
+      console.log(
+        `     Cloud Vision: ${cloudVisionBBoxes.length} regions (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`
+      );
+      console.log(
+        `     Gemini corrections: ${geminiCorrectedTexts.size}/${lowConfidenceRegions.length} low-confidence regions`
+      );
+      console.log(
+        `     Cost: ${estimatedCost.toFixed(2)} yen (saved ${(geminiClient.estimateCost(1, false) - geminiCost).toFixed(2)} yen vs full Gemini)`
+      );
+    }
 
     return {
       success: true,

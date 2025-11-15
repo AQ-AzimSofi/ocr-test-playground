@@ -5,6 +5,8 @@
  * Generates reports on missing properties, data inconsistencies, and recommendations.
  */
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 export interface GeometricElement {
   id: string;
   type: string;
@@ -333,6 +335,8 @@ export function applyDefaults(
  * Log validation report to console
  */
 export function logValidationReport(report: DataQualityReport): void {
+  if (!isDevelopment) return;
+
   console.log(`\n${'='.repeat(70)}`);
   console.log('DATA QUALITY VALIDATION REPORT');
   console.log('='.repeat(70));

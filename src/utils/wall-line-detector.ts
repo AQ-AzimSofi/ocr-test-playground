@@ -1,6 +1,8 @@
 import sharp from 'sharp';
 import Jimp from 'jimp';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * OpenCV-style wall line detection utility for floor plans
  * Uses image processing techniques to detect walls, lines, and room boundaries
@@ -52,38 +54,40 @@ export class WallLineDetector {
    * Main detection method - analyzes floor plan image
    */
   async detectWalls(imagePath: string): Promise<WallDetectionResult> {
-    console.log('  [Wall Line Detector] Loading image...');
+    if (isDevelopment) console.log('  [Wall Line Detector] Loading image...');
 
     // Load image with Jimp for pixel-level operations
     const image = await Jimp.read(imagePath);
     const width = image.bitmap.width;
     const height = image.bitmap.height;
 
-    console.log(`  [Wall Line Detector] Image size: ${width}x${height}`);
+    if (isDevelopment) console.log(`  [Wall Line Detector] Image size: ${width}x${height}`);
 
     // Step 1: Preprocess - convert to grayscale and threshold
-    console.log('  [Wall Line Detector] Step 1: Preprocessing...');
+    if (isDevelopment) console.log('  [Wall Line Detector] Step 1: Preprocessing...');
     const binary = await this.preprocessImage(image);
 
     // Step 2: Detect lines using Hough-like transform
-    console.log('  [Wall Line Detector] Step 2: Detecting lines...');
+    if (isDevelopment) console.log('  [Wall Line Detector] Step 2: Detecting lines...');
     const lines = await this.detectLines(binary);
 
     // Step 3: Filter and classify lines as walls
-    console.log('  [Wall Line Detector] Step 3: Filtering walls...');
+    if (isDevelopment) console.log('  [Wall Line Detector] Step 3: Filtering walls...');
     const walls = this.filterWalls(lines);
 
     // Step 4: Detect parallel line pairs (wall thickness)
-    console.log('  [Wall Line Detector] Step 4: Detecting wall thickness...');
+    if (isDevelopment) console.log('  [Wall Line Detector] Step 4: Detecting wall thickness...');
     const wallsWithThickness = this.detectParallelPairs(walls);
 
     // Step 5: Detect rooms using connected component analysis
-    console.log('  [Wall Line Detector] Step 5: Detecting rooms...');
+    if (isDevelopment) console.log('  [Wall Line Detector] Step 5: Detecting rooms...');
     const rooms = await this.detectRooms(binary);
 
-    console.log(
-      `  [Wall Line Detector] Complete: ${wallsWithThickness.length} walls, ${rooms.length} rooms`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  [Wall Line Detector] Complete: ${wallsWithThickness.length} walls, ${rooms.length} rooms`
+      );
+    }
 
     return {
       walls: wallsWithThickness,

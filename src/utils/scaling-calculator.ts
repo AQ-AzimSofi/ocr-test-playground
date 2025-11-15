@@ -13,6 +13,8 @@
  * 4. Validate consistency (flag if anchors disagree significantly)
  */
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 interface Point {
   x: number;
   y: number;
@@ -271,6 +273,8 @@ export function calculateScalingFactor(
  * Log scaling calculation results (for debugging)
  */
 export function logScalingResults(result: ScalingResult): void {
+  if (!isDevelopment) return;
+
   console.log(`\n${'='.repeat(70)}`);
   console.log('SCALING FACTOR CALCULATION');
   console.log('='.repeat(70));

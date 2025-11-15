@@ -2,6 +2,8 @@ import { azureDocumentClient } from '../lib/azure-document-client.js';
 import { db, extractionResults } from '../db/index.js';
 import { sanitizePdf } from '../utils/pdf-sanitizer.js';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Standalone Azure Read Processor
  *
@@ -13,7 +15,9 @@ export async function processWithAzureRead(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`  Processing with Azure Read (standalone)...`);
+  if (isDevelopment) {
+    console.log(`  Processing with Azure Read (standalone)...`);
+  }
   const startTime = Date.now();
 
   // Sanitize PDF if it's a PDF file
@@ -22,7 +26,9 @@ export async function processWithAzureRead(
     try {
       const sanitizedPath = await sanitizePdf(imagePath);
       if (sanitizedPath !== imagePath) {
-        console.log(`  PDF sanitized to fix metadata issues`);
+        if (isDevelopment) {
+          console.log(`  PDF sanitized to fix metadata issues`);
+        }
         workingPath = sanitizedPath;
       }
     } catch (error) {
@@ -35,9 +41,11 @@ export async function processWithAzureRead(
     const result = await azureDocumentClient.analyzeRead(workingPath);
     const rawText = result.content;
 
-    console.log(
-      `  Azure Read: ${result.words.length} words, ${rawText.length} chars`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Azure Read: ${result.words.length} words, ${rawText.length} chars`
+      );
+    }
 
     // Calculate average confidence
     const avgConfidence =
@@ -98,17 +106,19 @@ export async function processWithAzureRead(
       })
       .returning();
 
-    console.log(
-      `  Azure Read completed in ${(processingTime / 1000).toFixed(2)}s`
-    );
-    console.log(`     Text: ${rawText.length} chars`);
-    console.log(
-      `     Words: ${result.words.length} (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`
-    );
-    console.log(
-      `     Confidence: excellent=${confidenceDistribution.excellent}, good=${confidenceDistribution.good}, medium=${confidenceDistribution.medium}, low=${confidenceDistribution.low}, veryLow=${confidenceDistribution.veryLow}`
-    );
-    console.log(`     Cost: ${estimatedCost.toFixed(2)} yen`);
+    if (isDevelopment) {
+      console.log(
+        `  Azure Read completed in ${(processingTime / 1000).toFixed(2)}s`
+      );
+      console.log(`     Text: ${rawText.length} chars`);
+      console.log(
+        `     Words: ${result.words.length} (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`
+      );
+      console.log(
+        `     Confidence: excellent=${confidenceDistribution.excellent}, good=${confidenceDistribution.good}, medium=${confidenceDistribution.medium}, low=${confidenceDistribution.low}, veryLow=${confidenceDistribution.veryLow}`
+      );
+      console.log(`     Cost: ${estimatedCost.toFixed(2)} yen`);
+    }
 
     return {
       success: true,

@@ -2,6 +2,8 @@ import sharp from 'sharp';
 import * as fs from 'fs';
 import * as path from 'path';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Image cropping utility for extracting regions from OCR images
  * Used for region-level hybrid OCR processing
@@ -133,7 +135,7 @@ export async function batchCropRegions(
   regions: CropRegion[],
   padding: number = 10
 ): Promise<CroppedRegion[]> {
-  console.log(`  Cropping ${regions.length} regions from image...`);
+  if (isDevelopment) console.log(`  Cropping ${regions.length} regions from image...`);
 
   const results: CroppedRegion[] = [];
 
@@ -147,7 +149,7 @@ export async function batchCropRegions(
     results.push(...batchResults);
   }
 
-  console.log(`  Cropped ${results.length} regions`);
+  if (isDevelopment) console.log(`  Cropped ${results.length} regions`);
   return results;
 }
 
@@ -168,9 +170,11 @@ export async function saveCroppedRegions(
     await fs.promises.writeFile(filepath, cropped.buffer);
   }
 
-  console.log(
-    `  Saved ${croppedRegions.length} cropped regions to ${outputDir}`
-  );
+  if (isDevelopment) {
+    console.log(
+      `  Saved ${croppedRegions.length} cropped regions to ${outputDir}`
+    );
+  }
 }
 
 /**

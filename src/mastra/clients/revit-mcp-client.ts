@@ -1,9 +1,14 @@
+// External imports
 import { MCPClient } from '@mastra/mcp';
+
+// Type imports
 import type {
   GeometricElement,
   CoordinateTransformationResult,
   ValidationResult
 } from '../../types';
+
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 /**
  * Revit MCP Client
@@ -99,7 +104,9 @@ export class RevitMCPClient {
 
     if (this.config.autoConnect) {
       this.connect().catch((err) => {
-        console.warn('Failed to auto-connect to Revit MCP server:', err.message);
+        if (isDevelopment) {
+          console.warn('Failed to auto-connect to Revit MCP server:', err.message);
+        }
       });
     }
   }
@@ -125,14 +132,16 @@ export class RevitMCPClient {
       const tools = await this.client.listTools();
       this.isConnected = tools && tools.length > 0;
 
-      if (this.isConnected) {
-        console.log('✓ Connected to Revit MCP server');
+      if (this.isConnected && isDevelopment) {
+        console.log('[OK] Connected to Revit MCP server');
         console.log(`  Available tools: ${tools.map(t => t.name).join(', ')}`);
       }
 
       return this.isConnected;
     } catch (error) {
-      console.warn('Revit MCP server not available:', error);
+      if (isDevelopment) {
+        console.warn('Revit MCP server not available:', error);
+      }
       this.isConnected = false;
       return false;
     }
@@ -404,7 +413,9 @@ export class RevitMCPClient {
 
       return elements;
     } catch (error: any) {
-      console.warn('Failed to query Revit elements:', error.message);
+      if (isDevelopment) {
+        console.warn('Failed to query Revit elements:', error.message);
+      }
       return [];
     }
   }

@@ -310,16 +310,13 @@ async function main() {
           );
 
           if (accuracy) {
-            console.log(`\n  Accuracy Metrics:`);
-            const cer = accuracy.characterErrorRate ?? 0;
-            const charAcc = accuracy.characterAccuracy ?? 0;
-            const coverage = accuracy.characterSetCoverage ?? 0;
-            console.log(`     CER: ${(cer * 100).toFixed(2)}%`);
-            console.log(`     Character Accuracy: ${charAcc.toFixed(1)}%`);
-            console.log(`     Coverage: ${coverage.toFixed(1)}%`);
+            console.log(`\n  OCR Evaluation Metrics:`);
+            const extractionAccuracy = accuracy.orderIndependentAccuracy ?? 0;
+            const editDistance = accuracy.editDistance ?? 0;
             console.log(
-              `     Chars: ${accuracy.extractedCharCount}/${accuracy.groundTruthCharCount}`
+              `     Extraction Accuracy: ${extractionAccuracy.toFixed(2)}% (based on ${accuracy.groundTruthCharCount} characters)`
             );
+            console.log(`     Edit Distance: ${editDistance} edits needed`);
 
             if (accuracy.bboxSourceStats) {
               console.log(`\n  Bbox Sources:`);

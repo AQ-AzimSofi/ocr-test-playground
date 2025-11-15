@@ -1,6 +1,9 @@
+// External imports
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import * as fs from 'fs';
 import * as dotenv from 'dotenv';
+
+// Internal imports
 import { cleanAICommentary } from './utils.js';
 
 dotenv.config({ path: '.env.development' });

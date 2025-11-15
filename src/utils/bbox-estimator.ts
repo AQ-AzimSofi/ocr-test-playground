@@ -1,5 +1,7 @@
 import Levenshtein from 'fast-levenshtein';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Bounding box estimation and synthesis utilities
  * Used for creating approximate bounding boxes for text detected by Gemini
@@ -232,7 +234,7 @@ export function estimateBboxFromNeighbors(
     y = nearestBounds[3].y + spacing;
 
     const debugEnabled = process.env.DEBUG_BBOX === 'true';
-    if (debugEnabled) {
+    if (isDevelopment && debugEnabled) {
       console.log(`  [Bbox Positioning] Detected VERTICAL text flow`);
       console.log(
         `     Nearest bbox: width=${nearestWidth.toFixed(0)}px, height=${nearestHeight.toFixed(0)}px`
@@ -243,7 +245,7 @@ export function estimateBboxFromNeighbors(
     y = nearestBounds[0].y;
 
     const debugEnabled = process.env.DEBUG_BBOX === 'true';
-    if (debugEnabled) {
+    if (isDevelopment && debugEnabled) {
       console.log(`  [Bbox Positioning] Detected HORIZONTAL text flow`);
       console.log(
         `     Nearest bbox: width=${nearestWidth.toFixed(0)}px, height=${nearestHeight.toFixed(0)}px`
@@ -294,7 +296,7 @@ export function synthesizeBboxForText(
     nearbyBboxes = findNearestBboxes({ x: avgX, y: avgY }, allBboxes, 5);
 
     const debugEnabled = process.env.DEBUG_BBOX === 'true';
-    if (debugEnabled) {
+    if (isDevelopment && debugEnabled) {
       console.log(
         `  [Bbox Synthesis] No position estimate - using centroid-based selection`
       );
@@ -391,7 +393,7 @@ export function validateBboxOrder(bbox: BoundingBox): BoundingBox {
   const bounds = bbox.bounds;
 
   if (bounds.length !== 4) {
-    console.warn(`Invalid bbox: expected 4 points, got ${bounds.length}`);
+    if (isDevelopment) console.warn(`Invalid bbox: expected 4 points, got ${bounds.length}`);
     return bbox;
   }
 

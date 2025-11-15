@@ -14,6 +14,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { sanitizePdf } from './pdf-sanitizer.js';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
 const execFileAsync = promisify(execFile);
 
 /**
@@ -37,11 +38,11 @@ export async function convertPdfToImages(pdfPath: string): Promise<string[]> {
   try {
     const sanitizedPath = await sanitizePdf(pdfPath);
     if (sanitizedPath !== pdfPath) {
-      console.log(`    PDF sanitized to fix metadata issues`);
+      if (isDevelopment) console.log(`    PDF sanitized to fix metadata issues`);
       workingPdfPath = sanitizedPath;
     }
   } catch (error) {
-    console.warn(`    Warning: PDF sanitization failed, using original: ${error}`);
+    if (isDevelopment) console.warn(`    Warning: PDF sanitization failed, using original: ${error}`);
   }
 
   // Create temporary directory for images
@@ -58,7 +59,7 @@ export async function convertPdfToImages(pdfPath: string): Promise<string[]> {
   // Get PDF page count
   const pageCount = await getPageCount(workingPdfPath);
 
-  console.log(`    Converting ${pageCount} PDF pages to PNG (225 DPI)...`);
+  if (isDevelopment) console.log(`    Converting ${pageCount} PDF pages to PNG (225 DPI)...`);
 
   // Output file prefix
   const outputPrefix = path.join(outputDir, 'page');
@@ -85,7 +86,7 @@ export async function convertPdfToImages(pdfPath: string): Promise<string[]> {
         );
 
       if (errors.length > 0) {
-        console.warn(`    pdftoppm warnings: ${errors.join('; ')}`);
+        if (isDevelopment) console.warn(`    pdftoppm warnings: ${errors.join('; ')}`);
       }
     }
 
@@ -100,7 +101,7 @@ export async function convertPdfToImages(pdfPath: string): Promise<string[]> {
       throw new Error('No images were generated from PDF');
     }
 
-    console.log(`    ✓ All ${imagePaths.length} pages converted successfully`);
+    if (isDevelopment) console.log(`    [OK] All ${imagePaths.length} pages converted successfully`);
     return imagePaths;
 
   } catch (error) {
@@ -159,10 +160,10 @@ export function cleanupTempImages(imagePaths: string[]): void {
   try {
     if (fs.existsSync(firstImageDir)) {
       fs.rmdirSync(firstImageDir);
-      console.log(`    ✓ Cleaned up temp directory: ${path.basename(firstImageDir)}`);
+      if (isDevelopment) console.log(`    [OK] Cleaned up temp directory: ${path.basename(firstImageDir)}`);
     }
   } catch (error) {
-    console.warn(`Failed to delete temp directory: ${firstImageDir}`, error);
+    if (isDevelopment) console.warn(`Failed to delete temp directory: ${firstImageDir}`, error);
   }
 
   // Try to delete the parent .pdf-temp directory if empty
@@ -172,7 +173,7 @@ export function cleanupTempImages(imagePaths: string[]): void {
       const remaining = fs.readdirSync(pdfTempDir);
       if (remaining.length === 0) {
         fs.rmdirSync(pdfTempDir);
-        console.log(`    ✓ Cleaned up .pdf-temp directory`);
+        console.log(`    [OK] Cleaned up .pdf-temp directory`);
       }
     }
   } catch (error) {

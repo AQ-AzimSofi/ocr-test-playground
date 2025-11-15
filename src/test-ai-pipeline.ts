@@ -103,7 +103,7 @@ async function main() {
         console.log(`  Quality score: ${result.validation_result.overall_quality.score}/100`);
         console.log(`  Grade: ${result.validation_result.overall_quality.grade}`);
         console.log(`  Data completeness: ${result.validation_result.overall_quality.data_completeness_pct.toFixed(1)}%`);
-        console.log(`  Ready for Revit: ${result.validation_result.ready_for_revit ? '✓ YES' : '✗ NO'}`);
+        console.log(`  Ready for Revit: ${result.validation_result.ready_for_revit ? '[OK] YES' : '[FAIL] NO'}`);
         console.log(`  Issues: ${result.validation_result.statistics.total_issues} (${result.validation_result.statistics.errors} errors, ${result.validation_result.statistics.warnings} warnings)`);
         console.log();
       }
@@ -127,7 +127,7 @@ async function main() {
       console.error('╚═══════════════════════════════════════════════════════════════╝');
       console.error();
       console.error('Errors:');
-      result.errors.forEach((e) => console.error(`  ✗ ${e}`));
+      result.errors.forEach((e) => console.error(`  [ERROR] ${e}`));
       console.error();
       process.exit(1);
     }

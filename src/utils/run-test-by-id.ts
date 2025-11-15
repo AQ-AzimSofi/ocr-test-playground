@@ -41,7 +41,7 @@ async function runTestById(testRunId: string) {
     .limit(1);
 
   if (!testRun) {
-    console.error(`❌ Test run not found: ${testRunId}`);
+    console.error(`[ERROR] Test run not found: ${testRunId}`);
     process.exit(1);
   }
 
@@ -52,12 +52,12 @@ async function runTestById(testRunId: string) {
   console.log('');
 
   if (!testRun.tools || testRun.tools.length === 0) {
-    console.error('❌ No processors specified in test run');
+    console.error('[ERROR] No processors specified in test run');
     process.exit(1);
   }
 
   if (!testRun.drawingIds || testRun.drawingIds.length === 0) {
-    console.error('❌ No drawings specified in test run');
+    console.error('[ERROR] No drawings specified in test run');
     process.exit(1);
   }
 
@@ -86,7 +86,7 @@ async function runTestById(testRunId: string) {
         const result = await runProcessor(processor, drawing.filePath, drawing.drawingId);
 
         if (result?.extractionResultId) {
-          console.log(`  ✓ Completed (${result.processingTime}ms, ¥${result.cost?.toFixed(2) || '0.00'})`);
+          console.log(`  [OK] Completed (${result.processingTime}ms, ¥${result.cost?.toFixed(2) || '0.00'})`);
           totalProcessed++;
 
           // Calculate accuracy if ground truth exists
@@ -98,17 +98,17 @@ async function runTestById(testRunId: string) {
               });
 
               if (accuracy.success) {
-                console.log(`  ✓ Accuracy calculated: ${(accuracy.data.characterAccuracy || 0).toFixed(1)}%`);
+                console.log(`  [OK] Extraction Accuracy: ${(accuracy.data.orderIndependentAccuracy || 0).toFixed(2)}%`);
               }
             } catch (err) {
-              console.warn(`  ⚠️  Failed to calculate accuracy:`, err);
+              console.warn(`  [WARN] Failed to calculate accuracy:`, err);
             }
           }
         } else {
-          console.log(`  ⚠️  No result returned`);
+          console.log(`  [WARN] No result returned`);
         }
       } catch (error) {
-        console.error(`  ❌ Error:`, error instanceof Error ? error.message : String(error));
+        console.error(`  [ERROR] Error:`, error instanceof Error ? error.message : String(error));
         totalErrors++;
       }
     }
@@ -132,7 +132,7 @@ async function runTestById(testRunId: string) {
     })
     .where(eq(testRuns.id, testRunId));
 
-  console.log('✓ Test run marked as completed');
+  console.log('[OK] Test run marked as completed');
   console.log('');
   console.log(`View results at: http://localhost:5173/test-run/${testRunId}`);
 }
@@ -180,10 +180,10 @@ if (!testRunId) {
 
 runTestById(testRunId)
   .then(() => {
-    console.log('✓ Done!');
+    console.log('[OK] Done!');
     process.exit(0);
   })
   .catch((error) => {
-    console.error('❌ Fatal error:', error);
+    console.error('[ERROR] Fatal error:', error);
     process.exit(1);
   });

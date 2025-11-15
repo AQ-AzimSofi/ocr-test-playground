@@ -7,6 +7,8 @@ import {
 import { eq } from 'drizzle-orm';
 import * as fs from 'fs';
 import * as path from 'path';
+
+const isDevelopment = process.env.NODE_ENV !== 'production';
 import {
   calculateScalingFactor,
   logScalingResults,
@@ -129,10 +131,12 @@ export async function generateRevitOutput(
     .from(geometricObjects)
     .where(eq(geometricObjects.extractionResultId, extractionResultId));
 
-  console.log(
-    `\n  Generating Enhanced Revit Output for ${result.drawingId}...`
-  );
-  console.log(`    Found ${objects.length} geometric objects`);
+  if (isDevelopment) {
+    console.log(
+      `\n  Generating Enhanced Revit Output for ${result.drawingId}...`
+    );
+    console.log(`    Found ${objects.length} geometric objects`);
+  }
 
   // Extract image metadata
   const imageMetadata = result.metadata?.imageMetadata || {};
@@ -140,12 +144,12 @@ export async function generateRevitOutput(
   const imageHeight = imageMetadata.image_height || 0;
 
   // STEP 1: Calculate scaling factor from geometric objects
-  console.log(`\n  STEP 1: Calculating scaling factor...`);
+  if (isDevelopment) console.log(`\n  STEP 1: Calculating scaling factor...`);
   const scalingResult = calculateScalingFactor(objects);
   logScalingResults(scalingResult);
 
   // STEP 2: Create coordinate transformer
-  console.log(`  STEP 2: Setting up coordinate transformation...`);
+  if (isDevelopment) console.log(`  STEP 2: Setting up coordinate transformation...`);
   const transformer = new CoordinateTransformer({
     scalingFactor: scalingResult.scalingFactor,
     imageHeight,
@@ -154,13 +158,13 @@ export async function generateRevitOutput(
   });
 
   // STEP 3: Validate data and apply defaults
-  console.log(`  STEP 3: Validating data quality...`);
+  if (isDevelopment) console.log(`  STEP 3: Validating data quality...`);
   const validationReport = validateData(objects as any);
   const defaultsApplied = applyDefaults(objects as any);
   logValidationReport(validationReport);
 
   // STEP 4: Transform geometric objects to Revit elements with dual coordinates
-  console.log(`  STEP 4: Transforming coordinates and generating elements...`);
+  if (isDevelopment) console.log(`  STEP 4: Transforming coordinates and generating elements...`);
   const elements: RevitElement[] = [];
   let verifiedDimensionsCount = 0;
 
@@ -286,19 +290,21 @@ export async function generateRevitOutput(
   if (outputPath) {
     const fullPath = path.resolve(outputPath);
     fs.writeFileSync(fullPath, JSON.stringify(output, null, 2), 'utf-8');
-    console.log(`\n  Revit JSON saved to: ${fullPath}`);
+    if (isDevelopment) console.log(`\n  Revit JSON saved to: ${fullPath}`);
   }
 
-  console.log(`\n  Revit Output Statistics:`);
-  console.log(`    Total elements: ${output.statistics.total_elements}`);
-  Object.entries(elementsByType).forEach(([type, count]) => {
-    console.log(`      - ${count} ${type}(s)`);
-  });
-  console.log(`    With dimensions: ${elementsWithDimensions}`);
-  console.log(`    With verified dimensions: ${verifiedDimensionsCount}`);
-  console.log(
-    `    Defaults applied: ${output.statistics.defaults_applied_count}`
-  );
+  if (isDevelopment) {
+    console.log(`\n  Revit Output Statistics:`);
+    console.log(`    Total elements: ${output.statistics.total_elements}`);
+    Object.entries(elementsByType).forEach(([type, count]) => {
+      console.log(`      - ${count} ${type}(s)`);
+    });
+    console.log(`    With dimensions: ${elementsWithDimensions}`);
+    console.log(`    With verified dimensions: ${verifiedDimensionsCount}`);
+    console.log(
+      `    Defaults applied: ${output.statistics.defaults_applied_count}`
+    );
+  }
 
   return output;
 }
@@ -350,7 +356,7 @@ export async function generateRevitCSV(
   const csvContent = csvLines.join('\n');
   fs.writeFileSync(outputPath, csvContent, 'utf-8');
 
-  console.log(`  Revit CSV saved to: ${outputPath}`);
+  if (isDevelopment) console.log(`  Revit CSV saved to: ${outputPath}`);
 }
 
 /**

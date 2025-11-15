@@ -609,38 +609,52 @@ async function main() {
 
           if (accuracy) {
             console.log(
-              `\n  Character-Level Accuracy Metrics for ${processor}:`
+              `\n  OCR Evaluation Metrics for ${processor}:`
             );
             console.log(
-              `     Character Error Rate (CER): ${(accuracy.characterErrorRate * 100).toFixed(2)}%`
+              `     Extraction Accuracy: ${accuracy.orderIndependentAccuracy.toFixed(2)}% (based on ${accuracy.groundTruthCharCount} characters)`
             );
-            console.log(
-              `     Character Accuracy: ${accuracy.characterAccuracy.toFixed(1)}%`
-            );
-            console.log(
-              `     Character Set Coverage: ${accuracy.characterSetCoverage.toFixed(1)}%`
-            );
-            console.log(
-              `     Character Count: ${accuracy.extractedCharCount}/${accuracy.groundTruthCharCount} ${accuracy.exactCharCountMatch ? 'MATCH' : 'DIFF'}`
-            );
-            console.log(`     Edit Distance: ${accuracy.editDistance}`);
+            console.log(`     Edit Distance: ${accuracy.editDistance} edits needed`);
 
             // Display order-independent character analysis
             const charAnalysis = accuracy.orderIndependentCharAnalysis;
-            if (charAnalysis.missingTotal > 0 || charAnalysis.extraTotal > 0) {
+            const hasMissingWords = charAnalysis.missingWords && charAnalysis.missingWords.length > 0;
+            const hasMissingChars = Object.keys(charAnalysis.missingCharacters || {}).length > 0;
+
+            if (hasMissingWords || hasMissingChars || charAnalysis.missingTotal > 0 || charAnalysis.extraTotal > 0) {
               console.log(`\n  Order-Independent Character Analysis:`);
 
-              if (charAnalysis.missingTotal > 0) {
-                const missingList = Object.entries(charAnalysis.missingCharacters)
-                  .sort((a, b) => b[1] - a[1]) // Sort by count descending
-                  .map(([char, count]) => `'${char}'×${count}`)
-                  .join(', ');
-                console.log(`     Missing: ${missingList} (${charAnalysis.missingTotal} chars)`);
+              // Show missing words first
+              if (hasMissingWords) {
+                const wordsList = charAnalysis.missingWords.map((w: string) => `"${w}"`).join(', ');
+                console.log(`     Missing Words: ${wordsList} (${charAnalysis.missingWords.length} words)`);
               }
 
+              // Show missing characters
+              if (hasMissingChars) {
+                const missingList = Object.entries(charAnalysis.missingCharacters)
+                  .sort((a, b) => {
+                    const countA = typeof b[1] === 'number' ? b[1] : b[1].count;
+                    const countB = typeof a[1] === 'number' ? a[1] : a[1].count;
+                    return countA - countB;
+                  })
+                  .map(([char, data]) => {
+                    // Handle both old format (number) and new format ({ count, sourceWords })
+                    const count = typeof data === 'number' ? data : data.count;
+                    const sourceWords = typeof data === 'object' && data.sourceWords ? data.sourceWords : [];
+                    const sourcesText = sourceWords.length > 0
+                      ? ` (from: ${sourceWords.map((w: string) => `"${w}"`).join(', ')}${sourceWords.length === 5 ? '...' : ''})`
+                      : '';
+                    return `'${char}'×${count}${sourcesText}`;
+                  })
+                  .join(', ');
+                console.log(`     Missing Characters: ${missingList}`);
+              }
+
+              // Show extra characters (no source words)
               if (charAnalysis.extraTotal > 0) {
                 const extraList = Object.entries(charAnalysis.extraCharacters)
-                  .sort((a, b) => b[1] - a[1]) // Sort by count descending
+                  .sort((a, b) => (b[1] as number) - (a[1] as number))
                   .map(([char, count]) => `'${char}'×${count}`)
                   .join(', ');
                 console.log(`     Extra: ${extraList} (${charAnalysis.extraTotal} chars)`);

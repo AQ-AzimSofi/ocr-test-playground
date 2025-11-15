@@ -1,3 +1,4 @@
+// Internal imports
 import { azureDocumentClient } from '../lib/azure-document-client.js';
 import { geminiClient } from '../lib/gemini-client.js';
 import { db, extractionResults } from '../db/index.js';
@@ -7,36 +8,36 @@ import {
   type CropRegion,
 } from '../utils/image-cropper.js';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Azure Read + Gemini Hybrid Processor (Word-Level Fusion)
  *
- * STRATEGY (Word-Level Fusion):
- * 1. Run Azure Read → Get word-level bounding boxes with confidence
- * 2. Keep high-confidence words as-is (≥0.85)
- * 3. Crop low-confidence word regions from image
- * 4. Send crops to Gemini for re-extraction
- * 5. Replace low-confidence words with Gemini results
- * 6. Combine: High-conf words + Gemini-corrected words = Final result
- *
- * Benefits: Word-level precision, fewer crops than paragraph-level
+ * Combines Azure Read's word-level confidence scores with Gemini's text correction.
+ * High-confidence words (≥0.85) are kept as-is; low-confidence words are cropped
+ * and re-extracted by Gemini, then merged into the final result.
  */
 
 export async function processWithAzureReadGeminiHybrid(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(
-    `  Processing with Azure Read + Gemini Hybrid (Word-Level Fusion)...`
-  );
+  if (isDevelopment) {
+    console.log(
+      `  Processing with Azure Read + Gemini Hybrid (Word-Level Fusion)...`
+    );
+  }
   const startTime = Date.now();
 
   try {
     const azureResult = await azureDocumentClient.analyzeRead(imagePath);
     const azureText = azureResult.content;
 
-    console.log(
-      `  Azure Read: ${azureResult.words.length} words, ${azureText.length} chars`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Azure Read: ${azureResult.words.length} words, ${azureText.length} chars`
+      );
+    }
 
     const LOW_CONFIDENCE_THRESHOLD = 0.85;
 
@@ -66,25 +67,31 @@ export async function processWithAzureReadGeminiHybrid(
           azureResult.words.length
         : 0;
 
-    console.log(
-      `  High confidence: ${highConfidenceWords.length} words (>=${LOW_CONFIDENCE_THRESHOLD * 100}%)`
-    );
-    console.log(
-      `  Low confidence: ${lowConfidenceWords.length} words (${lowConfidencePercentage.toFixed(1)}%)`
-    );
-    console.log(`  Average confidence: ${(avgConfidence * 100).toFixed(1)}%`);
+    if (isDevelopment) {
+      console.log(
+        `  High confidence: ${highConfidenceWords.length} words (>=${LOW_CONFIDENCE_THRESHOLD * 100}%)`
+      );
+      console.log(
+        `  Low confidence: ${lowConfidenceWords.length} words (${lowConfidencePercentage.toFixed(1)}%)`
+      );
+      console.log(`  Average confidence: ${(avgConfidence * 100).toFixed(1)}%`);
+    }
 
     let croppedWords = [];
     let geminiCorrectedTexts = new Map<number, string>();
     let geminiCost = 0;
 
     if (lowConfidenceWords.length > 0) {
-      console.log(
-        `  Cropping ${lowConfidenceWords.length} low-confidence words...`
-      );
+      if (isDevelopment) {
+        console.log(
+          `  Cropping ${lowConfidenceWords.length} low-confidence words...`
+        );
+      }
       croppedWords = await batchCropRegions(imagePath, lowConfidenceWords, 5);
 
-      console.log(`  Sending ${croppedWords.length} words to Gemini...`);
+      if (isDevelopment) {
+        console.log(`  Sending ${croppedWords.length} words to Gemini...`);
+      }
 
       const geminiInputs = croppedWords.map((cropped) => ({
         base64: cropped.base64,
@@ -100,11 +107,15 @@ export async function processWithAzureReadGeminiHybrid(
       });
 
       geminiCost = geminiClient.estimateCost(lowConfidenceWords.length, true);
-      console.log(`  Gemini corrected ${geminiCorrectedTexts.size} words`);
+      if (isDevelopment) {
+        console.log(`  Gemini corrected ${geminiCorrectedTexts.size} words`);
+      }
     } else {
-      console.log(
-        `  All words have high confidence - no Gemini correction needed!`
-      );
+      if (isDevelopment) {
+        console.log(
+          `  All words have high confidence - no Gemini correction needed!`
+        );
+      }
     }
 
     const allWords = azureResult.words.map(
@@ -220,22 +231,24 @@ export async function processWithAzureReadGeminiHybrid(
       })
       .returning();
 
-    console.log(
-      `  Azure Read + Gemini Hybrid completed in ${(processingTime / 1000).toFixed(2)}s`
-    );
-    console.log(`     Final text: ${finalText.length} chars`);
-    console.log(
-      `     Azure Read: ${azureResult.words.length} words (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`
-    );
-    console.log(
-      `     Distribution: ${confidenceRanges.excellent} excellent, ${confidenceRanges.good} good, ${confidenceRanges.medium} medium, ${confidenceRanges.low + confidenceRanges.veryLow} low`
-    );
-    console.log(
-      `     Gemini corrections: ${geminiCorrectedTexts.size}/${lowConfidenceWords.length} low-confidence words`
-    );
-    console.log(
-      `     Cost: ${estimatedCost.toFixed(2)} yen (saved ${(geminiClient.estimateCost(1, false) - geminiCost).toFixed(2)} yen vs full Gemini)`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Azure Read + Gemini Hybrid completed in ${(processingTime / 1000).toFixed(2)}s`
+      );
+      console.log(`     Final text: ${finalText.length} chars`);
+      console.log(
+        `     Azure Read: ${azureResult.words.length} words (avg confidence: ${(avgConfidence * 100).toFixed(1)}%)`
+      );
+      console.log(
+        `     Distribution: ${confidenceRanges.excellent} excellent, ${confidenceRanges.good} good, ${confidenceRanges.medium} medium, ${confidenceRanges.low + confidenceRanges.veryLow} low`
+      );
+      console.log(
+        `     Gemini corrections: ${geminiCorrectedTexts.size}/${lowConfidenceWords.length} low-confidence words`
+      );
+      console.log(
+        `     Cost: ${estimatedCost.toFixed(2)} yen (saved ${(geminiClient.estimateCost(1, false) - geminiCost).toFixed(2)} yen vs full Gemini)`
+      );
+    }
 
     return {
       success: true,

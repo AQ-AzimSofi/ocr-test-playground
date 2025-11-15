@@ -21,6 +21,8 @@ import {
 import { eq } from 'drizzle-orm';
 import * as path from 'path';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 interface Point {
   x: number;
   y: number;
@@ -200,13 +202,15 @@ export async function generateVisualVerification(
     opacity = 0.8,
   } = options;
 
-  console.log(`\n  Generating visual verification overlay...`);
+  if (isDevelopment) console.log(`\n  Generating visual verification overlay...`);
 
   // Load original drawing
   const image = await Jimp.read(drawingPath);
-  console.log(
-    `    Loaded image: ${image.bitmap.width}×${image.bitmap.height}px`
-  );
+  if (isDevelopment) {
+    console.log(
+      `    Loaded image: ${image.bitmap.width}×${image.bitmap.height}px`
+    );
+  }
 
   // Fetch geometric objects
   const objects = await db
@@ -214,7 +218,7 @@ export async function generateVisualVerification(
     .from(geometricObjects)
     .where(eq(geometricObjects.extractionResultId, extractionResultId));
 
-  console.log(`    Found ${objects.length} objects to annotate`);
+  if (isDevelopment) console.log(`    Found ${objects.length} objects to annotate`);
 
   // Note: Text rendering disabled for performance
   // Text rendering with Jimp can be slow with many objects
@@ -354,8 +358,10 @@ export async function generateVisualVerification(
 
   // Save annotated image
   await image.writeAsync(outputPath);
-  console.log(`    Annotated image saved: ${outputPath}`);
-  console.log(`    Annotated ${annotationCount} objects`);
+  if (isDevelopment) {
+    console.log(`    Annotated image saved: ${outputPath}`);
+    console.log(`    Annotated ${annotationCount} objects`);
+  }
 }
 
 /**

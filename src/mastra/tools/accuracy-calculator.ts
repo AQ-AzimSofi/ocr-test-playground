@@ -1,5 +1,8 @@
+// External imports
 import { createTool } from '@mastra/core';
 import { z } from 'zod';
+
+// Internal imports
 import {
   calculateCER,
   calculateCharacterAccuracy,
@@ -244,9 +247,8 @@ export const accuracyCalculatorTool = createTool({
 
     // Generate summary
     const summaryLines = [
-      `Character Error Rate (position-sensitive): ${(characterErrorRate * 100).toFixed(2)}%`,
-      `Order-Independent CER: ${(orderIndependentMetrics.cer * 100).toFixed(2)}%`,
-      `Order-Independent Accuracy: ${orderIndependentMetrics.accuracy.toFixed(2)}%`,
+      `Position-Sensitive Accuracy: ${((1 - characterErrorRate) * 100).toFixed(2)}%`,
+      `Extraction Accuracy ⭐: ${orderIndependentMetrics.accuracy.toFixed(2)}%`,
       `Character Accuracy: ${characterAccuracy.toFixed(2)}%`,
       `Character Set Coverage: ${characterSetCoverage.toFixed(2)}%`,
       `Edit Distance: ${editDistance}`,
@@ -298,48 +300,135 @@ export const accuracyCalculatorTool = createTool({
 });
 
 /**
+ * Split text into words for source tracking
+ * Handles both space-separated and CJK text
+ */
+function splitIntoWords(text: string): string[] {
+  // For CJK text, split on spaces and punctuation, treating continuous CJK as single words
+  // For mixed text, split on whitespace and punctuation
+  const words: string[] = [];
+
+  // Split on whitespace and common punctuation
+  const segments = text.split(/[\s、。，．！？\n\r]+/);
+
+  for (const segment of segments) {
+    if (segment.trim().length > 0) {
+      words.push(segment.trim());
+    }
+  }
+
+  return words.filter(w => w.length > 0);
+}
+
+/**
  * Calculate character frequency differences (order-independent)
- * Returns missing and extra characters with their counts
+ * Returns missing words, missing characters, and extra characters
  */
 function calculateCharacterFrequencyDifferences(
   extracted: string,
   groundTruth: string
 ): {
-  missingCharacters: Record<string, number>;
+  missingWords: string[];
+  missingCharacters: Record<string, { count: number; sourceWords: string[] }>;
   extraCharacters: Record<string, number>;
   missingTotal: number;
   extraTotal: number;
 } {
+  // Split into words for source tracking
+  const groundTruthWords = splitIntoWords(groundTruth);
+  const extractedWords = splitIntoWords(extracted);
+
   // Remove whitespace for order-independent comparison
   const extractedNoSpace = extracted.replace(/\s+/g, '');
   const groundTruthNoSpace = groundTruth.replace(/\s+/g, '');
 
-  // Count character frequencies
+  // Count character frequencies and track source words
   const extractedFreq = new Map<string, number>();
   const groundTruthFreq = new Map<string, number>();
+  const groundTruthSources = new Map<string, Set<string>>();
+  const extractedSources = new Map<string, Set<string>>();
 
-  for (const char of extractedNoSpace) {
-    extractedFreq.set(char, (extractedFreq.get(char) || 0) + 1);
+  // Track ground truth characters and their source words
+  for (const word of groundTruthWords) {
+    for (const char of word) {
+      groundTruthFreq.set(char, (groundTruthFreq.get(char) || 0) + 1);
+      if (!groundTruthSources.has(char)) {
+        groundTruthSources.set(char, new Set());
+      }
+      groundTruthSources.get(char)!.add(word);
+    }
   }
 
-  for (const char of groundTruthNoSpace) {
-    groundTruthFreq.set(char, (groundTruthFreq.get(char) || 0) + 1);
+  // Track extracted characters and their source words
+  for (const word of extractedWords) {
+    for (const char of word) {
+      extractedFreq.set(char, (extractedFreq.get(char) || 0) + 1);
+      if (!extractedSources.has(char)) {
+        extractedSources.set(char, new Set());
+      }
+      extractedSources.get(char)!.add(word);
+    }
   }
 
-  // Find missing characters (in ground truth but not enough in extracted)
-  const missingCharacters: Record<string, number> = {};
+  // Build initial missing characters map
+  const missingCharsMap = new Map<string, { count: number; sourceWords: string[] }>();
   let missingTotal = 0;
 
   for (const [char, gtCount] of groundTruthFreq) {
     const exCount = extractedFreq.get(char) || 0;
     if (exCount < gtCount) {
       const diff = gtCount - exCount;
-      missingCharacters[char] = diff;
+      const sourceWords = Array.from(groundTruthSources.get(char) || []);
+      missingCharsMap.set(char, {
+        count: diff,
+        sourceWords,
+      });
       missingTotal += diff;
     }
   }
 
-  // Find extra characters (in extracted but not in ground truth, or too many)
+  // Detect complete missing words (all characters from word are missing)
+  const missingWords: string[] = [];
+  const charsInMissingWords = new Set<string>();
+
+  for (const word of groundTruthWords) {
+    const wordChars = [...word];
+    const allCharsMissing = wordChars.every(char => missingCharsMap.has(char));
+
+    if (allCharsMissing && wordChars.length > 0) {
+      missingWords.push(word);
+      // Mark these characters as part of a missing word
+      wordChars.forEach(char => charsInMissingWords.add(char));
+    }
+  }
+
+  // Remove characters that are part of missing words from individual character list
+  const missingCharacters: Record<string, { count: number; sourceWords: string[] }> = {};
+
+  for (const [char, data] of missingCharsMap) {
+    if (charsInMissingWords.has(char)) {
+      // This char is part of a missing word - filter out those source words
+      const remainingSourceWords = data.sourceWords.filter(
+        word => !missingWords.includes(word)
+      );
+
+      // Only include if there are remaining source words (char appears in other contexts)
+      if (remainingSourceWords.length > 0) {
+        missingCharacters[char] = {
+          count: data.count,
+          sourceWords: remainingSourceWords.slice(0, 5),
+        };
+      }
+    } else {
+      // Not part of a missing word - include with limited source words
+      missingCharacters[char] = {
+        count: data.count,
+        sourceWords: data.sourceWords.slice(0, 5),
+      };
+    }
+  }
+
+  // Find extra characters (no source words needed)
   const extraCharacters: Record<string, number> = {};
   let extraTotal = 0;
 
@@ -353,6 +442,7 @@ function calculateCharacterFrequencyDifferences(
   }
 
   return {
+    missingWords,
     missingCharacters,
     extraCharacters,
     missingTotal,

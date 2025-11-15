@@ -25,6 +25,8 @@ import { getRevitMCPClient } from '../mastra/clients/revit-mcp-client.js';
 import type { GeometricElement } from '../types.js';
 import * as fs from 'fs';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Mastra AI Pipeline Processor
  *
@@ -172,65 +174,75 @@ export async function processMastraAIPipeline(
     stop_on_error = false,
   } = options;
 
-  console.log('\n=== MASTRA AI PIPELINE ===');
-  console.log(`Drawing: ${drawing_id}`);
-  console.log(`File: ${file_path}`);
-  console.log();
+  if (isDevelopment) {
+    console.log('\n=== MASTRA AI PIPELINE ===');
+    console.log(`Drawing: ${drawing_id}`);
+    console.log(`File: ${file_path}`);
+    console.log();
+  }
 
   try {
-    console.log('[1/7] Running Global Analyzer Agent...');
+    if (isDevelopment) console.log('[1/7] Running Global Analyzer Agent...');
     const globalAnalysis = await analyzeFloorPlanGlobally(file_path);
-    console.log(`  ✓ Detected ${globalAnalysis.dimension_zones.length} dimension zones`);
-    console.log(`  ✓ Detected ${globalAnalysis.text_annotation_areas.length} annotation areas`);
-    console.log(`  ✓ Drawing type: ${globalAnalysis.drawing_metadata.drawing_type}`);
-    console.log(`  ✓ Complexity: ${globalAnalysis.drawing_metadata.complexity}`);
-    console.log();
+    if (isDevelopment) {
+      console.log(`  [OK] Detected ${globalAnalysis.dimension_zones.length} dimension zones`);
+      console.log(`  [OK] Detected ${globalAnalysis.text_annotation_areas.length} annotation areas`);
+      console.log(`  [OK] Drawing type: ${globalAnalysis.drawing_metadata.drawing_type}`);
+      console.log(`  [OK] Complexity: ${globalAnalysis.drawing_metadata.complexity}`);
+      console.log();
+    }
 
-    console.log('[2/7] Running Geometric Specialist Agent...');
+    if (isDevelopment) console.log('[2/7] Running Geometric Specialist Agent...');
     const geometricAnalysis = await detectGeometricElements(
       file_path,
       globalAnalysis.main_building_area.bounding_box
     );
-    console.log(`  ✓ Detected ${geometricAnalysis.detection_summary.total_elements} elements:`);
-    console.log(`    - Walls: ${geometricAnalysis.detection_summary.walls_count}`);
-    console.log(`    - Doors: ${geometricAnalysis.detection_summary.doors_count}`);
-    console.log(`    - Windows: ${geometricAnalysis.detection_summary.windows_count}`);
-    console.log(`    - Rooms: ${geometricAnalysis.detection_summary.rooms_count}`);
-    console.log(`    - Stairs: ${geometricAnalysis.detection_summary.stairs_count}`);
-    console.log(`    - Columns: ${geometricAnalysis.detection_summary.columns_count}`);
-    console.log();
+    if (isDevelopment) {
+      console.log(`  [OK] Detected ${geometricAnalysis.detection_summary.total_elements} elements:`);
+      console.log(`    - Walls: ${geometricAnalysis.detection_summary.walls_count}`);
+      console.log(`    - Doors: ${geometricAnalysis.detection_summary.doors_count}`);
+      console.log(`    - Windows: ${geometricAnalysis.detection_summary.windows_count}`);
+      console.log(`    - Rooms: ${geometricAnalysis.detection_summary.rooms_count}`);
+      console.log(`    - Stairs: ${geometricAnalysis.detection_summary.stairs_count}`);
+      console.log(`    - Columns: ${geometricAnalysis.detection_summary.columns_count}`);
+      console.log();
+    }
 
-    console.log('[3/7] Running Dimension Specialist Agent...');
+    if (isDevelopment) console.log('[3/7] Running Dimension Specialist Agent...');
     const dimensionAnalysis = await extractDimensionsWithLeaderLines(
       file_path,
       globalAnalysis.dimension_zones
     );
-    console.log(`  ✓ Extracted ${dimensionAnalysis.summary.total_dimensions} dimensions:`);
-    console.log(`    - Overall: ${dimensionAnalysis.summary.by_type.overall}`);
-    console.log(`    - Segment: ${dimensionAnalysis.summary.by_type.segment}`);
-    console.log(`    - Detail: ${dimensionAnalysis.summary.by_type.detail}`);
-    console.log(`    - Primary unit: ${dimensionAnalysis.summary.primary_unit}`);
-    if (dimensionAnalysis.scale_indicators.length > 0) {
-      console.log(`  ✓ Found scale indicator: ${dimensionAnalysis.scale_indicators[0].text}`);
+    if (isDevelopment) {
+      console.log(`  [OK] Extracted ${dimensionAnalysis.summary.total_dimensions} dimensions:`);
+      console.log(`    - Overall: ${dimensionAnalysis.summary.by_type.overall}`);
+      console.log(`    - Segment: ${dimensionAnalysis.summary.by_type.segment}`);
+      console.log(`    - Detail: ${dimensionAnalysis.summary.by_type.detail}`);
+      console.log(`    - Primary unit: ${dimensionAnalysis.summary.primary_unit}`);
+      if (dimensionAnalysis.scale_indicators.length > 0) {
+        console.log(`  [OK] Found scale indicator: ${dimensionAnalysis.scale_indicators[0].text}`);
+      }
+      console.log();
     }
-    console.log();
 
-    console.log('[4/7] Running Association Agent...');
+    if (isDevelopment) console.log('[4/7] Running Association Agent...');
     const associationAnalysis = await associateDimensionsToElements(
       geometricAnalysis.elements,
       dimensionAnalysis.dimensions,
       geometricAnalysis.image_dimensions.width_px,
       geometricAnalysis.image_dimensions.height_px
     );
-    console.log(`  ✓ Created ${associationAnalysis.associations.length} associations`);
-    console.log(`  ✓ Association rate: ${((associationAnalysis.summary.associated_dimensions / associationAnalysis.summary.total_dimensions) * 100).toFixed(1)}%`);
-    console.log(`  ✓ Average confidence: ${associationAnalysis.summary.association_confidence_avg.toFixed(2)}`);
+    if (isDevelopment) {
+      console.log(`  [OK] Created ${associationAnalysis.associations.length} associations`);
+      console.log(`  [OK] Association rate: ${((associationAnalysis.summary.associated_dimensions / associationAnalysis.summary.total_dimensions) * 100).toFixed(1)}%`);
+      console.log(`  [OK] Average confidence: ${associationAnalysis.summary.association_confidence_avg.toFixed(2)}`);
+      console.log();
+    }
     if (associationAnalysis.unassociated_dimensions.length > 0) {
       warnings.push(`${associationAnalysis.unassociated_dimensions.length} dimensions could not be associated`);
     }
-    console.log();
 
-    console.log('[5/7] Calculating scaling factor...');
+    if (isDevelopment) console.log('[5/7] Calculating scaling factor...');
 
     const scalingAssociations = associationAnalysis.associations
       .map((assoc) => {
@@ -275,16 +287,18 @@ export async function processMastraAIPipeline(
       },
     });
 
-    console.log(`  ✓ Scaling factor: ${scalingResult.scaling_factor.toFixed(3)} mm/pixel`);
-    console.log(`  ✓ Method: ${scalingResult.calculation_method}`);
-    console.log(`  ✓ Confidence: ${(scalingResult.confidence * 100).toFixed(1)}%`);
-    console.log(`  ✓ Anchor count: ${scalingResult.anchor_count}`);
+    if (isDevelopment) {
+      console.log(`  [OK] Scaling factor: ${scalingResult.scaling_factor.toFixed(3)} mm/pixel`);
+      console.log(`  [OK] Method: ${scalingResult.calculation_method}`);
+      console.log(`  [OK] Confidence: ${(scalingResult.confidence * 100).toFixed(1)}%`);
+      console.log(`  [OK] Anchor count: ${scalingResult.anchor_count}`);
+      console.log();
+    }
     if (scalingResult.confidence < 0.6) {
       warnings.push('Low scaling factor confidence - manual verification recommended');
     }
-    console.log();
 
-    console.log('[6/7] Transforming coordinates...');
+    if (isDevelopment) console.log('[6/7] Transforming coordinates...');
 
     const transformedElements = await Promise.all(
       geometricAnalysis.elements.map(async (element) => {
@@ -321,12 +335,14 @@ export async function processMastraAIPipeline(
       })
     );
 
-    console.log(`  ✓ Transformed ${transformedElements.length} elements to millimeters`);
-    console.log();
+    if (isDevelopment) {
+      console.log(`  [OK] Transformed ${transformedElements.length} elements to millimeters`);
+      console.log();
+    }
 
     let validationResult: ValidationOutput | undefined;
     if (enable_validation) {
-      console.log('[7/7] Running Validation Agent...');
+      if (isDevelopment) console.log('[7/7] Running Validation Agent...');
       validationResult = await validateExtractionResults(
         transformedElements,
         dimensionAnalysis.dimensions,
@@ -339,11 +355,13 @@ export async function processMastraAIPipeline(
         }
       );
 
-      console.log(`  ✓ Overall quality: ${validationResult.overall_quality.score}/100 (${validationResult.overall_quality.grade})`);
-      console.log(`  ✓ Data completeness: ${validationResult.overall_quality.data_completeness_pct.toFixed(1)}%`);
-      console.log(`  ✓ Association success: ${validationResult.overall_quality.association_success_rate.toFixed(1)}%`);
-      console.log(`  ✓ Issues found: ${validationResult.statistics.total_issues} (${validationResult.statistics.errors} errors, ${validationResult.statistics.warnings} warnings)`);
-      console.log(`  ✓ Ready for Revit: ${validationResult.ready_for_revit ? 'YES' : 'NO'}`);
+      if (isDevelopment) {
+        console.log(`  [OK] Overall quality: ${validationResult.overall_quality.score}/100 (${validationResult.overall_quality.grade})`);
+        console.log(`  [OK] Data completeness: ${validationResult.overall_quality.data_completeness_pct.toFixed(1)}%`);
+        console.log(`  [OK] Association success: ${validationResult.overall_quality.association_success_rate.toFixed(1)}%`);
+        console.log(`  [OK] Issues found: ${validationResult.statistics.total_issues} (${validationResult.statistics.errors} errors, ${validationResult.statistics.warnings} warnings)`);
+        console.log(`  [OK] Ready for Revit: ${validationResult.ready_for_revit ? 'YES' : 'NO'}`);
+      }
 
       if (validationResult.overall_quality.score < min_validation_score) {
         warnings.push(`Quality score (${validationResult.overall_quality.score}) below threshold (${min_validation_score})`);
@@ -353,14 +371,14 @@ export async function processMastraAIPipeline(
         warnings.push('Data is not ready for Revit import - review validation issues');
       }
 
-      console.log();
+      if (isDevelopment) console.log();
     }
 
     let revitMCPResult;
     let revitMCPAvailable = false;
 
     if (enable_revit_mcp) {
-      console.log('[7.5/8] Checking Revit MCP availability...');
+      if (isDevelopment) console.log('[7.5/8] Checking Revit MCP availability...');
 
       const revitClient = getRevitMCPClient({
         mcpPath: revit_mcp_path,
@@ -371,15 +389,17 @@ export async function processMastraAIPipeline(
       revitMCPAvailable = revitStatus.isAvailable && revitStatus.isConnected;
 
       if (revitMCPAvailable) {
-        console.log('  ✓ Revit MCP server is available');
-        console.log(`  ✓ Revit version: ${revitStatus.revitVersion || 'Unknown'}`);
-        console.log(`  ✓ Active document: ${revitStatus.activeDocument || 'Unknown'}`);
+        if (isDevelopment) {
+          console.log('  [OK] Revit MCP server is available');
+          console.log(`  [OK] Revit version: ${revitStatus.revitVersion || 'Unknown'}`);
+          console.log(`  [OK] Active document: ${revitStatus.activeDocument || 'Unknown'}`);
 
-        if (revitStatus.projectInfo) {
-          console.log(`  ✓ Available levels: ${revitStatus.projectInfo.levels.join(', ')}`);
+          if (revitStatus.projectInfo) {
+            console.log(`  [OK] Available levels: ${revitStatus.projectInfo.levels.join(', ')}`);
+          }
+
+          console.log('\n[7.6/8] Creating elements in Revit via MCP...');
         }
-
-        console.log('\n[7.6/8] Creating elements in Revit via MCP...');
 
         const geometricElements: GeometricElement[] = transformedElements.map((element, idx) => {
           const associations = associationAnalysis.associations.filter(
@@ -450,27 +470,33 @@ export async function processMastraAIPipeline(
           level: revit_level,
           stopOnError: stop_on_error,
           onProgress: (progress) => {
-            console.log(`  Progress: ${progress.current}/${progress.total} - Creating ${progress.element.type} (${progress.element.id})`);
+            if (isDevelopment) {
+              console.log(`  Progress: ${progress.current}/${progress.total} - Creating ${progress.element.type} (${progress.element.id})`);
+            }
           },
         });
 
-        console.log(`  Created ${revitMCPResult.successCount}/${revitMCPResult.totalElements} elements`);
-        if (revitMCPResult.failureCount > 0) {
-          console.log(`  ${revitMCPResult.failureCount} elements failed to create`);
-          revitMCPResult.errors.forEach((err) => {
-            console.log(`    - Element ${err.index}: ${err.error}`);
-            warnings.push(`MCP: Element ${err.index} failed - ${err.error}`);
-          });
+        if (isDevelopment) {
+          console.log(`  Created ${revitMCPResult.successCount}/${revitMCPResult.totalElements} elements`);
+          if (revitMCPResult.failureCount > 0) {
+            console.log(`  ${revitMCPResult.failureCount} elements failed to create`);
+            revitMCPResult.errors.forEach((err) => {
+              console.log(`    - Element ${err.index}: ${err.error}`);
+            });
+          }
+          console.log();
         }
-        console.log();
+        revitMCPResult.errors.forEach((err) => {
+          warnings.push(`MCP: Element ${err.index} failed - ${err.error}`);
+        });
       } else {
-        console.log('  Revit MCP server not available - falling back to JSON/CSV export');
+        if (isDevelopment) console.log('  Revit MCP server not available - falling back to JSON/CSV export');
         warnings.push('Revit MCP was enabled but server is not available');
-        console.log();
+        if (isDevelopment) console.log();
       }
     }
 
-    console.log('[8/8] Generating Revit outputs (JSON/CSV)...');
+    if (isDevelopment) console.log('[8/8] Generating Revit outputs (JSON/CSV)...');
 
     const revitData = {
       metadata: {
@@ -581,18 +607,21 @@ export async function processMastraAIPipeline(
     const jsonPath = await saveRevitJSON(revitData, drawing_id, output_dir);
     const csvPath = await saveRevitCSV(revitData, drawing_id, output_dir);
 
-    console.log(`  ✓ Generated: ${jsonPath}`);
-    console.log(`  ✓ Generated: ${csvPath}`);
-    console.log();
-
     const processingTime = Date.now() - startTime;
-    console.log(`=== PIPELINE COMPLETE ===`);
-    console.log(`Total time: ${(processingTime / 1000).toFixed(2)}s`);
-    if (warnings.length > 0) {
-      console.log(`Warnings: ${warnings.length}`);
-      warnings.forEach((w) => console.log(`  - ${w}`));
+
+    if (isDevelopment) {
+      console.log(`  [OK] Generated: ${jsonPath}`);
+      console.log(`  [OK] Generated: ${csvPath}`);
+      console.log();
+
+      console.log(`=== PIPELINE COMPLETE ===`);
+      console.log(`Total time: ${(processingTime / 1000).toFixed(2)}s`);
+      if (warnings.length > 0) {
+        console.log(`Warnings: ${warnings.length}`);
+        warnings.forEach((w) => console.log(`  - ${w}`));
+      }
+      console.log();
     }
-    console.log();
 
     return {
       drawing_id,
@@ -615,7 +644,7 @@ export async function processMastraAIPipeline(
     };
   } catch (error) {
     const processingTime = Date.now() - startTime;
-    console.error('Pipeline failed:', error);
+    if (isDevelopment) console.error('Pipeline failed:', error);
     errors.push(error instanceof Error ? error.message : String(error));
 
     return {

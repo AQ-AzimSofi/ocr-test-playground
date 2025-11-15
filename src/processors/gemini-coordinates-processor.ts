@@ -7,6 +7,8 @@ import {
 } from '../utils/gemini-parser.js';
 import { percentageToBbox } from '../utils/bbox-estimator.js';
 
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 /**
  * Process drawing with Gemini using coordinate-based prompting
  * Attempts to get both text AND approximate bounding boxes from Gemini
@@ -15,7 +17,9 @@ export async function processWithGeminiCoordinates(
   imagePath: string,
   drawingId: string
 ) {
-  console.log(`  Processing with Gemini Coordinates...`);
+  if (isDevelopment) {
+    console.log(`  Processing with Gemini Coordinates...`);
+  }
   const startTime = Date.now();
 
   try {
@@ -63,14 +67,18 @@ Include all:
       prompt
     );
 
-    console.log(`  Gemini response preview: ${response.substring(0, 200)}...`);
+    if (isDevelopment) {
+      console.log(`  Gemini response preview: ${response.substring(0, 200)}...`);
+    }
 
     // Try to parse coordinates from response
     const coordinates = parseGeminiCoordinates(response);
 
-    console.log(
-      `  Parsed ${coordinates.length} text elements with coordinates`
-    );
+    if (isDevelopment) {
+      console.log(
+        `  Parsed ${coordinates.length} text elements with coordinates`
+      );
+    }
 
     let boundingBoxes = [];
     let rawText = '';
