@@ -167,7 +167,7 @@ export const processorMetadata: Record<string, ProcessorInfo> = {
   'cloud-vision-gemini-hybrid': {
     name: 'cloud-vision-gemini-hybrid',
     displayName: 'Cloud Vision + Gemini Hybrid',
-    shortDescription: 'Region-level fusion with AI correction (RECOMMENDED)',
+    shortDescription: 'Region-level fusion with AI correction',
     fullDescription:
       "Advanced hybrid processor that combines Cloud Vision's precise bounding boxes with Gemini's superior text detection. Uses confidence-based selective correction at the region level.",
     howItWorks: [

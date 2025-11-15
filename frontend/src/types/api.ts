@@ -50,8 +50,15 @@ export interface Drawing {
 }
 
 export interface AccuracyMetrics {
+  /** Position-Sensitive Error Rate (considers character order) */
   characterErrorRate: number;
+  /** Content Error Rate (ignores character order) */
+  orderIndependentCer: number;
+  /** Extraction Accuracy (100% - Content Error Rate) */
+  orderIndependentAccuracy: number;
+  /** Character Accuracy (position-based) */
   characterAccuracy: number;
+  /** Character Set Coverage (percentage of unique characters found) */
   characterSetCoverage: number;
   extractedCharCount: number;
   groundTruthCharCount: number;
