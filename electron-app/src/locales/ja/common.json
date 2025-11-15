@@ -1,0 +1,41 @@
+{
+  "appName": "OCR テストツール",
+  "navigation": {
+    "pdfOcr": "PDF OCR テスト",
+    "textComparison": "テキスト比較",
+    "floorPlan": "平面図 → Revit",
+    "settings": "設定"
+  },
+  "buttons": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "select": "選択",
+    "selectFile": "ファイルを選択",
+    "selectImage": "画像を選択",
+    "run": "実行",
+    "runTest": "テストを実行",
+    "runComparison": "比較を実行",
+    "processing": "処理中...",
+    "addProcessor": "プロセッサを追加",
+    "remove": "削除",
+    "selectAll": "すべて選択",
+    "deselectAll": "すべて選択解除",
+    "copy": "コピー",
+    "copied": "コピーしました！"
+  },
+  "status": {
+    "selected": "選択済み:",
+    "saving": "保存中...",
+    "saved": "保存しました！",
+    "complete": "完了！",
+    "processingComplete": "処理完了！"
+  },
+  "common": {
+    "optional": "任意",
+    "required": "必須",
+    "characters": "{{count}}文字",
+    "cost": "コスト",
+    "processingTime": "処理時間",
+    "estimatedCost": "推定コスト"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "title": "設定",
+  "language": {
+    "title": "言語設定",
+    "description": "アプリケーションの表示言語を選択します。",
+    "japanese": "日本語 (Japanese)",
+    "english": "English"
+  },
+  "apiKeys": {
+    "title": "APIキー設定",
+    "description": "OCRおよびAIサービスのAPIキーを設定します。キーは暗号化されてローカルに保存されます。",
+    "cloudVision": {
+      "title": "Google Cloud Vision",
+      "authMethod": "認証方法を選択:",
+      "serviceAccount": "推奨: サービスアカウント",
+      "apiKey": "代替: APIキー（シンプル）",
+      "projectId": "プロジェクトID",
+      "projectIdHint": "サービスアカウントJSONから自動入力されます（空欄可）",
+      "serviceAccountJson": "サービスアカウントJSON",
+      "serviceAccountJsonPlaceholder": "サービスアカウントキーファイルのJSON全体を貼り付けてください",
+      "apiKeyField": "APIキー",
+      "apiKeyHint": "セキュリティが低いため、本番環境には推奨されません"
+    },
+    "azure": {
+      "title": "Azure Cognitive Services",
+      "key": "Azure Cognitive Services キー",
+      "endpoint": "Azureエンドポイント URL"
+    },
+    "gemini": {
+      "title": "Google Gemini",
+      "apiKey": "Google Gemini APIキー",
+      "required": "必須対象: Geminiベースのプロセッサ、ハイブリッドプロセッサ、平面図からRevitへの変換"
+    },
+    "documentAi": {
+      "title": "Document AI",
+      "description": "プロセッサを作成: console.cloud.google.com/ai/document-ai",
+      "processorId": "プロセッサID",
+      "location": "プロセッサの場所",
+      "locationUs": "us（アメリカ）",
+      "locationEu": "eu（ヨーロッパ）",
+      "locationTokyoNortheast": "asia-northeast1（東京）",
+      "locationSingapore": "asia-southeast1（シンガポール）",
+      "locationHint": "プロセッサを作成した場所を選択してください"
+    },
+    "saveButton": "APIキーを保存",
+    "availableProcessors": {
+      "title": "利用可能なプロセッサ",
+      "cloudVision": "Cloud Vision",
+      "azureReadLayout": "Azure Read & Layout",
+      "documentAi": "Document AI",
+      "gemini": "Gemini ベースのプロセッサ",
+      "confidentialSafe": "機密情報対応",
+      "hybridsExperimental": "ハイブリッド & 実験的",
+      "available": "利用可能",
+      "notConfigured": "未設定"
+    }
+  }
+}

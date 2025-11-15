@@ -1,0 +1,90 @@
+{
+  "title": "Text Comparison",
+  "description": "Compare OCR processor outputs and validate text extraction accuracy. Analyze differences between processors and measure confidence levels.",
+  "groundTruth": {
+    "title": "Ground Truth Text",
+    "description": "The reference text for comparison",
+    "placeholder": "Paste the ground truth text here...",
+    "charCount": "{{count}} characters"
+  },
+  "processorInputs": {
+    "title": "Processor Outputs",
+    "description": "Enter the OCR output from different processors",
+    "addProcessor": "Add Processor",
+    "processorName": "Processor Name",
+    "processorOutput": "OCR Output",
+    "outputPlaceholder": "Paste the processor output here...",
+    "confidence": "Confidence",
+    "confidencePlaceholder": "e.g., 95%",
+    "accuracy": "Accuracy: {{accuracy}}%"
+  },
+  "features": {
+    "title": "Features",
+    "items": [
+      {
+        "title": "Side-by-Side Comparison",
+        "description": "View ground truth and processor outputs together"
+      },
+      {
+        "title": "Difference Highlighting",
+        "description": "Automatically highlights differences between texts"
+      },
+      {
+        "title": "Accuracy Calculation",
+        "description": "Calculate accuracy metrics based on character-level comparison"
+      },
+      {
+        "title": "Word-Level Analysis",
+        "description": "Analyze accuracy at the word level"
+      },
+      {
+        "title": "Confidence Tracking",
+        "description": "Track confidence levels from each processor"
+      },
+      {
+        "title": "Export Results",
+        "description": "Export comparison results as JSON or CSV"
+      }
+    ]
+  },
+  "howItWorks": {
+    "title": "How It Works",
+    "steps": [
+      {
+        "number": "1",
+        "title": "Enter Ground Truth",
+        "description": "Paste the reference/correct text"
+      },
+      {
+        "number": "2",
+        "title": "Add Processors",
+        "description": "Add OCR outputs from different processors"
+      },
+      {
+        "number": "3",
+        "title": "Compare Results",
+        "description": "System automatically highlights differences"
+      },
+      {
+        "number": "4",
+        "title": "Analyze Metrics",
+        "description": "Review accuracy percentages and confidence levels"
+      },
+      {
+        "number": "5",
+        "title": "Export Data",
+        "description": "Download comparison results for reporting"
+      }
+    ]
+  },
+  "tips": {
+    "title": "Tips for Best Results",
+    "items": [
+      "Ensure ground truth text is accurate and complete",
+      "Include confidence levels from processor metadata when available",
+      "Use consistent formatting across processor outputs",
+      "Test with diverse document types for comprehensive comparison",
+      "Consider whitespace and special characters in comparisons"
+    ]
+  }
+}

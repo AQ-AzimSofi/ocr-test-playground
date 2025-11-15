@@ -1,0 +1,213 @@
+{
+  "categories": {
+    "confidentialSafe": "機密情報対応プロセッサ",
+    "confidentialSafeDesc": "これらのプロセッサはデータをローカルに保つため安全です。ドキュメントは外部のAIサービスに送信されません。",
+    "hybrids": "ハイブリッドプロセッサ",
+    "hybridsDesc": "複数のOCRエンジンをAIと組み合わせて精度を向上。データは設定されたAPIサービスに送信されます。",
+    "experimental": "実験的 & 高度な機能",
+    "experimentalDesc": "特殊なユースケース向けの最先端プロセッサ。利用が制限されている場合があります。"
+  },
+  "processors": [
+    {
+      "id": "cloud-vision",
+      "name": "Google Cloud Vision",
+      "description": "高速で信頼性の高い段落レベルOCR",
+      "category": "confidentialSafe",
+      "cost": "約1画像あたり0.15円",
+      "features": [
+        "段落レベルOCR",
+        "高精度",
+        "高速処理",
+        "複数言語対応"
+      ],
+      "bestFor": "一般的なPDFドキュメント、スキャン画像、テキストが明確なドキュメント"
+    },
+    {
+      "id": "azure-read",
+      "name": "Azure Read API",
+      "description": "コスト効率的な単語レベルOCR",
+      "category": "confidentialSafe",
+      "cost": "約1ページあたり0.225円",
+      "features": [
+        "単語レベルOCR",
+        "コスト効率的",
+        "良好な精度",
+        "手書きテキストに対応"
+      ],
+      "bestFor": "コスト意識的なプロジェクト、混合ドキュメント、手書きコンテンツ"
+    },
+    {
+      "id": "azure-layout",
+      "name": "Azure Layout API",
+      "description": "テーブル検出機能を備えた構造認識OCR",
+      "category": "confidentialSafe",
+      "cost": "約1ページあたり1.50円",
+      "features": [
+        "テーブル検出",
+        "構造保持",
+        "レイアウト理解",
+        "フォーム処理"
+      ],
+      "bestFor": "表を含むドキュメント、複雑なレイアウト、構造化フォーム"
+    },
+    {
+      "id": "document-ai",
+      "name": "Document AI",
+      "description": "構造分析を備えた高度な単語レベルOCR",
+      "category": "confidentialSafe",
+      "cost": "約1ページあたり0.225円",
+      "features": [
+        "高度なOCR",
+        "ドキュメント構造分析",
+        "エンティティ抽出",
+        "カスタムプロセッサ利用可"
+      ],
+      "bestFor": "複雑なドキュメント、特殊なドキュメントタイプ、エンティティ抽出が必要な場合"
+    },
+    {
+      "id": "cloud-vision-gemini-hybrid",
+      "name": "Cloud Vision + Gemini ハイブリッド",
+      "description": "領域レベルの融合とAI修正",
+      "category": "hybrids",
+      "cost": "約1画像あたり0.15-0.30円（低信頼度領域数による変動）",
+      "features": [
+        "AI搭載修正",
+        "領域レベル融合",
+        "適応的処理",
+        "高精度"
+      ],
+      "bestFor": "複雑なドキュメント、品質が混在する画像、最高精度が必要な場合"
+    },
+    {
+      "id": "azure-read-gemini-hybrid",
+      "name": "Azure Read + Gemini ハイブリッド",
+      "description": "予算に優しいハイブリッド、単語レベルの精度",
+      "category": "hybrids",
+      "cost": "約1画像あたり0.225-0.40円（低信頼度単語数による変動）",
+      "features": [
+        "予算に優しい",
+        "単語レベルの精度",
+        "AI強化",
+        "コストと精度のバランス"
+      ],
+      "bestFor": "予算意識的なプロジェクト、良好な精度が必要、一般的なドキュメント"
+    },
+    {
+      "id": "document-ai-gemini-hybrid",
+      "name": "Document AI + Gemini ハイブリッド",
+      "description": "Document AI検証ワークフロー付き高度なハイブリッド",
+      "category": "hybrids",
+      "cost": "約1画像あたり0.25-0.50円（検証問題数による変動）",
+      "features": [
+        "高度な検証",
+        "構造保持",
+        "AI搭載QA",
+        "エンティティ抽出"
+      ],
+      "bestFor": "複雑なドキュメント、検証が重要なワークフロー、エンティティ抽出"
+    },
+    {
+      "id": "gemini-self-calibrating",
+      "name": "Gemini 自己キャリブレーション",
+      "description": "Cloud Visionを参照として使用したAI搭載座標キャリブレーション",
+      "category": "hybrids",
+      "cost": "約1画像あたり0.25-0.40円（Gemini専用テキスト数による変動）",
+      "features": [
+        "自己キャリブレーション",
+        "座標精度",
+        "AI検証",
+        "適応的処理"
+      ],
+      "bestFor": "正確な座標抽出が必要なドキュメント、平面図、技術図面"
+    },
+    {
+      "id": "hybrid",
+      "name": "ハイブリッド（レガシー）",
+      "description": "シンプルな並列処理（Cloud Vision + Gemini）",
+      "category": "experimental",
+      "cost": "約1画像あたり0.20円",
+      "features": [
+        "並列処理",
+        "デュアルAI出力",
+        "シンプルな融合",
+        "レガシーサポート"
+      ],
+      "bestFor": "テスト、レガシーワークフロー、比較目的"
+    },
+    {
+      "id": "gemini-coordinates",
+      "name": "Gemini 座標",
+      "description": "Geminiにテキスト+パーセンテージ座標を要求（実験的）",
+      "category": "experimental",
+      "cost": "約1画像あたり0.05円",
+      "features": [
+        "Gemini専用",
+        "座標抽出",
+        "軽量",
+        "予算に優しい"
+      ],
+      "bestFor": "座標抽出、実験的なワークフロー、予算が限られたテスト",
+      "note": "実験的 - テスト目的"
+    },
+    {
+      "id": "gemini-bbox-synthesis",
+      "name": "Gemini バウンディングボックス合成",
+      "description": "GeminiテキストをCloud Visionバウンディングボックスにマッチング（実験的）",
+      "category": "experimental",
+      "cost": "約1画像あたり0.20円",
+      "features": [
+        "バウンディングボックス合成",
+        "デュアルエンジン マッチング",
+        "座標精度",
+        "実験的アルゴリズム"
+      ],
+      "bestFor": "バウンディングボックス抽出、実験的な座標ワークフロー",
+      "note": "実験的 - 研究およびテスト用"
+    },
+    {
+      "id": "gemini-validation-azure",
+      "name": "Gemini 検証 - Azure Read",
+      "description": "Geminiをの品質管理レビュアーとしてAzure Read結果を検証（実験的）",
+      "category": "experimental",
+      "cost": "約1画像あたり0.30-0.50円（検出された問題数による変動）",
+      "features": [
+        "AI搭載品質保証",
+        "Azure Read検証",
+        "品質保証",
+        "問題検出"
+      ],
+      "bestFor": "品質が重要なワークフロー、検証シナリオ、エラー検出",
+      "note": "実験的 - 品質管理検証ワークフロー"
+    },
+    {
+      "id": "region-classifier",
+      "name": "領域クラシファイア",
+      "description": "スマートルーティング: 高信頼度はAzure、低信頼度はGemini（実験的）",
+      "category": "experimental",
+      "cost": "約1画像あたり1.50-1.70円（低信頼度領域数による変動）",
+      "features": [
+        "スマートルーティング",
+        "信頼度ベースの選択",
+        "適応的処理",
+        "動的エンジン選択"
+      ],
+      "bestFor": "品質が混在するドキュメント、適応的処理、コスト最適化",
+      "note": "実験的 - インテリジェントルーティングアルゴリズム"
+    },
+    {
+      "id": "gemini-geometric",
+      "name": "Gemini 幾何学的",
+      "description": "壁と部屋検出を備えたAI搭載平面図分析",
+      "category": "experimental",
+      "cost": "約1平面図あたり1.50円",
+      "features": [
+        "壁検出",
+        "部屋検出",
+        "幾何学的分析",
+        "平面図理解"
+      ],
+      "bestFor": "平面図分析、建築ドキュメント、空間理解",
+      "note": "実験的 - 平面図と建築ドキュメント専用"
+    }
+  ]
+}

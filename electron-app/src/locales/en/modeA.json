@@ -1,0 +1,134 @@
+{
+  "title": "PDF OCR Testing",
+  "description": "Test and compare various OCR processors on PDF documents. Select ground truth text, choose processors, and analyze accuracy across different algorithms.",
+  "upload": {
+    "title": "Upload PDF",
+    "description": "Select a PDF file to analyze",
+    "placeholder": "Click to select a PDF file",
+    "supportedFormats": "Supported: PDF files",
+    "fileSize": "File size: {{size}}",
+    "fileName": "File: {{name}}"
+  },
+  "groundTruth": {
+    "title": "Ground Truth",
+    "description": "The correct/expected OCR output for comparison",
+    "placeholder": "Paste the ground truth text here...",
+    "charCount": "{{count}} characters",
+    "instructions": "Enter the text that represents the correct OCR output. This will be used to calculate accuracy metrics."
+  },
+  "processorSelection": {
+    "title": "Select Processors",
+    "description": "Choose which OCR processors to test",
+    "tabs": {
+      "confidentialSafe": "Confidential-Safe",
+      "hybrids": "Hybrid Processors",
+      "experimental": "Experimental"
+    },
+    "categories": {
+      "confidentialSafe": "Confidential-Safe (Local Data)",
+      "hybrids": "Hybrid Processors (AI-Enhanced)",
+      "experimental": "Experimental & Advanced"
+    },
+    "selectProcessors": "Select processors to run the test",
+    "selectedCount": "{{count}} processor(s) selected"
+  },
+  "costEstimate": {
+    "title": "Cost Estimate",
+    "description": "Estimated API costs for selected processors",
+    "perImage": "Per image",
+    "total": "Total cost estimate",
+    "varies": "Cost varies based on image content",
+    "note": "{{note}}"
+  },
+  "runButton": {
+    "run": "Run Test",
+    "running": "Running Tests...",
+    "cancel": "Cancel",
+    "noProcessors": "Please select at least one processor",
+    "noGroundTruth": "Please enter ground truth text",
+    "noFile": "Please select a PDF file"
+  },
+  "rateLimit": {
+    "title": "Rate Limit Configuration",
+    "description": "Manage API rate limits to avoid throttling",
+    "rateLimitExceeded": "Rate limit exceeded",
+    "waitTime": "Please wait {{seconds}} seconds before running again",
+    "options": {
+      "waitAndRetry": "Wait and Retry",
+      "skipProcessor": "Skip This Processor",
+      "skipAll": "Cancel All Tests"
+    },
+    "optionDescriptions": {
+      "waitAndRetry": "Pause and automatically retry when rate limit is lifted",
+      "skipProcessor": "Skip this processor and continue with others",
+      "skipAll": "Cancel the entire test run"
+    },
+    "retrying": "Retrying in {{seconds}} seconds...",
+    "processorSkipped": "Processor skipped due to rate limit"
+  },
+  "queueProgress": {
+    "title": "Processing Queue",
+    "position": "Position: {{current}}/{{total}}",
+    "status": "Status: {{status}}",
+    "statuses": {
+      "queued": "Queued",
+      "processing": "Processing",
+      "completed": "Completed",
+      "failed": "Failed",
+      "rateLimited": "Rate Limited"
+    },
+    "elapsedTime": "Elapsed: {{time}}",
+    "estimatedRemaining": "Est. remaining: {{time}}"
+  },
+  "errors": {
+    "missingApiKeys": "Missing API Keys",
+    "missingApiKeysDesc": "The following processors cannot run because their API keys are not configured: {{processors}}. Please configure them in Settings.",
+    "missingFile": "No PDF File Selected",
+    "missingFileDesc": "Please select a PDF file to test.",
+    "missingGroundTruth": "No Ground Truth Provided",
+    "missingGroundTruthDesc": "Please enter the ground truth text for comparison.",
+    "fileNotFound": "File not found",
+    "fileNotFoundDesc": "The selected PDF file could not be found.",
+    "invalidPdf": "Invalid PDF",
+    "invalidPdfDesc": "The selected file is not a valid PDF.",
+    "processingFailed": "Processing Failed",
+    "processingFailedDesc": "An error occurred while processing. Please try again.",
+    "networkError": "Network Error",
+    "networkErrorDesc": "Failed to connect to the API service. Please check your internet connection."
+  },
+  "howItWorks": {
+    "title": "How It Works",
+    "steps": [
+      {
+        "number": "1",
+        "title": "Upload PDF",
+        "description": "Select a PDF document to analyze"
+      },
+      {
+        "number": "2",
+        "title": "Enter Ground Truth",
+        "description": "Paste the correct/expected OCR output"
+      },
+      {
+        "number": "3",
+        "title": "Select Processors",
+        "description": "Choose which OCR algorithms to test"
+      },
+      {
+        "number": "4",
+        "title": "Review Cost",
+        "description": "Check the estimated API costs"
+      },
+      {
+        "number": "5",
+        "title": "Run Tests",
+        "description": "Process the PDF with selected processors"
+      },
+      {
+        "number": "6",
+        "title": "Compare Results",
+        "description": "View accuracy metrics and processor output"
+      }
+    ]
+  }
+}

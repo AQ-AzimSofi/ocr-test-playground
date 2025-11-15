@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Settings from './pages/Settings';
 import ModeA from './pages/ModeA';
 import ModeB from './pages/ModeB';
@@ -8,6 +9,7 @@ type Page = 'mode-a' | 'mode-b' | 'floor-plan' | 'settings';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('mode-a');
+  const { t } = useTranslation('common');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -17,7 +19,7 @@ function App() {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-gray-900">OCR Testing Tool</h1>
+                <h1 className="text-xl font-bold text-gray-900">{t('appName')}</h1>
               </div>
               <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
                 <button
@@ -28,7 +30,7 @@ function App() {
                       : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                   } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
-                  PDF OCR Testing
+                  {t('navigation.pdfOcr')}
                 </button>
                 <button
                   onClick={() => setCurrentPage('mode-b')}
@@ -38,7 +40,7 @@ function App() {
                       : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                   } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
-                  Text Comparison
+                  {t('navigation.textComparison')}
                 </button>
                 <button
                   onClick={() => setCurrentPage('floor-plan')}
@@ -48,7 +50,7 @@ function App() {
                       : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                   } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
-                  Floor Plan → Revit
+                  {t('navigation.floorPlan')}
                 </button>
               </div>
             </div>
@@ -60,7 +62,7 @@ function App() {
                     ? 'bg-gray-200 text-gray-900'
                     : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                 } p-2 rounded-md`}
-                title="Settings"
+                title={t('navigation.settings')}
               >
                 <svg
                   className="h-5 w-5"

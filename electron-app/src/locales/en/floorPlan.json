@@ -1,0 +1,197 @@
+{
+  "title": "Floor Plan → Revit",
+  "description": "Convert floor plans to Revit-compatible models. Extract walls, doors, windows, and rooms automatically using AI-powered analysis.",
+  "apiKeyWarning": {
+    "title": "API Key Required",
+    "message": "Google Gemini API key is required for this feature. Please configure it in Settings.",
+    "learnMore": "Learn more about setup"
+  },
+  "upload": {
+    "title": "Upload Floor Plan",
+    "description": "Select a floor plan image or PDF",
+    "placeholder": "Click to select a floor plan image (PNG, JPG) or PDF",
+    "supportedFormats": "Supported: PNG, JPG, JPEG, PDF (first page)",
+    "fileSize": "File size: {{size}}",
+    "fileName": "File: {{name}}",
+    "resolutionHint": "Recommended: 300+ DPI for best accuracy"
+  },
+  "processButton": {
+    "process": "Process Floor Plan",
+    "processing": "Processing...",
+    "cancel": "Cancel",
+    "noFile": "Please select a floor plan image"
+  },
+  "resultsDisplay": {
+    "title": "Detection Results",
+    "summary": "Detection Summary",
+    "walls": {
+      "title": "Walls",
+      "count": "{{count}} walls detected",
+      "length": "Total length: {{length}}mm",
+      "avgThickness": "Average thickness: {{thickness}}mm"
+    },
+    "doors": {
+      "title": "Doors",
+      "count": "{{count}} doors detected",
+      "types": "Door types: {{types}}"
+    },
+    "windows": {
+      "title": "Windows",
+      "count": "{{count}} windows detected",
+      "types": "Window types: {{types}}"
+    },
+    "rooms": {
+      "title": "Rooms",
+      "count": "{{count}} rooms detected",
+      "totalArea": "Total area: {{area}}m²",
+      "avgArea": "Average room area: {{area}}m²"
+    },
+    "accuracy": "Detection Accuracy: {{accuracy}}%",
+    "confidence": "Confidence Score: {{confidence}}/100"
+  },
+  "detectionPreview": {
+    "title": "Detection Preview Options",
+    "showWalls": "Show Walls",
+    "showDoors": "Show Doors",
+    "showWindows": "Show Windows",
+    "showRooms": "Show Rooms",
+    "showLabels": "Show Labels",
+    "showDimensions": "Show Dimensions",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "resetView": "Reset View"
+  },
+  "nextSteps": {
+    "title": "Next Steps",
+    "description": "Your floor plan has been successfully processed. Here's what you can do next:",
+    "steps": [
+      {
+        "number": "1",
+        "title": "Download Revit File",
+        "description": "Download the generated .rvt file and open in Revit"
+      },
+      {
+        "number": "2",
+        "title": "Review in Revit",
+        "description": "Check the imported walls, doors, and windows"
+      },
+      {
+        "number": "3",
+        "title": "Fine-tune Details",
+        "description": "Make any necessary adjustments in Revit"
+      },
+      {
+        "number": "4",
+        "title": "Export to Dynamo",
+        "description": "Use Dynamo scripts for further automation"
+      }
+    ]
+  },
+  "revitImport": {
+    "title": "How to Import into Revit",
+    "steps": [
+      {
+        "number": "1",
+        "description": "Open your Revit project"
+      },
+      {
+        "number": "2",
+        "description": "Click File > Import/Link > Import CAD"
+      },
+      {
+        "number": "3",
+        "description": "Select the downloaded DWG file"
+      },
+      {
+        "number": "4",
+        "description": "Configure import options as needed"
+      },
+      {
+        "number": "5",
+        "description": "Click Open to import the floor plan"
+      }
+    ]
+  },
+  "dynamoExport": {
+    "title": "How to Export to Dynamo",
+    "description": "Automate further processing using Dynamo scripts",
+    "steps": [
+      {
+        "number": "1",
+        "description": "Open Dynamo within your Revit project"
+      },
+      {
+        "number": "2",
+        "description": "Load the generated Dynamo script from the results folder"
+      },
+      {
+        "number": "3",
+        "description": "Review the automation workflow"
+      },
+      {
+        "number": "4",
+        "description": "Click 'Run' to execute the Dynamo script"
+      },
+      {
+        "number": "5",
+        "description": "Review generated elements in Revit"
+      }
+    ]
+  },
+  "whatGetsCreated": {
+    "title": "What Gets Created",
+    "description": "The tool automatically generates the following in Revit:",
+    "items": [
+      {
+        "title": "Walls",
+        "description": "Structural walls based on detected lines and thickness"
+      },
+      {
+        "title": "Doors",
+        "description": "Door instances with appropriate sizes and materials"
+      },
+      {
+        "title": "Windows",
+        "description": "Window instances with detected dimensions"
+      },
+      {
+        "title": "Rooms",
+        "description": "Room boundaries and area calculations"
+      },
+      {
+        "title": "Levels",
+        "description": "Level objects for multi-story planning"
+      },
+      {
+        "title": "Views",
+        "description": "Floor plan and elevation views"
+      }
+    ]
+  },
+  "features": {
+    "title": "Key Features",
+    "items": [
+      "Automatic wall detection and generation",
+      "Door and window recognition with type assignment",
+      "Room boundary detection and area calculation",
+      "Multi-floor support for complex buildings",
+      "Dimension extraction and coordinate system setup",
+      "Material assignment based on detected patterns",
+      "Dynamo script generation for further automation",
+      "DWG export for compatibility with other tools"
+    ]
+  },
+  "tips": {
+    "title": "Tips for Best Results",
+    "items": [
+      "Use high-resolution floor plans (300+ DPI)",
+      "Ensure clear walls with distinct line styles",
+      "Mark doors and windows clearly in the original image",
+      "Include proper scale or dimension information",
+      "Use consistent line weights for accuracy",
+      "Test with a single floor before processing multi-story plans",
+      "Have Revit templates ready before import",
+      "Keep original floor plan for reference during review"
+    ]
+  }
+}

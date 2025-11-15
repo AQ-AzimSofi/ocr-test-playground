@@ -1,0 +1,58 @@
+{
+  "title": "Settings",
+  "language": {
+    "title": "Language Settings",
+    "description": "Select the application display language.",
+    "japanese": "日本語 (Japanese)",
+    "english": "English"
+  },
+  "apiKeys": {
+    "title": "API Key Configuration",
+    "description": "Configure your API keys for OCR and AI services. Keys are encrypted and stored locally on your machine.",
+    "cloudVision": {
+      "title": "Google Cloud Vision",
+      "authMethod": "Choose one authentication method:",
+      "serviceAccount": "Recommended: Service Account",
+      "apiKey": "Alternative: API Key (Simple)",
+      "projectId": "Project ID",
+      "projectIdHint": "Will be auto-filled from the service account JSON if left empty",
+      "serviceAccountJson": "Service Account JSON",
+      "serviceAccountJsonPlaceholder": "Paste the entire JSON content from your service account key file",
+      "apiKeyField": "API Key",
+      "apiKeyHint": "Less secure, not recommended for production"
+    },
+    "azure": {
+      "title": "Azure Cognitive Services",
+      "key": "Azure Cognitive Services Key",
+      "endpoint": "Azure Endpoint URL"
+    },
+    "gemini": {
+      "title": "Google Gemini",
+      "apiKey": "Google Gemini API Key",
+      "required": "Required for: All Gemini-based processors, hybrid processors, and Floor Plan to Revit conversion"
+    },
+    "documentAi": {
+      "title": "Document AI",
+      "description": "Create a processor at console.cloud.google.com/ai/document-ai",
+      "processorId": "Processor ID",
+      "location": "Processor Location",
+      "locationUs": "us (United States)",
+      "locationEu": "eu (Europe)",
+      "locationTokyoNortheast": "asia-northeast1 (Tokyo)",
+      "locationSingapore": "asia-southeast1 (Singapore)",
+      "locationHint": "Select the location where your processor was created"
+    },
+    "saveButton": "Save API Keys",
+    "availableProcessors": {
+      "title": "Available Processors",
+      "cloudVision": "Cloud Vision",
+      "azureReadLayout": "Azure Read & Layout",
+      "documentAi": "Document AI",
+      "gemini": "All Gemini-based",
+      "confidentialSafe": "Confidential-safe",
+      "hybridsExperimental": "Hybrids & Experimental",
+      "available": "Available",
+      "notConfigured": "Not configured"
+    }
+  }
+}

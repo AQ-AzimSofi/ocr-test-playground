@@ -1,0 +1,41 @@
+{
+  "appName": "OCR Testing Tool",
+  "navigation": {
+    "pdfOcr": "PDF OCR Testing",
+    "textComparison": "Text Comparison",
+    "floorPlan": "Floor Plan → Revit",
+    "settings": "Settings"
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "select": "Select",
+    "selectFile": "Select File",
+    "selectImage": "Select Image",
+    "run": "Run",
+    "runTest": "Run Test",
+    "runComparison": "Run Comparison",
+    "processing": "Processing...",
+    "addProcessor": "Add Processor",
+    "remove": "Remove",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "copy": "Copy",
+    "copied": "Copied!"
+  },
+  "status": {
+    "selected": "Selected:",
+    "saving": "Saving...",
+    "saved": "Saved successfully!",
+    "complete": "Complete!",
+    "processingComplete": "Processing Complete!"
+  },
+  "common": {
+    "optional": "Optional",
+    "required": "Required",
+    "characters": "{{count}} characters",
+    "cost": "Cost",
+    "processingTime": "Processing time",
+    "estimatedCost": "Estimated cost"
+  }
+}

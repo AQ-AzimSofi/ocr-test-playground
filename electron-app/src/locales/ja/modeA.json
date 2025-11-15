@@ -1,0 +1,134 @@
+{
+  "title": "PDF OCRテスト",
+  "description": "様々なOCRプロセッサをPDFドキュメントでテストして比較します。グラウンドトゥルーステキストを選択し、プロセッサを選んで、異なるアルゴリズム間の精度を分析します。",
+  "upload": {
+    "title": "PDFをアップロード",
+    "description": "分析するPDFファイルを選択",
+    "placeholder": "クリックしてPDFファイルを選択",
+    "supportedFormats": "対応形式: PDFファイル",
+    "fileSize": "ファイルサイズ: {{size}}",
+    "fileName": "ファイル: {{name}}"
+  },
+  "groundTruth": {
+    "title": "グラウンドトゥルース",
+    "description": "比較用の正しい/期待されるOCR出力",
+    "placeholder": "グラウンドトゥルーステキストをここに貼り付けてください...",
+    "charCount": "{{count}}文字",
+    "instructions": "正しいOCR出力を表すテキストを入力してください。これは精度指標を計算するために使用されます。"
+  },
+  "processorSelection": {
+    "title": "プロセッサを選択",
+    "description": "テストするOCRプロセッサを選択",
+    "tabs": {
+      "confidentialSafe": "機密情報対応",
+      "hybrids": "ハイブリッドプロセッサ",
+      "experimental": "実験的"
+    },
+    "categories": {
+      "confidentialSafe": "機密情報対応（ローカルデータ）",
+      "hybrids": "ハイブリッドプロセッサ（AI強化）",
+      "experimental": "実験的 & 高度な機能"
+    },
+    "selectProcessors": "テストを実行するプロセッサを選択",
+    "selectedCount": "{{count}}個のプロセッサが選択されています"
+  },
+  "costEstimate": {
+    "title": "コスト推定",
+    "description": "選択したプロセッサの推定APIコスト",
+    "perImage": "1画像あたり",
+    "total": "総コスト推定",
+    "varies": "コストは画像のコンテンツによって異なります",
+    "note": "{{note}}"
+  },
+  "runButton": {
+    "run": "テストを実行",
+    "running": "テストを実行中...",
+    "cancel": "キャンセル",
+    "noProcessors": "少なくとも1つのプロセッサを選択してください",
+    "noGroundTruth": "グラウンドトゥルーステキストを入力してください",
+    "noFile": "PDFファイルを選択してください"
+  },
+  "rateLimit": {
+    "title": "レート制限設定",
+    "description": "APIレート制限を管理してスロットリングを回避",
+    "rateLimitExceeded": "レート制限に達しました",
+    "waitTime": "もう一度実行する前に{{seconds}}秒待機してください",
+    "options": {
+      "waitAndRetry": "待機して再試行",
+      "skipProcessor": "このプロセッサをスキップ",
+      "skipAll": "すべてのテストをキャンセル"
+    },
+    "optionDescriptions": {
+      "waitAndRetry": "一時停止して、レート制限が解除されたら自動的に再試行",
+      "skipProcessor": "このプロセッサをスキップして他を続行",
+      "skipAll": "テスト全体をキャンセル"
+    },
+    "retrying": "{{seconds}}秒後に再試行します...",
+    "processorSkipped": "レート制限によりプロセッサがスキップされました"
+  },
+  "queueProgress": {
+    "title": "処理キュー",
+    "position": "位置: {{current}}/{{total}}",
+    "status": "ステータス: {{status}}",
+    "statuses": {
+      "queued": "キュー中",
+      "processing": "処理中",
+      "completed": "完了",
+      "failed": "失敗",
+      "rateLimited": "レート制限中"
+    },
+    "elapsedTime": "経過時間: {{time}}",
+    "estimatedRemaining": "推定残り時間: {{time}}"
+  },
+  "errors": {
+    "missingApiKeys": "APIキーが不足しています",
+    "missingApiKeysDesc": "以下のプロセッサはAPIキーが設定されていないため実行できません: {{processors}}。設定で設定してください。",
+    "missingFile": "PDFファイルが選択されていません",
+    "missingFileDesc": "テストするPDFファイルを選択してください。",
+    "missingGroundTruth": "グラウンドトゥルースが提供されていません",
+    "missingGroundTruthDesc": "比較用のグラウンドトゥルーステキストを入力してください。",
+    "fileNotFound": "ファイルが見つかりません",
+    "fileNotFoundDesc": "選択したPDFファイルが見つかりません。",
+    "invalidPdf": "無効なPDF",
+    "invalidPdfDesc": "選択したファイルは有効なPDFではありません。",
+    "processingFailed": "処理に失敗しました",
+    "processingFailedDesc": "処理中にエラーが発生しました。もう一度お試しください。",
+    "networkError": "ネットワークエラー",
+    "networkErrorDesc": "APIサービスへの接続に失敗しました。インターネット接続を確認してください。"
+  },
+  "howItWorks": {
+    "title": "使用方法",
+    "steps": [
+      {
+        "number": "1",
+        "title": "PDFをアップロード",
+        "description": "分析するPDFドキュメントを選択"
+      },
+      {
+        "number": "2",
+        "title": "グラウンドトゥルースを入力",
+        "description": "正しい/期待されるOCR出力を貼り付け"
+      },
+      {
+        "number": "3",
+        "title": "プロセッサを選択",
+        "description": "テストするOCRアルゴリズムを選択"
+      },
+      {
+        "number": "4",
+        "title": "コストを確認",
+        "description": "推定APIコストを確認"
+      },
+      {
+        "number": "5",
+        "title": "テストを実行",
+        "description": "選択したプロセッサでPDFを処理"
+      },
+      {
+        "number": "6",
+        "title": "結果を比較",
+        "description": "精度指標とプロセッサ出力を表示"
+      }
+    ]
+  }
+}

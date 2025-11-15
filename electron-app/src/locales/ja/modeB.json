@@ -1,0 +1,90 @@
+{
+  "title": "テキスト比較",
+  "description": "OCRプロセッサの出力を比較し、テキスト抽出精度を検証します。プロセッサ間の違いを分析し、信頼度レベルを測定します。",
+  "groundTruth": {
+    "title": "グラウンドトゥルーステキスト",
+    "description": "比較用の参照テキスト",
+    "placeholder": "グラウンドトゥルーステキストをここに貼り付けてください...",
+    "charCount": "{{count}}文字"
+  },
+  "processorInputs": {
+    "title": "プロセッサ出力",
+    "description": "異なるプロセッサからのOCR出力を入力",
+    "addProcessor": "プロセッサを追加",
+    "processorName": "プロセッサ名",
+    "processorOutput": "OCR出力",
+    "outputPlaceholder": "プロセッサの出力をここに貼り付けてください...",
+    "confidence": "信頼度",
+    "confidencePlaceholder": "例: 95%",
+    "accuracy": "精度: {{accuracy}}%"
+  },
+  "features": {
+    "title": "機能",
+    "items": [
+      {
+        "title": "並べて比較",
+        "description": "グラウンドトゥルースとプロセッサ出力を並べて表示"
+      },
+      {
+        "title": "差分ハイライト",
+        "description": "テキスト間の違いを自動的にハイライト"
+      },
+      {
+        "title": "精度計算",
+        "description": "文字レベルの比較に基づいて精度指標を計算"
+      },
+      {
+        "title": "単語レベル分析",
+        "description": "単語レベルで精度を分析"
+      },
+      {
+        "title": "信頼度追跡",
+        "description": "各プロセッサからの信頼度レベルを追跡"
+      },
+      {
+        "title": "結果をエクスポート",
+        "description": "比較結果をJSONまたはCSVとしてエクスポート"
+      }
+    ]
+  },
+  "howItWorks": {
+    "title": "使用方法",
+    "steps": [
+      {
+        "number": "1",
+        "title": "グラウンドトゥルースを入力",
+        "description": "参照/正しいテキストを貼り付け"
+      },
+      {
+        "number": "2",
+        "title": "プロセッサを追加",
+        "description": "異なるプロセッサからのOCR出力を追加"
+      },
+      {
+        "number": "3",
+        "title": "結果を比較",
+        "description": "システムが自動的に違いをハイライト"
+      },
+      {
+        "number": "4",
+        "title": "指標を分析",
+        "description": "精度パーセンテージと信頼度レベルを確認"
+      },
+      {
+        "number": "5",
+        "title": "データをエクスポート",
+        "description": "比較結果をダウンロードしてレポーティング"
+      }
+    ]
+  },
+  "tips": {
+    "title": "最良の結果を得るためのヒント",
+    "items": [
+      "グラウンドトゥルーステキストが正確で完全であることを確認",
+      "利用可能な場合、プロセッサメタデータから信頼度レベルを含める",
+      "プロセッサ出力間で一貫したフォーマットを使用",
+      "包括的な比較のために異なるドキュメントタイプでテスト",
+      "比較では空白と特殊文字を考慮"
+    ]
+  }
+}

@@ -1,0 +1,197 @@
+{
+  "title": "平面図 → Revit",
+  "description": "平面図をRevit互換モデルに変換します。AIを活用した分析を使用して、壁、ドア、窓、部屋を自動的に抽出します。",
+  "apiKeyWarning": {
+    "title": "APIキーが必要",
+    "message": "この機能にはGoogle Gemini APIキーが必要です。設定で設定してください。",
+    "learnMore": "セットアップについて詳しく知る"
+  },
+  "upload": {
+    "title": "平面図をアップロード",
+    "description": "平面図の画像またはPDFを選択",
+    "placeholder": "クリックして平面図の画像（PNG、JPG）またはPDFを選択",
+    "supportedFormats": "対応形式: PNG、JPG、JPEG、PDF（最初のページ）",
+    "fileSize": "ファイルサイズ: {{size}}",
+    "fileName": "ファイル: {{name}}",
+    "resolutionHint": "推奨: 最高の精度のために300以上のDPI"
+  },
+  "processButton": {
+    "process": "平面図を処理",
+    "processing": "処理中...",
+    "cancel": "キャンセル",
+    "noFile": "平面図の画像を選択してください"
+  },
+  "resultsDisplay": {
+    "title": "検出結果",
+    "summary": "検出概要",
+    "walls": {
+      "title": "壁",
+      "count": "{{count}}個の壁を検出",
+      "length": "総長: {{length}}mm",
+      "avgThickness": "平均厚さ: {{thickness}}mm"
+    },
+    "doors": {
+      "title": "ドア",
+      "count": "{{count}}個のドアを検出",
+      "types": "ドアタイプ: {{types}}"
+    },
+    "windows": {
+      "title": "窓",
+      "count": "{{count}}個の窓を検出",
+      "types": "窓タイプ: {{types}}"
+    },
+    "rooms": {
+      "title": "部屋",
+      "count": "{{count}}個の部屋を検出",
+      "totalArea": "総面積: {{area}}m²",
+      "avgArea": "平均部屋面積: {{area}}m²"
+    },
+    "accuracy": "検出精度: {{accuracy}}%",
+    "confidence": "信頼度スコア: {{confidence}}/100"
+  },
+  "detectionPreview": {
+    "title": "検出プレビューオプション",
+    "showWalls": "壁を表示",
+    "showDoors": "ドアを表示",
+    "showWindows": "窓を表示",
+    "showRooms": "部屋を表示",
+    "showLabels": "ラベルを表示",
+    "showDimensions": "寸法を表示",
+    "zoomIn": "ズームイン",
+    "zoomOut": "ズームアウト",
+    "resetView": "表示をリセット"
+  },
+  "nextSteps": {
+    "title": "次のステップ",
+    "description": "平面図の処理が正常に完了しました。次にできることをご紹介します:",
+    "steps": [
+      {
+        "number": "1",
+        "title": "Revitファイルをダウンロード",
+        "description": "生成された.rvtファイルをダウンロードしてRevitで開く"
+      },
+      {
+        "number": "2",
+        "title": "Revitで確認",
+        "description": "インポートされた壁、ドア、窓を確認"
+      },
+      {
+        "number": "3",
+        "title": "詳細を微調整",
+        "description": "Revitで必要な調整を行う"
+      },
+      {
+        "number": "4",
+        "title": "Dynamoにエクスポート",
+        "description": "Dynamoスクリプトを使用してさらに自動化"
+      }
+    ]
+  },
+  "revitImport": {
+    "title": "Revitにインポートする方法",
+    "steps": [
+      {
+        "number": "1",
+        "description": "Revitプロジェクトを開く"
+      },
+      {
+        "number": "2",
+        "description": "ファイル > インポート/リンク > CADをインポート をクリック"
+      },
+      {
+        "number": "3",
+        "description": "ダウンロードしたDWGファイルを選択"
+      },
+      {
+        "number": "4",
+        "description": "必要に応じてインポートオプションを設定"
+      },
+      {
+        "number": "5",
+        "description": "開くをクリックして平面図をインポート"
+      }
+    ]
+  },
+  "dynamoExport": {
+    "title": "Dynamoにエクスポートする方法",
+    "description": "Dynamoスクリプトを使用してさらに処理を自動化",
+    "steps": [
+      {
+        "number": "1",
+        "description": "Revitプロジェクト内でDynamoを開く"
+      },
+      {
+        "number": "2",
+        "description": "結果フォルダから生成されたDynamoスクリプトを読み込む"
+      },
+      {
+        "number": "3",
+        "description": "自動化ワークフローを確認"
+      },
+      {
+        "number": "4",
+        "description": "「実行」をクリックしてDynamoスクリプトを実行"
+      },
+      {
+        "number": "5",
+        "description": "Revitで生成された要素を確認"
+      }
+    ]
+  },
+  "whatGetsCreated": {
+    "title": "作成されるもの",
+    "description": "ツールは自動的にRevitで以下を生成します:",
+    "items": [
+      {
+        "title": "壁",
+        "description": "検出された線と厚さに基づいた構造壁"
+      },
+      {
+        "title": "ドア",
+        "description": "適切なサイズと材料を備えたドアインスタンス"
+      },
+      {
+        "title": "窓",
+        "description": "検出された寸法を備えた窓インスタンス"
+      },
+      {
+        "title": "部屋",
+        "description": "部屋の境界と面積計算"
+      },
+      {
+        "title": "レベル",
+        "description": "複数階の計画のためのレベルオブジェクト"
+      },
+      {
+        "title": "ビュー",
+        "description": "平面図と立面図ビュー"
+      }
+    ]
+  },
+  "features": {
+    "title": "主要機能",
+    "items": [
+      "自動壁検出と生成",
+      "ドアと窓の認識とタイプ割り当て",
+      "部屋の境界検出と面積計算",
+      "複雑な建物のための複数階対応",
+      "寸法抽出と座標システムセットアップ",
+      "検出されたパターンに基づく材料割り当て",
+      "さらなる自動化のためのDynamoスクリプト生成",
+      "他のツールとの互換性のためのDWGエクスポート"
+    ]
+  },
+  "tips": {
+    "title": "最良の結果を得るためのヒント",
+    "items": [
+      "高解像度の平面図を使用（300以上のDPI）",
+      "明確な線のスタイルで壁を明確に",
+      "元の画像でドアと窓を明確にマーク",
+      "適切なスケールまたは寸法情報を含める",
+      "精度のために一貫した線の太さを使用",
+      "複数階の計画を処理する前に単一階でテスト",
+      "インポート前にRevitテンプレートを準備",
+      "確認中のリファレンスとして元の平面図を保持"
+    ]
+  }
+}

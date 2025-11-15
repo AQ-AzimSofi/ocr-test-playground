@@ -1,0 +1,188 @@
+{
+  "title": "エラーメッセージ",
+  "common": {
+    "error": "エラー",
+    "warning": "警告",
+    "info": "情報",
+    "success": "成功",
+    "tryAgain": "もう一度試す",
+    "dismiss": "閉じる",
+    "learnMore": "詳しく知る"
+  },
+  "fileErrors": {
+    "noFileSelected": {
+      "title": "ファイルが選択されていません",
+      "message": "続行するためにファイルを選択してください。"
+    },
+    "fileNotFound": {
+      "title": "ファイルが見つかりません",
+      "message": "選択したファイルが見つかりません。移動または削除されているかもしれません。"
+    },
+    "invalidFileFormat": {
+      "title": "無効なファイル形式",
+      "message": "ファイル形式はサポートされていません。{{supported}}ファイルを選択してください。"
+    },
+    "fileTooLarge": {
+      "title": "ファイルが大きすぎます",
+      "message": "ファイルサイズが最大制限の{{limit}}MBを超えています。"
+    },
+    "fileReadError": {
+      "title": "ファイル読み込みエラー",
+      "message": "ファイル読み込み中にエラーが発生しました。もう一度お試しください。"
+    },
+    "invalidPdf": {
+      "title": "無効なPDF",
+      "message": "選択したファイルは有効なPDFではありません。有効なPDFファイルを選択してください。"
+    },
+    "corruptedFile": {
+      "title": "破損したファイル",
+      "message": "ファイルが破損しているようです。別のファイルを選択してください。"
+    }
+  },
+  "apiKeyErrors": {
+    "missingApiKey": {
+      "title": "APIキーが不足しています",
+      "message": "{{service}} APIキーが設定されていません。設定で設定してください。"
+    },
+    "invalidApiKey": {
+      "title": "無効なAPIキー",
+      "message": "{{service}} APIキーは無効または正しくありません。検証して設定を更新してください。"
+    },
+    "apiKeyExpired": {
+      "title": "APIキーが期限切れ",
+      "message": "{{service}} APIキーが期限切れです。設定で更新してください。"
+    },
+    "multipleApiKeysRequired": {
+      "title": "複数のAPIキーが必要",
+      "message": "このプロセッサは以下のAPIキーが必要です: {{keys}}。設定で設定してください。"
+    },
+    "processorsUnavailable": {
+      "title": "プロセッサが利用できません",
+      "message": "以下のプロセッサはAPIキーが不足しているため実行できません: {{processors}}。設定で設定してください。"
+    }
+  },
+  "authenticationErrors": {
+    "unauthorized": {
+      "title": "権限がありません",
+      "message": "APIの認証情報がこのサービスに対して無効または権限がありません。"
+    },
+    "authenticationFailed": {
+      "title": "認証に失敗しました",
+      "message": "{{service}}での認証に失敗しました。認証情報を確認してください。"
+    },
+    "invalidServiceAccount": {
+      "title": "無効なサービスアカウント",
+      "message": "サービスアカウントJSONは無効または不正な形式です。検証して更新してください。"
+    },
+    "serviceAccountMissing": {
+      "title": "サービスアカウントが見つかりません",
+      "message": "{{service}}ではサービスアカウント設定が必要です。設定で設定してください。"
+    }
+  },
+  "networkErrors": {
+    "networkError": {
+      "title": "ネットワークエラー",
+      "message": "サービスへの接続に失敗しました。インターネット接続を確認してください。"
+    },
+    "connectionTimeout": {
+      "title": "接続がタイムアウト",
+      "message": "{{service}}への接続がタイムアウトしました。もう一度お試しください。"
+    },
+    "serviceUnavailable": {
+      "title": "サービスが利用できません",
+      "message": "{{service}}は現在利用できません。後でもう一度お試しください。"
+    },
+    "requestFailed": {
+      "title": "リクエストが失敗",
+      "message": "{{service}}へのリクエスト完了に失敗しました。もう一度お試しください。"
+    }
+  },
+  "rateLimitErrors": {
+    "rateLimitExceeded": {
+      "title": "レート制限に達しました",
+      "message": "{{service}}へのリクエストが多すぎます。{{seconds}}秒待機してからもう一度お試しください。"
+    },
+    "quotaExceeded": {
+      "title": "クォータを超過",
+      "message": "この期間の{{service}}クォータが超過しました。後でもう一度お試しください。"
+    },
+    "retrying": {
+      "title": "再試行中",
+      "message": "{{seconds}}秒後にリクエストを再試行します..."
+    }
+  },
+  "processingErrors": {
+    "processingFailed": {
+      "title": "処理に失敗しました",
+      "message": "処理中にエラーが発生しました。もう一度お試しください。"
+    },
+    "ocrFailed": {
+      "title": "OCR処理に失敗",
+      "message": "画像からテキストを抽出できませんでした。画像が不明確であるか、サポートされていない形式です。"
+    },
+    "analysisTimeout": {
+      "title": "分析がタイムアウト",
+      "message": "分析の完了に時間がかかりすぎました。より小さいファイルでもう一度お試しください。"
+    },
+    "invalidImage": {
+      "title": "無効な画像",
+      "message": "アップロードした画像は無効またはサポートされていません。別の画像を選択してください。"
+    },
+    "emptyResult": {
+      "title": "結果が空です",
+      "message": "画像からテキストを抽出できませんでした。画像が空白であるか、品質が非常に低い可能性があります。"
+    }
+  },
+  "validationErrors": {
+    "missingGroundTruth": {
+      "title": "グラウンドトゥルースが不足",
+      "message": "比較用のグラウンドトゥルーステキストを入力してください。"
+    },
+    "emptyInput": {
+      "title": "入力が空です",
+      "message": "進む前に何かテキストを入力してください。"
+    },
+    "invalidInput": {
+      "title": "無効な入力",
+      "message": "入力に無効な文字または形式が含まれています。修正してください。"
+    },
+    "noProcessorSelected": {
+      "title": "プロセッサが選択されていません",
+      "message": "進むために少なくとも1つのプロセッサを選択してください。"
+    }
+  },
+  "costErrors": {
+    "costCalculationFailed": {
+      "title": "コスト計算に失敗",
+      "message": "コスト推定を計算できません。もう一度お試しください。"
+    },
+    "highEstimatedCost": {
+      "title": "推定コストが高い",
+      "message": "推定コストは{{cost}}です。通常より高いです。続行しますか？"
+    }
+  },
+  "systemErrors": {
+    "unexpectedError": {
+      "title": "予期しないエラー",
+      "message": "予期しないエラーが発生しました。もう一度お試しいただくか、サポートに連絡してください。"
+    },
+    "internalError": {
+      "title": "内部エラー",
+      "message": "内部エラーが発生しました。アプリケーションを再起動してからもう一度お試しください。"
+    },
+    "notImplemented": {
+      "title": "機能が利用できません",
+      "message": "この機能はまだ実装されていません。後でもう一度お試しください。"
+    },
+    "permissionDenied": {
+      "title": "アクセス許可が拒否",
+      "message": "このリソースにアクセスする権限がありません。"
+    }
+  },
+  "alerts": {
+    "confirmAction": "本当に進めたいですか？",
+    "unsavedChanges": "保存されていない変更があります。離脱する前に保存しますか？",
+    "processingInProgress": "処理が進行中です。本当にキャンセルしますか？",
+    "deleteConfirmation": "この操作は元に戻せません。本当に削除しますか？"
+  }
+}

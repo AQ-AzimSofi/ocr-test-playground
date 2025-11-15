@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ApiKeys } from '@shared/types';
 
 export default function Settings() {
@@ -6,6 +7,7 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const { t, i18n } = useTranslation('settings');
 
   useEffect(() => {
     loadApiKeys();
@@ -93,18 +95,40 @@ export default function Settings() {
 
   return (
     <div className="px-4 py-6 sm:px-0">
+      {/* Language Selection */}
+      <div className="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-md">
+        <h4 className="font-medium text-indigo-900 mb-3">
+          {t('language.title')}
+        </h4>
+        <select
+          value={i18n.language}
+          onChange={(e) => {
+            const newLang = e.target.value;
+            i18n.changeLanguage(newLang);
+            localStorage.setItem('language', newLang);
+          }}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+        >
+          <option value="ja">{t('language.japanese')}</option>
+          <option value="en">{t('language.english')}</option>
+        </select>
+        <p className="mt-2 text-xs text-indigo-600">
+          {t('language.description')}
+        </p>
+      </div>
+
       <div className="bg-white shadow sm:rounded-lg">
         <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">API Key Configuration</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900">{t('title')}</h3>
           <div className="mt-2 max-w-xl text-sm text-gray-500">
-            <p>Configure your API keys for OCR and AI services. Keys are encrypted and stored locally on your machine.</p>
+            <p>{t('apiKeys.description')}</p>
           </div>
 
           <div className="mt-6 space-y-6">
             {/* Google Cloud Vision - Service Account (Recommended) */}
             <div className="border-t border-gray-200 pt-6">
-              <h4 className="text-base font-semibold text-gray-900 mb-3">Google Cloud Vision</h4>
-              <p className="text-sm text-gray-600 mb-4">Choose one authentication method:</p>
+              <h4 className="text-base font-semibold text-gray-900 mb-3">{t('cloudVision.title')}</h4>
+              <p className="text-sm text-gray-600 mb-4">{t('cloudVision.chooseMethod')}</p>
 
               {/* Method 1: Service Account (Recommended) */}
               <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
@@ -112,12 +136,12 @@ export default function Settings() {
                   <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  Recommended: Service Account
+                  {t('cloudVision.serviceAccount.recommended')}
                 </h5>
 
                 <div className="mb-3">
                   <label htmlFor="cloudVisionProjectId" className="block text-sm font-medium text-gray-700">
-                    Project ID
+                    {t('cloudVision.serviceAccount.projectId')}
                   </label>
                   <div className="mt-1">
                     <input
@@ -126,15 +150,15 @@ export default function Settings() {
                       value={apiKeys.cloudVisionProjectId || ''}
                       onChange={(e) => handleChange('cloudVisionProjectId', e.target.value)}
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
-                      placeholder="your-project-id"
+                      placeholder={t('cloudVision.serviceAccount.projectIdPlaceholder')}
                     />
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Will be auto-filled from the service account JSON if left empty</p>
+                  <p className="mt-1 text-xs text-gray-500">{t('cloudVision.serviceAccount.projectIdHint')}</p>
                 </div>
 
                 <div>
                   <label htmlFor="cloudVisionServiceAccount" className="block text-sm font-medium text-gray-700">
-                    Service Account JSON
+                    {t('cloudVision.serviceAccount.jsonLabel')}
                   </label>
                   <div className="mt-1">
                     <textarea
@@ -146,16 +170,16 @@ export default function Settings() {
                       placeholder='{"type": "service_account", "project_id": "...", ...}'
                     />
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Paste the entire JSON content from your service account key file</p>
+                  <p className="mt-1 text-xs text-gray-500">{t('cloudVision.serviceAccount.jsonHint')}</p>
                 </div>
               </div>
 
               {/* Method 2: API Key (Alternative) */}
               <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
-                <h5 className="text-sm font-semibold text-gray-700 mb-2">Alternative: API Key (Simple)</h5>
+                <h5 className="text-sm font-semibold text-gray-700 mb-2">{t('cloudVision.apiKey.alternative')}</h5>
                 <div>
                   <label htmlFor="googleCloudVision" className="block text-sm font-medium text-gray-700">
-                    API Key
+                    {t('cloudVision.apiKey.label')}
                   </label>
                   <div className="mt-1">
                     <input
@@ -164,20 +188,20 @@ export default function Settings() {
                       value={apiKeys.googleCloudVision || ''}
                       onChange={(e) => handleChange('googleCloudVision', e.target.value)}
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
-                      placeholder="Enter your Google Cloud Vision API key"
+                      placeholder={t('cloudVision.apiKey.placeholder')}
                     />
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Less secure, not recommended for production</p>
+                  <p className="mt-1 text-xs text-gray-500">{t('cloudVision.apiKey.warning')}</p>
                 </div>
               </div>
 
-              <p className="mt-2 text-xs text-gray-500">Required for: Cloud Vision processor</p>
+              <p className="mt-2 text-xs text-gray-500">{t('cloudVision.requiredFor')}</p>
             </div>
 
             {/* Azure Computer Vision */}
             <div>
               <label htmlFor="azureComputerVision" className="block text-sm font-medium text-gray-700">
-                Azure Cognitive Services Key
+                {t('azure.keyLabel')}
               </label>
               <div className="mt-1">
                 <input
@@ -186,14 +210,14 @@ export default function Settings() {
                   value={apiKeys.azureComputerVision || ''}
                   onChange={(e) => handleChange('azureComputerVision', e.target.value)}
                   className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
-                  placeholder="Enter your Azure Cognitive Services key"
+                  placeholder={t('azure.keyPlaceholder')}
                 />
               </div>
             </div>
 
             <div>
               <label htmlFor="azureEndpoint" className="block text-sm font-medium text-gray-700">
-                Azure Endpoint URL
+                {t('azure.endpointLabel')}
               </label>
               <div className="mt-1">
                 <input
@@ -202,16 +226,16 @@ export default function Settings() {
                   value={apiKeys.azureEndpoint || ''}
                   onChange={(e) => handleChange('azureEndpoint', e.target.value)}
                   className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
-                  placeholder="https://your-region.api.cognitive.microsoft.com/"
+                  placeholder={t('azure.endpointPlaceholder')}
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-500">Required for: Azure Read, Azure Layout processors</p>
+              <p className="mt-1 text-xs text-gray-500">{t('azure.requiredFor')}</p>
             </div>
 
             {/* Google Gemini */}
             <div>
               <label htmlFor="googleGemini" className="block text-sm font-medium text-gray-700">
-                Google Gemini API Key
+                {t('gemini.label')}
               </label>
               <div className="mt-1">
                 <input
@@ -220,17 +244,17 @@ export default function Settings() {
                   value={apiKeys.googleGemini || ''}
                   onChange={(e) => handleChange('googleGemini', e.target.value)}
                   className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
-                  placeholder="Enter your Google Gemini API key"
+                  placeholder={t('gemini.placeholder')}
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-500">Required for: All Gemini-based processors, hybrid processors, and Floor Plan to Revit conversion</p>
+              <p className="mt-1 text-xs text-gray-500">{t('gemini.requiredFor')}</p>
             </div>
 
             {/* Document AI */}
             <div className="border-t border-gray-200 pt-6">
-              <h4 className="text-base font-semibold text-gray-900 mb-3">Document AI</h4>
+              <h4 className="text-base font-semibold text-gray-900 mb-3">{t('documentAi.title')}</h4>
               <p className="text-sm text-gray-600 mb-4">
-                Create a processor at{' '}
+                {t('documentAi.createProcessor')}{' '}
                 <a
                   href="https://console.cloud.google.com/ai/document-ai"
                   target="_blank"
@@ -244,7 +268,7 @@ export default function Settings() {
               <div className="space-y-4">
                 <div>
                   <label htmlFor="documentAiProjectId" className="block text-sm font-medium text-gray-700">
-                    Project ID
+                    {t('documentAi.projectId')}
                   </label>
                   <div className="mt-1">
                     <input
@@ -253,15 +277,15 @@ export default function Settings() {
                       value={apiKeys.documentAiProjectId || ''}
                       onChange={(e) => handleChange('documentAiProjectId', e.target.value)}
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
-                      placeholder="your-project-id"
+                      placeholder={t('documentAi.projectIdPlaceholder')}
                     />
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Will be auto-filled from the service account JSON if left empty</p>
+                  <p className="mt-1 text-xs text-gray-500">{t('documentAi.projectIdHint')}</p>
                 </div>
 
                 <div>
                   <label htmlFor="documentAiProcessorId" className="block text-sm font-medium text-gray-700">
-                    Processor ID
+                    {t('documentAi.processorId')}
                   </label>
                   <div className="mt-1">
                     <input
@@ -270,15 +294,15 @@ export default function Settings() {
                       value={apiKeys.documentAiProcessorId || ''}
                       onChange={(e) => handleChange('documentAiProcessorId', e.target.value)}
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
-                      placeholder="abc123def456"
+                      placeholder={t('documentAi.processorIdPlaceholder')}
                     />
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Found in the processor details page (e.g., "abc123def456")</p>
+                  <p className="mt-1 text-xs text-gray-500">{t('documentAi.processorIdHint')}</p>
                 </div>
 
                 <div>
                   <label htmlFor="documentAiLocation" className="block text-sm font-medium text-gray-700">
-                    Processor Location
+                    {t('documentAi.location')}
                   </label>
                   <div className="mt-1">
                     <select
@@ -287,18 +311,18 @@ export default function Settings() {
                       onChange={(e) => handleChange('documentAiLocation', e.target.value)}
                       className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2 border"
                     >
-                      <option value="us">us (United States)</option>
-                      <option value="eu">eu (Europe)</option>
-                      <option value="asia-northeast1">asia-northeast1 (Tokyo)</option>
-                      <option value="asia-southeast1">asia-southeast1 (Singapore)</option>
+                      <option value="us">{t('documentAi.locations.us')}</option>
+                      <option value="eu">{t('documentAi.locations.eu')}</option>
+                      <option value="asia-northeast1">{t('documentAi.locations.tokyo')}</option>
+                      <option value="asia-southeast1">{t('documentAi.locations.singapore')}</option>
                     </select>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Select the location where your processor was created</p>
+                  <p className="mt-1 text-xs text-gray-500">{t('documentAi.locationHint')}</p>
                 </div>
 
                 <div>
                   <label htmlFor="documentAiCredentials" className="block text-sm font-medium text-gray-700">
-                    Service Account JSON
+                    {t('documentAi.serviceAccountJson')}
                   </label>
                   <div className="mt-1">
                     <textarea
@@ -310,7 +334,7 @@ export default function Settings() {
                       placeholder='{"type": "service_account", ...}'
                     />
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">Paste the entire JSON content from your service account key file</p>
+                  <p className="mt-1 text-xs text-gray-500">{t('documentAi.serviceAccountJsonHint')}</p>
                 </div>
               </div>
             </div>
@@ -323,7 +347,7 @@ export default function Settings() {
               disabled={saving}
               className="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
             >
-              {saving ? 'Saving...' : 'Save API Keys'}
+              {saving ? t('saveButton.saving') : t('saveButton.save')}
             </button>
             {saved && (
               <span className="text-sm text-green-600 flex items-center">
@@ -334,7 +358,7 @@ export default function Settings() {
                     clipRule="evenodd"
                   />
                 </svg>
-                Saved successfully!
+                {t('saveButton.success')}
               </span>
             )}
           </div>
@@ -344,32 +368,32 @@ export default function Settings() {
       {/* API Key Status */}
       <div className="mt-6 bg-white shadow sm:rounded-lg">
         <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Available Processors</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">{t('processors.title')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ProcessorStatus
-              name="Cloud Vision"
+              name={t('processors.cloudVision')}
               available={
                 !!apiKeys.googleCloudVision ||
                 (!!apiKeys.cloudVisionServiceAccount && !!apiKeys.cloudVisionProjectId)
               }
-              category="Confidential-safe"
+              category={t('processors.confidentialSafe')}
             />
             <ProcessorStatus
-              name="Azure Read & Layout"
+              name={t('processors.azure')}
               available={!!apiKeys.azureComputerVision && !!apiKeys.azureEndpoint}
-              category="Confidential-safe"
+              category={t('processors.confidentialSafe')}
             />
             <ProcessorStatus
-              name="Document AI"
+              name={t('processors.documentAi')}
               available={
                 !!apiKeys.documentAiProjectId &&
                 !!apiKeys.documentAiCredentials &&
                 !!apiKeys.documentAiProcessorId &&
                 !!apiKeys.documentAiLocation
               }
-              category="Confidential-safe"
+              category={t('processors.confidentialSafe')}
             />
-            <ProcessorStatus name="All Gemini-based" available={!!apiKeys.googleGemini} category="Hybrids & Experimental" />
+            <ProcessorStatus name={t('processors.geminiBased')} available={!!apiKeys.googleGemini} category={t('processors.experimental')} />
           </div>
         </div>
       </div>
@@ -386,6 +410,8 @@ function ProcessorStatus({
   available: boolean;
   category: string;
 }) {
+  const { t } = useTranslation('settings');
+
   return (
     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
       <div>
@@ -394,11 +420,11 @@ function ProcessorStatus({
       </div>
       {available ? (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-          Available
+          {t('processors.available')}
         </span>
       ) : (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-          Not configured
+          {t('processors.notConfigured')}
         </span>
       )}
     </div>

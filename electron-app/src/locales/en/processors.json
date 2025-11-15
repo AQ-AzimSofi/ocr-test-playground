@@ -1,0 +1,213 @@
+{
+  "categories": {
+    "confidentialSafe": "Confidential-Safe Processors",
+    "confidentialSafeDesc": "These processors keep your data local and safe. Your documents are not sent to external AI services.",
+    "hybrids": "Hybrid Processors",
+    "hybridsDesc": "Combine multiple OCR engines with AI for enhanced accuracy. Data goes to configured API services.",
+    "experimental": "Experimental & Advanced",
+    "experimentalDesc": "Cutting-edge processors for specialized use cases. Some may have limited availability."
+  },
+  "processors": [
+    {
+      "id": "cloud-vision",
+      "name": "Google Cloud Vision",
+      "description": "Fast, reliable paragraph-level OCR with high accuracy",
+      "category": "confidentialSafe",
+      "cost": "~0.15 yen per image",
+      "features": [
+        "Paragraph-level OCR",
+        "High accuracy",
+        "Fast processing",
+        "Supports multiple languages"
+      ],
+      "bestFor": "General PDF documents, scanned images, documents with clear text"
+    },
+    {
+      "id": "azure-read",
+      "name": "Azure Read API",
+      "description": "Cost-effective word-level OCR with good accuracy",
+      "category": "confidentialSafe",
+      "cost": "~0.225 yen per page",
+      "features": [
+        "Word-level OCR",
+        "Cost-effective",
+        "Good accuracy",
+        "Supports handwritten text"
+      ],
+      "bestFor": "Cost-sensitive projects, mixed document types, handwritten content"
+    },
+    {
+      "id": "azure-layout",
+      "name": "Azure Layout API",
+      "description": "Structure-aware OCR with table detection",
+      "category": "confidentialSafe",
+      "cost": "~1.50 yen per page",
+      "features": [
+        "Table detection",
+        "Structure preservation",
+        "Layout understanding",
+        "Form processing"
+      ],
+      "bestFor": "Documents with tables, complex layouts, structured forms"
+    },
+    {
+      "id": "document-ai",
+      "name": "Document AI",
+      "description": "Advanced word-level OCR with structure analysis",
+      "category": "confidentialSafe",
+      "cost": "~0.225 yen per page",
+      "features": [
+        "Advanced OCR",
+        "Document structure analysis",
+        "Entity extraction",
+        "Custom processors available"
+      ],
+      "bestFor": "Complex documents, specialized document types, entity extraction needs"
+    },
+    {
+      "id": "cloud-vision-gemini-hybrid",
+      "name": "Cloud Vision + Gemini Hybrid",
+      "description": "Region-level fusion with AI correction",
+      "category": "hybrids",
+      "cost": "~0.15-0.30 yen per image (depends on low-confidence region count)",
+      "features": [
+        "AI-powered correction",
+        "Region-level fusion",
+        "Adaptive processing",
+        "High accuracy"
+      ],
+      "bestFor": "Complex documents, mixed quality images, maximum accuracy requirements"
+    },
+    {
+      "id": "azure-read-gemini-hybrid",
+      "name": "Azure Read + Gemini Hybrid",
+      "description": "Budget-friendly hybrid with word-level precision",
+      "category": "hybrids",
+      "cost": "~0.225-0.40 yen per image (depends on low-confidence word count)",
+      "features": [
+        "Budget-friendly",
+        "Word-level precision",
+        "AI enhancement",
+        "Good balance of cost and accuracy"
+      ],
+      "bestFor": "Budget-conscious projects, good accuracy needs, general documents"
+    },
+    {
+      "id": "document-ai-gemini-hybrid",
+      "name": "Document AI + Gemini Hybrid",
+      "description": "Advanced hybrid with Document AI validation workflow",
+      "category": "hybrids",
+      "cost": "~0.25-0.50 yen per image (depends on validation issues)",
+      "features": [
+        "Advanced validation",
+        "Structure preservation",
+        "AI-powered QA",
+        "Entity extraction"
+      ],
+      "bestFor": "Complex documents, validation-critical workflows, entity extraction"
+    },
+    {
+      "id": "gemini-self-calibrating",
+      "name": "Gemini Self-Calibrating",
+      "description": "AI-powered coordinate calibration using Cloud Vision as reference",
+      "category": "hybrids",
+      "cost": "~0.25-0.40 yen per image (depends on Gemini-only text count)",
+      "features": [
+        "Self-calibrating",
+        "Coordinate accuracy",
+        "AI validation",
+        "Adaptive processing"
+      ],
+      "bestFor": "Documents requiring precise coordinate extraction, floor plans, technical drawings"
+    },
+    {
+      "id": "hybrid",
+      "name": "Hybrid (Legacy)",
+      "description": "Simple parallel processing (Cloud Vision + Gemini)",
+      "category": "experimental",
+      "cost": "~0.20 yen per image",
+      "features": [
+        "Parallel processing",
+        "Dual AI output",
+        "Simple fusion",
+        "Legacy support"
+      ],
+      "bestFor": "Testing, legacy workflows, comparison purposes"
+    },
+    {
+      "id": "gemini-coordinates",
+      "name": "Gemini Coordinates",
+      "description": "Asks Gemini for text + percentage coordinates (EXPERIMENTAL)",
+      "category": "experimental",
+      "cost": "~0.05 yen per image",
+      "features": [
+        "Gemini-only",
+        "Coordinate extraction",
+        "Lightweight",
+        "Budget-friendly"
+      ],
+      "bestFor": "Coordinate extraction, experimental workflows, budget-limited testing",
+      "note": "Experimental - for testing purposes"
+    },
+    {
+      "id": "gemini-bbox-synthesis",
+      "name": "Gemini Bbox Synthesis",
+      "description": "Matches Gemini text to Cloud Vision bboxes (EXPERIMENTAL)",
+      "category": "experimental",
+      "cost": "~0.20 yen per image",
+      "features": [
+        "Bounding box synthesis",
+        "Dual-engine matching",
+        "Coordinate accuracy",
+        "Experimental algorithm"
+      ],
+      "bestFor": "Bounding box extraction, experimental coordinate workflows",
+      "note": "Experimental - for research and testing"
+    },
+    {
+      "id": "gemini-validation-azure",
+      "name": "Gemini Validation - Azure Read",
+      "description": "Uses Gemini as QA reviewer to validate Azure Read results (EXPERIMENTAL)",
+      "category": "experimental",
+      "cost": "~0.30-0.50 yen per image (depends on issues found)",
+      "features": [
+        "AI-powered QA",
+        "Azure Read validation",
+        "Quality assurance",
+        "Issue detection"
+      ],
+      "bestFor": "Quality-critical workflows, validation scenarios, error detection",
+      "note": "Experimental - QA validation workflow"
+    },
+    {
+      "id": "region-classifier",
+      "name": "Region Classifier",
+      "description": "Smart routing: Azure for high confidence, Gemini for low (EXPERIMENTAL)",
+      "category": "experimental",
+      "cost": "~1.50-1.70 yen per image (depends on low-confidence region count)",
+      "features": [
+        "Smart routing",
+        "Confidence-based selection",
+        "Adaptive processing",
+        "Dynamic engine selection"
+      ],
+      "bestFor": "Mixed quality documents, adaptive processing, cost optimization",
+      "note": "Experimental - intelligent routing algorithm"
+    },
+    {
+      "id": "gemini-geometric",
+      "name": "Gemini Geometric",
+      "description": "AI-powered floor plan analysis with wall and room detection",
+      "category": "experimental",
+      "cost": "~1.50 yen per floor plan",
+      "features": [
+        "Wall detection",
+        "Room detection",
+        "Geometric analysis",
+        "Floor plan understanding"
+      ],
+      "bestFor": "Floor plan analysis, architectural documents, spatial understanding",
+      "note": "Experimental - specialized for floor plans and architectural documents"
+    }
+  ]
+}

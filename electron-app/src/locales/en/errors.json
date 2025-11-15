@@ -1,0 +1,188 @@
+{
+  "title": "Error Messages",
+  "common": {
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information",
+    "success": "Success",
+    "tryAgain": "Try Again",
+    "dismiss": "Dismiss",
+    "learnMore": "Learn More"
+  },
+  "fileErrors": {
+    "noFileSelected": {
+      "title": "No File Selected",
+      "message": "Please select a file to proceed."
+    },
+    "fileNotFound": {
+      "title": "File Not Found",
+      "message": "The selected file could not be found. It may have been moved or deleted."
+    },
+    "invalidFileFormat": {
+      "title": "Invalid File Format",
+      "message": "The file format is not supported. Please select a {{supported}} file."
+    },
+    "fileTooLarge": {
+      "title": "File Too Large",
+      "message": "The file size exceeds the maximum limit of {{limit}}MB."
+    },
+    "fileReadError": {
+      "title": "File Read Error",
+      "message": "An error occurred while reading the file. Please try again."
+    },
+    "invalidPdf": {
+      "title": "Invalid PDF",
+      "message": "The selected file is not a valid PDF. Please select a valid PDF file."
+    },
+    "corruptedFile": {
+      "title": "Corrupted File",
+      "message": "The file appears to be corrupted. Please select a different file."
+    }
+  },
+  "apiKeyErrors": {
+    "missingApiKey": {
+      "title": "Missing API Key",
+      "message": "{{service}} API key is not configured. Please configure it in Settings."
+    },
+    "invalidApiKey": {
+      "title": "Invalid API Key",
+      "message": "The {{service}} API key is invalid or incorrect. Please verify and update it in Settings."
+    },
+    "apiKeyExpired": {
+      "title": "API Key Expired",
+      "message": "The {{service}} API key has expired. Please renew it in Settings."
+    },
+    "multipleApiKeysRequired": {
+      "title": "Multiple API Keys Required",
+      "message": "This processor requires the following API keys: {{keys}}. Please configure them in Settings."
+    },
+    "processorsUnavailable": {
+      "title": "Processors Unavailable",
+      "message": "The following processors cannot run due to missing API keys: {{processors}}. Please configure them in Settings."
+    }
+  },
+  "authenticationErrors": {
+    "unauthorized": {
+      "title": "Unauthorized",
+      "message": "Your API credentials are invalid or unauthorized for this service."
+    },
+    "authenticationFailed": {
+      "title": "Authentication Failed",
+      "message": "Failed to authenticate with {{service}}. Please verify your credentials."
+    },
+    "invalidServiceAccount": {
+      "title": "Invalid Service Account",
+      "message": "The service account JSON is invalid or malformed. Please verify and update it."
+    },
+    "serviceAccountMissing": {
+      "title": "Service Account Missing",
+      "message": "Service account configuration is required for {{service}}. Please configure it in Settings."
+    }
+  },
+  "networkErrors": {
+    "networkError": {
+      "title": "Network Error",
+      "message": "Failed to connect to the service. Please check your internet connection."
+    },
+    "connectionTimeout": {
+      "title": "Connection Timeout",
+      "message": "The connection to {{service}} timed out. Please try again."
+    },
+    "serviceUnavailable": {
+      "title": "Service Unavailable",
+      "message": "{{service}} is currently unavailable. Please try again later."
+    },
+    "requestFailed": {
+      "title": "Request Failed",
+      "message": "Failed to complete the request to {{service}}. Please try again."
+    }
+  },
+  "rateLimitErrors": {
+    "rateLimitExceeded": {
+      "title": "Rate Limit Exceeded",
+      "message": "Too many requests to {{service}}. Please wait {{seconds}} seconds before trying again."
+    },
+    "quotaExceeded": {
+      "title": "Quota Exceeded",
+      "message": "Your {{service}} quota has been exceeded for this period. Please try again later."
+    },
+    "retrying": {
+      "title": "Retrying",
+      "message": "Retrying request in {{seconds}} seconds..."
+    }
+  },
+  "processingErrors": {
+    "processingFailed": {
+      "title": "Processing Failed",
+      "message": "An error occurred while processing. Please try again."
+    },
+    "ocrFailed": {
+      "title": "OCR Processing Failed",
+      "message": "Failed to extract text from the image. The image may be unclear or in an unsupported format."
+    },
+    "analysisTimeout": {
+      "title": "Analysis Timeout",
+      "message": "The analysis took too long to complete. Please try again with a smaller file."
+    },
+    "invalidImage": {
+      "title": "Invalid Image",
+      "message": "The uploaded image is invalid or unsupported. Please select a different image."
+    },
+    "emptyResult": {
+      "title": "Empty Result",
+      "message": "No text could be extracted from the image. The image may be blank or of very low quality."
+    }
+  },
+  "validationErrors": {
+    "missingGroundTruth": {
+      "title": "Missing Ground Truth",
+      "message": "Please enter the ground truth text for comparison."
+    },
+    "emptyInput": {
+      "title": "Empty Input",
+      "message": "Please enter some text before proceeding."
+    },
+    "invalidInput": {
+      "title": "Invalid Input",
+      "message": "The input contains invalid characters or format. Please correct it."
+    },
+    "noProcessorSelected": {
+      "title": "No Processor Selected",
+      "message": "Please select at least one processor to proceed."
+    }
+  },
+  "costErrors": {
+    "costCalculationFailed": {
+      "title": "Cost Calculation Failed",
+      "message": "Unable to calculate the cost estimate. Please try again."
+    },
+    "highEstimatedCost": {
+      "title": "High Estimated Cost",
+      "message": "The estimated cost is {{cost}}. This is higher than usual. Do you want to proceed?"
+    }
+  },
+  "systemErrors": {
+    "unexpectedError": {
+      "title": "Unexpected Error",
+      "message": "An unexpected error occurred. Please try again or contact support."
+    },
+    "internalError": {
+      "title": "Internal Error",
+      "message": "An internal error occurred. Please restart the application and try again."
+    },
+    "notImplemented": {
+      "title": "Feature Not Available",
+      "message": "This feature is not yet implemented. Please try again later."
+    },
+    "permissionDenied": {
+      "title": "Permission Denied",
+      "message": "You do not have permission to access this resource."
+    }
+  },
+  "alerts": {
+    "confirmAction": "Are you sure you want to proceed?",
+    "unsavedChanges": "You have unsaved changes. Do you want to save before leaving?",
+    "processingInProgress": "Processing is in progress. Are you sure you want to cancel?",
+    "deleteConfirmation": "This action cannot be undone. Are you sure?"
+  }
+}
