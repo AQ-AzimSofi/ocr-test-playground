@@ -70,7 +70,8 @@
     "avgCharsPerFile": "平均文字数/ファイル",
     "failures": "失敗数",
     "perFile": "/ ファイル",
-    "totalPages": "総ページ数"
+    "totalPages": "総ページ数",
+    "totalChars": "合計文字数"
   },
 
   "accuracy": {

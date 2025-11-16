@@ -70,7 +70,8 @@
     "avgCharsPerFile": "Avg Chars/File",
     "failures": "Failures",
     "perFile": "per file",
-    "totalPages": "Total Pages"
+    "totalPages": "Total Pages",
+    "totalChars": "Total Chars"
   },
 
   "accuracy": {

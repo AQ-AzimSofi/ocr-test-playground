@@ -2036,9 +2036,9 @@ export function generateBatchHTMLReport(
               <div class="summary-metric-large">
                 <span class="metric-value-large ${colorClass}">${avgAccuracyStr}</span>
                 <span class="metric-label">${t('toolSummary.avgAccuracy', language)}</span>
-                ${summary.avgCharCount > 0 ? `
+                ${summary.totalCharCount > 0 ? `
                   <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
-                    (${language === 'ja' ? '平均' : 'avg'} ${formatCharCount(summary.avgCharCount)} ${t('metadata.chars', language)}${language === 'ja' ? '/ファイル' : '/file'})
+                    (${summary.totalCharCount.toLocaleString('en-US')} ${t('metadata.chars', language)} ${language === 'ja' ? '合計' : 'total'})
                   </div>
                 ` : ''}
               </div>
@@ -2062,8 +2062,8 @@ export function generateBatchHTMLReport(
                   <span class="value">${(summary.avgTime / 1000).toFixed(2)}s${language === 'ja' ? t('toolSummary.perFile', language) : '/file'}</span>
                 </div>
                 <div class="metric">
-                  <span class="label">${t('toolSummary.avgCharsPerFile', language)}</span>
-                  <span class="value">${formatCharCount(summary.avgCharCount)}</span>
+                  <span class="label">${t('toolSummary.totalChars', language)}</span>
+                  <span class="value">${summary.totalCharCount.toLocaleString('en-US')}</span>
                 </div>
                 ${summary.totalPages > 0 ? `
                 <div class="metric">
