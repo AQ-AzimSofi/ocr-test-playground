@@ -91,7 +91,7 @@ export class CloudVisionProcessor {
 
   /**
    * Process a single image with Cloud Vision OCR
-   * @param imagePath - Path to image file (PNG, JPEG, etc. - NOT PDF)
+   * @param imagePath - Path to image file (PNG, JPEG, PDF, etc.)
    * @param pageNumber - Page number for multi-page documents (default: 1)
    */
   async processImage(
@@ -106,8 +106,20 @@ export class CloudVisionProcessor {
         throw new Error(`Image file not found: ${imagePath}`);
       }
 
-      // Extract text with bounding boxes
-      const [result] = await this.client.documentTextDetection(imagePath);
+      // For PDFs, read as buffer and pass as content. For images, use file path.
+      const isPdf = imagePath.toLowerCase().endsWith('.pdf');
+      let result;
+
+      if (isPdf) {
+        // Read PDF file and send as buffer content
+        const pdfBuffer = fs.readFileSync(imagePath);
+        [result] = await this.client.documentTextDetection({
+          image: { content: pdfBuffer }
+        });
+      } else {
+        // For images, use file path as before
+        [result] = await this.client.documentTextDetection(imagePath);
+      }
       const fullTextAnnotation = result.fullTextAnnotation;
 
       if (!fullTextAnnotation || !fullTextAnnotation.pages) {

@@ -8,7 +8,7 @@ export interface ElectronAPI {
 
   // OCR Processing
   processOCR: (params: {
-    mode: 'pdf' | 'text';
+    mode: 'pdf' | 'text' | 'batch';
     processors: string[];
     files?: { path: string; groundTruth: string }[];
     textInputs?: { processor: string; text: string }[];
@@ -38,6 +38,21 @@ export interface ElectronAPI {
   // File System
   selectFile: (filters?: { name: string; extensions: string[] }[]) => Promise<string | null>;
   selectFiles: (filters?: { name: string; extensions: string[] }[]) => Promise<string[] | null>;
+  selectFolder: () => Promise<string | null>;
+  scanFolder: (folderPath: string) => Promise<Array<{
+    type: 'file' | 'folder';
+    name: string;
+    path: string;
+    selected: boolean;
+    // File-specific fields
+    groundTruth?: string;
+    groundTruthStatus?: 'found' | 'missing' | 'manual' | 'skip';
+    groundTruthPath?: string;
+    pageCount?: number; // For PDF files
+    // Folder-specific fields
+    expanded?: boolean;
+    children?: any[];
+  }>>;
   saveFile: (defaultPath: string, filters?: { name: string; extensions: string[] }[]) => Promise<string | null>;
   openPath: (path: string) => Promise<void>;
   showInFolder: (path: string) => Promise<void>;
@@ -55,6 +70,13 @@ export interface ElectronAPI {
       retryDelay: number;
       quotaLimit?: number;
     };
+  }) => void) => () => void;
+
+  // File Error Events
+  onFileError: (callback: (data: {
+    fileName: string;
+    filePath: string;
+    error: string;
   }) => void) => () => void;
 
   // Queue Progress Events
@@ -89,6 +111,8 @@ const electronAPI: ElectronAPI = {
   // File System
   selectFile: (filters) => ipcRenderer.invoke('select-file', filters),
   selectFiles: (filters) => ipcRenderer.invoke('select-files', filters),
+  selectFolder: () => ipcRenderer.invoke('select-folder'),
+  scanFolder: (folderPath) => ipcRenderer.invoke('scan-folder', folderPath),
   saveFile: (defaultPath, filters) => ipcRenderer.invoke('save-file', defaultPath, filters),
   openPath: (path) => ipcRenderer.invoke('open-path', path),
   showInFolder: (path) => ipcRenderer.invoke('show-in-folder', path),
@@ -114,6 +138,17 @@ const electronAPI: ElectronAPI = {
     // Return cleanup function
     return () => {
       ipcRenderer.removeListener('rate-limit-detected', subscription);
+    };
+  },
+
+  // File Error Events
+  onFileError: (callback) => {
+    const subscription = (_event: any, data: any) => callback(data);
+    ipcRenderer.on('file-error', subscription);
+
+    // Return cleanup function
+    return () => {
+      ipcRenderer.removeListener('file-error', subscription);
     };
   },
 

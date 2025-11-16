@@ -99,12 +99,25 @@ export class AzureDocumentProcessor {
     const startTime = Date.now();
 
     try {
-      const imageStream = fs.createReadStream(filePath);
+      // Check if file is PDF
+      const isPdf = filePath.toLowerCase().endsWith('.pdf');
 
-      const poller = await this.client.beginAnalyzeDocument(
-        'prebuilt-read',
-        imageStream
-      );
+      // For PDFs, use buffer instead of stream (more reliable for split PDFs)
+      let poller;
+      if (isPdf) {
+        const imageBuffer = fs.readFileSync(filePath);
+        poller = await this.client.beginAnalyzeDocument(
+          'prebuilt-read',
+          imageBuffer
+        );
+      } else {
+        // For images, use stream as before
+        const imageStream = fs.createReadStream(filePath);
+        poller = await this.client.beginAnalyzeDocument(
+          'prebuilt-read',
+          imageStream
+        );
+      }
       const result = await poller.pollUntilDone();
 
       if (!result || !result.pages) {
@@ -177,6 +190,46 @@ export class AzureDocumentProcessor {
         },
       };
     } catch (error) {
+      // Log full error details for debugging
+      console.error('[Azure Read Error Details]', {
+        message: error instanceof Error ? error.message : String(error),
+        code: (error as any)?.code,
+        statusCode: (error as any)?.statusCode,
+        details: (error as any)?.details,
+        name: (error as any)?.name,
+        filePath,
+      });
+      // Log stringified error to see full nested details
+      console.error('[Azure Read Full Error]', JSON.stringify((error as any), null, 2));
+
+      // Enhance error message for common issues
+      let errorMessage = error instanceof Error ? error.message : String(error);
+
+      // Detect "Invalid request" errors and provide helpful context
+      if (errorMessage.includes('Invalid') || errorMessage.includes('invalid')) {
+        const isPdf = filePath.toLowerCase().endsWith('.pdf');
+        if (isPdf) {
+          try {
+            const { getPdfPageCount } = require('../utils/pdf-utils');
+            const fsPromises = require('fs/promises');
+            const pageCount = await getPdfPageCount(filePath);
+            const stats = await fsPromises.stat(filePath);
+            const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
+
+            if (stats.size > 4 * 1024 * 1024) {
+              errorMessage = `File size exceeded. PDF: ${pageCount} pages, ${sizeMB}MB. Exceeds Azure's 4MB file size limit (free tier). Batch processor will auto-split into smaller chunks. Original error: ${errorMessage}`;
+            } else if (pageCount > 10) {
+              errorMessage = `Page limit exceeded. PDF: ${pageCount} pages, ${sizeMB}MB. Exceeds Azure's 10-page limit. Batch processor should split automatically. Original error: ${errorMessage}`;
+            } else {
+              errorMessage = `Invalid request. PDF: ${pageCount} pages, ${sizeMB}MB. May be due to format or Azure API configuration. Original error: ${errorMessage}`;
+            }
+          } catch (pdfError) {
+            // If we can't get page count, just provide general guidance
+            errorMessage = `Invalid request. For PDFs, this is often caused by exceeding file size limit (4MB free tier) or page limit (10 pages). Original error: ${errorMessage}`;
+          }
+        }
+      }
+
       return {
         success: false,
         tool: 'azure-read',
@@ -192,7 +245,7 @@ export class AzureDocumentProcessor {
           pageCount: 0,
           avgConfidence: 0,
         },
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMessage,
       };
     }
   }
@@ -206,12 +259,25 @@ export class AzureDocumentProcessor {
     const startTime = Date.now();
 
     try {
-      const imageStream = fs.createReadStream(filePath);
+      // Check if file is PDF
+      const isPdf = filePath.toLowerCase().endsWith('.pdf');
 
-      const poller = await this.client.beginAnalyzeDocument(
-        'prebuilt-layout',
-        imageStream
-      );
+      // For PDFs, use buffer instead of stream (Azure Layout might be more restrictive)
+      let poller;
+      if (isPdf) {
+        const imageBuffer = fs.readFileSync(filePath);
+        poller = await this.client.beginAnalyzeDocument(
+          'prebuilt-layout',
+          imageBuffer
+        );
+      } else {
+        // For images, use stream as before
+        const imageStream = fs.createReadStream(filePath);
+        poller = await this.client.beginAnalyzeDocument(
+          'prebuilt-layout',
+          imageStream
+        );
+      }
       const result = await poller.pollUntilDone();
 
       if (!result || !result.pages) {
@@ -276,6 +342,46 @@ export class AzureDocumentProcessor {
         },
       };
     } catch (error) {
+      // Log full error details for debugging
+      console.error('[Azure Layout Error Details]', {
+        message: error instanceof Error ? error.message : String(error),
+        code: (error as any)?.code,
+        statusCode: (error as any)?.statusCode,
+        details: (error as any)?.details,
+        name: (error as any)?.name,
+        filePath,
+      });
+      // Log stringified error to see full nested details
+      console.error('[Azure Layout Full Error]', JSON.stringify((error as any), null, 2));
+
+      // Enhance error message for common issues
+      let errorMessage = error instanceof Error ? error.message : String(error);
+
+      // Detect "Invalid request" errors and provide helpful context
+      if (errorMessage.includes('Invalid') || errorMessage.includes('invalid')) {
+        const isPdf = filePath.toLowerCase().endsWith('.pdf');
+        if (isPdf) {
+          try {
+            const { getPdfPageCount } = require('../utils/pdf-utils');
+            const fsPromises = require('fs/promises');
+            const pageCount = await getPdfPageCount(filePath);
+            const stats = await fsPromises.stat(filePath);
+            const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
+
+            if (stats.size > 4 * 1024 * 1024) {
+              errorMessage = `File size exceeded. PDF: ${pageCount} pages, ${sizeMB}MB. Exceeds Azure's 4MB file size limit (free tier). Batch processor will auto-split into smaller chunks. Original error: ${errorMessage}`;
+            } else if (pageCount > 10) {
+              errorMessage = `Page limit exceeded. PDF: ${pageCount} pages, ${sizeMB}MB. Exceeds Azure's 10-page limit. Batch processor should split automatically. Original error: ${errorMessage}`;
+            } else {
+              errorMessage = `Invalid request. PDF: ${pageCount} pages, ${sizeMB}MB. May be due to format or Azure API configuration. Original error: ${errorMessage}`;
+            }
+          } catch (pdfError) {
+            // If we can't get page count, just provide general guidance
+            errorMessage = `Invalid request. For PDFs, this is often caused by exceeding file size limit (4MB free tier) or page limit (10 pages). Original error: ${errorMessage}`;
+          }
+        }
+      }
+
       return {
         success: false,
         tool: 'azure-layout',
@@ -290,7 +396,7 @@ export class AzureDocumentProcessor {
           pageCount: 0,
           avgConfidence: 0,
         },
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMessage,
       };
     }
   }

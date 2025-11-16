@@ -46,16 +46,25 @@ export class DocumentAIProcessor {
       const imageBuffer = fs.readFileSync(filePath);
       const encodedImage = imageBuffer.toString('base64');
 
-      // Get actual image dimensions for coordinate conversion
-      const metadata = await sharp(imageBuffer).metadata();
-      const imageWidth = metadata.width || 1000;
-      const imageHeight = metadata.height || 1000;
-
-      // Determine MIME type
+      // Determine MIME type and file type
       const ext = filePath.toLowerCase().split('.').pop();
       let mimeType = 'application/pdf';
+      const isPdf = ext === 'pdf';
+
       if (ext === 'png') mimeType = 'image/png';
       else if (ext === 'jpg' || ext === 'jpeg') mimeType = 'image/jpeg';
+
+      // Get actual image dimensions for coordinate conversion
+      // Only use Sharp for image files, not PDFs
+      let imageWidth = 1000;  // Default for PDFs
+      let imageHeight = 1000; // Default for PDFs
+
+      if (!isPdf) {
+        // For images, get actual dimensions using Sharp
+        const metadata = await sharp(imageBuffer).metadata();
+        imageWidth = metadata.width || 1000;
+        imageHeight = metadata.height || 1000;
+      }
 
       const request = {
         name: `projects/${this.projectId}/locations/${this.location}/processors/${this.processorId}`,
@@ -63,6 +72,7 @@ export class DocumentAIProcessor {
           content: encodedImage,
           mimeType,
         },
+        imagelessMode: true,  // Enable 30-page limit instead of 15
       };
 
       const [result] = await this.client.processDocument(request);
@@ -141,6 +151,34 @@ export class DocumentAIProcessor {
         },
       };
     } catch (error) {
+      // Enhance error message for common issues
+      let errorMessage = error instanceof Error ? error.message : String(error);
+
+      // Detect page limit errors
+      if (errorMessage.includes('exceed') || errorMessage.includes('limit')) {
+        const isPdf = filePath.toLowerCase().endsWith('.pdf');
+        if (isPdf) {
+          try {
+            const { getPdfPageCount } = require('../utils/pdf-utils');
+            const fsPromises = require('fs/promises');
+            const pageCount = await getPdfPageCount(filePath);
+            const stats = await fsPromises.stat(filePath);
+            const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
+
+            if (pageCount > 30) {
+              errorMessage = `Page limit exceeded. PDF: ${pageCount} pages, ${sizeMB}MB. Document AI has a hard limit of 30 pages. Batch processor should split automatically. Original error: ${errorMessage}`;
+            } else if (stats.size > 20 * 1024 * 1024) {
+              errorMessage = `File size issue. PDF: ${pageCount} pages, ${sizeMB}MB. Consider reducing file size or splitting document. Original error: ${errorMessage}`;
+            } else {
+              errorMessage = `Processing error. PDF: ${pageCount} pages, ${sizeMB}MB. Original error: ${errorMessage}`;
+            }
+          } catch (pdfError) {
+            // If we can't get details, provide general guidance
+            errorMessage = `Document AI error. Hard limit: 30 pages max. Original error: ${errorMessage}`;
+          }
+        }
+      }
+
       return {
         success: false,
         tool: 'document-ai',
@@ -154,7 +192,7 @@ export class DocumentAIProcessor {
           pageCount: 0,
           avgConfidence: 0,
         },
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMessage,
       };
     }
   }
