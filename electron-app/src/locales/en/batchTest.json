@@ -1,0 +1,98 @@
+{
+  "title": "Batch OCR Testing",
+  "description": "Select a folder containing multiple PDF/PNG files and run OCR tests on all of them at once. Ground truth files with matching names will be automatically detected.",
+  "folder": {
+    "heading": "1. Select Folder",
+    "selectButton": "Select Folder",
+    "selected": "Selected folder:"
+  },
+  "fileList": {
+    "heading": "2. Files in Folder",
+    "stats": "{{total}} files | {{ready}} ready | {{missing}} missing ground truth | {{skipped}} skipped",
+    "groundTruthFound": "Ground truth found automatically",
+    "groundTruthManual": "Ground truth selected manually",
+    "groundTruthMissing": "Ground truth not found - select manually or skip",
+    "fileSkipped": "This file will be skipped",
+    "selectGroundTruth": "Select ground truth text file",
+    "select": "Select",
+    "skip": "Skip",
+    "unskip": "Unskip",
+    "removeFile": "Remove from batch",
+    "fileName": "File",
+    "status": "Status"
+  },
+  "processors": {
+    "heading": "3. Select Processors",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All",
+    "selectInTab": "Select All in Tab",
+    "deselectInTab": "Deselect All in Tab",
+    "tabs": {
+      "confidentialSafe": "Confidential-Safe (4)",
+      "hybrids": "Hybrids (4)",
+      "experimental": "Experimental (6)"
+    },
+    "missingApiKey": "Missing API keys: {{keys}}",
+    "missingAuth": "Missing authentication: Configure either Service Account (Project ID + JSON) OR API Key in Settings"
+  },
+  "costEstimate": {
+    "heading": "Cost Estimate",
+    "batchInfo": "{{processors}} processors × {{files}} files = {{total}} total tests",
+    "exact": "Estimated cost: ¥{{cost}}",
+    "range": "Estimated cost: ¥{{min}} - ¥{{max}} (varies based on content)"
+  },
+  "buttons": {
+    "runTest": "Run Batch Test",
+    "processing": "Processing..."
+  },
+  "rateLimit": {
+    "title": "API Rate Limit Reached",
+    "message": "{{message}}",
+    "freeTierLimit": "Free tier limit: {{limit}} requests/minute",
+    "question": "What would you like to do?",
+    "continueSlower": "Continue at Slower Rate",
+    "continueSlowerDesc": "Reduce concurrency and add delays. Processing will be slower but will complete.",
+    "skipTest": "Skip This Test",
+    "skipTestDesc": "Skip the current processor/file combination and continue with others.",
+    "cancelAll": "Cancel All Tests",
+    "cancelAllDesc": "Stop all batch processing immediately.",
+    "suggestedWait": "Suggested wait time: {{seconds}} seconds"
+  },
+  "fileError": {
+    "title": "File Processing Error",
+    "message": "An error occurred while processing '{{fileName}}':",
+    "question": "What would you like to do?",
+    "skipFile": "Skip This File",
+    "skipFileDesc": "Skip this file and continue processing the remaining files in the batch.",
+    "retryFile": "Retry This File",
+    "retryFileDesc": "Retry processing this file. The file may have temporary issues.",
+    "cancelAll": "Cancel Entire Batch",
+    "cancelAllDesc": "Stop all batch processing immediately."
+  },
+  "queueProgress": {
+    "heading": "Batch Processing Status",
+    "status": "{{status}}",
+    "details": "Completed: {{completed}} / {{total}} | Processing: {{processing}} | Queued: {{queued}}"
+  },
+  "errors": {
+    "noFilesToProcess": "No files to process. Please select a folder with PDF/PNG files and ensure at least one file is not skipped.",
+    "noProcessorsSelected": "No processors selected. Please select at least one processor to run the batch test.",
+    "missingGroundTruth": "The following files are missing ground truth:\n\n{{files}}\n\nDo you want to continue anyway? These files will still be processed but won't have accuracy metrics.",
+    "testFailed": "Batch test failed:\n{{error}}",
+    "generalError": "Error: {{message}}"
+  },
+  "success": {
+    "testCompleted": "Batch test completed successfully!\n\nReport saved to:\n{{path}}"
+  },
+  "howItWorks": {
+    "title": "How it works:",
+    "step1": "Select a folder containing PDF/PNG files",
+    "step2": "Ground truth files (matching filenames with .txt extension) are automatically detected",
+    "step3": "For files without ground truth, you can select a text file or skip that file",
+    "step4": "Select OCR processors to test on all files",
+    "step5": "Review the batch HTML report with results for all files"
+  },
+  "progress": {
+    "heading": "Batch Processing..."
+  }
+}

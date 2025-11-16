@@ -1,0 +1,149 @@
+{
+  "title": "OCRテスト結果",
+  "batchTitle": "バッチOCRテスト結果",
+  "generated": "生成日時",
+  "summary": "概要",
+  "tableOfContents": "目次",
+  "scrollToTop": "トップへ戻る",
+  "toggleMenu": "メニューの切り替え",
+  "toggleTOC": "目次の切り替え",
+
+  "metadata": {
+    "totalCost": "合計コスト",
+    "totalTime": "合計時間",
+    "totalFiles": "ファイル数",
+    "totalTests": "テスト数",
+    "processingTime": "処理時間",
+    "actualProcessing": "実際の処理",
+    "includesWaitTime": "レート制限待機時間{{time}}を含む",
+    "includesWaitTimeShort": "レート制限待機を含む",
+    "cost": "コスト",
+    "confidence": "信頼度",
+    "textLength": "テキスト長",
+    "wordCount": "単語数",
+    "pageCount": "ページ数",
+    "path": "パス",
+    "groundTruthLength": "正解テキスト長",
+    "characters": "文字",
+    "chars": "文字"
+  },
+
+  "table": {
+    "processor": "プロセッサ",
+    "status": "ステータス",
+    "extractionAccuracy": "抽出精度",
+    "editDistance": "編集距離",
+    "cost": "コスト",
+    "time": "時間",
+    "fileName": "ファイル名"
+  },
+
+  "status": {
+    "success": "成功",
+    "failed": "失敗",
+    "processingFailed": "処理失敗",
+    "unknownError": "不明なエラー"
+  },
+
+  "sections": {
+    "bboxComparison": "バウンディングボックス比較",
+    "bboxVisualization": "バウンディングボックス可視化",
+    "textComparison": "テキスト比較",
+    "groundTruth": "正解テキスト",
+    "ocrOutput": "OCR出力",
+    "extractedText": "抽出テキスト",
+    "metadata": "メタデータ",
+    "detailedResults": "ファイル別詳細結果",
+    "summaryAllFiles": "全ファイル概要"
+  },
+
+  "toolSummary": {
+    "title": "ツール概要 - 全体パフォーマンス",
+    "avgAccuracy": "平均精度",
+    "successRate": "成功率",
+    "totalCost": "合計コスト",
+    "avgTime": "平均時間",
+    "filesProcessed": "処理ファイル数",
+    "accuracyRange": "精度範囲",
+    "totalTime": "合計時間",
+    "avgCostPerFile": "1ファイル当たりの平均コスト",
+    "avgCharsPerFile": "平均文字数/ファイル",
+    "failures": "失敗数",
+    "perFile": "/ ファイル",
+    "totalPages": "総ページ数"
+  },
+
+  "accuracy": {
+    "extractionAccuracy": "抽出精度",
+    "editDistance": "編集距離",
+    "missingCharacters": "欠損文字",
+    "extraCharacters": "余剰文字",
+    "missing": "欠損",
+    "extra": "余剰",
+    "howCalculated": "計算方法",
+    "basedOnChars": "{{count}}文字に基づく",
+    "editsNeeded": "必要な編集数（挿入、削除、置換）",
+    "orderIndependentAnalysis": "順序非依存文字分析",
+    "missingWords": "欠落した単語",
+    "from": "から",
+    "calculationSteps": {
+      "step1": "すべての空白を削除",
+      "step2": "文字をアルファベット順にソート",
+      "step3": "順序に関係なく内容を比較"
+    },
+    "example": {
+      "line1": "\"first second\" = \"second first\"",
+      "line2": "両方 → \"cdefinorsst\""
+    }
+  },
+
+  "bbox": {
+    "detected": "{{count}}個のバウンディングボックスを検出",
+    "detected_plural": "{{count}}個のバウンディングボックスを検出",
+    "hoverForDetails": "ボックスにカーソルを合わせると詳細が表示されます",
+    "visualComparison": "すべてのプロセッサのバウンディングボックス検出の視覚的比較。ボックスにカーソルを合わせるとテキストと信頼度が表示されます。",
+    "text": "テキスト",
+    "legend": {
+      "excellent": "優秀",
+      "good": "良好",
+      "medium": "中程度",
+      "low": "低い"
+    }
+  },
+
+  "descriptions": {
+    "clickAccuracy": "精度のパーセンテージをクリックすると詳細結果にジャンプします",
+    "empty": "（空）",
+    "notProvided": "（未提供）"
+  },
+
+  "footer": {
+    "generatedBy": "OCRテストツールで生成",
+    "version": "v1.0",
+    "batchMode": "OCRテストツールで生成 - バッチモード",
+    "reportGenerated": "{{timestamp}}に生成されたレポート"
+  },
+
+  "preValidation": {
+    "title": "事前検証結果",
+    "filesToSplit": "自動的に分割されるファイル:",
+    "filesWithErrors": "エラーのあるファイル:",
+    "summary": {
+      "totalFiles": "ファイル数: {{count}}",
+      "pdfFiles": "PDFファイル: {{count}}",
+      "filesToSplit": "分割するファイル: {{count}}",
+      "filesWithErrors": "エラーのあるファイル: {{count}}"
+    },
+    "fileDetails": {
+      "pages": "ページ",
+      "chunks": "チャンク",
+      "affectedProcessors": "影響を受けるプロセッサ:"
+    },
+    "question": "続行しますか？",
+    "buttons": {
+      "continue": "続行",
+      "cancel": "キャンセル"
+    },
+    "cancelled": "ユーザーによってバッチ処理がキャンセルされました"
+  }
+}

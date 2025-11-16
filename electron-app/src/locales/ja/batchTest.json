@@ -1,0 +1,98 @@
+{
+  "title": "バッチOCRテスト",
+  "description": "複数のPDF/PNGファイルを含むフォルダを選択し、一度にすべてのファイルでOCRテストを実行します。一致する名前のグラウンドトゥルースファイルが自動的に検出されます。",
+  "folder": {
+    "heading": "1. フォルダを選択",
+    "selectButton": "フォルダを選択",
+    "selected": "選択されたフォルダ:"
+  },
+  "fileList": {
+    "heading": "2. フォルダ内のファイル",
+    "stats": "{{total}}ファイル | {{ready}}準備完了 | {{missing}}グラウンドトゥルース未検出 | {{skipped}}スキップ",
+    "groundTruthFound": "グラウンドトゥルースが自動的に検出されました",
+    "groundTruthManual": "グラウンドトゥルースが手動で選択されました",
+    "groundTruthMissing": "グラウンドトゥルースが見つかりません - 手動で選択するかスキップしてください",
+    "fileSkipped": "このファイルはスキップされます",
+    "selectGroundTruth": "グラウンドトゥルーステキストファイルを選択",
+    "select": "選択",
+    "skip": "スキップ",
+    "unskip": "スキップ解除",
+    "removeFile": "バッチから削除",
+    "fileName": "ファイル",
+    "status": "ステータス"
+  },
+  "processors": {
+    "heading": "3. プロセッサを選択",
+    "selectAll": "すべて選択",
+    "deselectAll": "すべて選択解除",
+    "selectInTab": "タブ内をすべて選択",
+    "deselectInTab": "タブ内をすべて選択解除",
+    "tabs": {
+      "confidentialSafe": "機密情報対応 (4)",
+      "hybrids": "ハイブリッド (4)",
+      "experimental": "実験的 (6)"
+    },
+    "missingApiKey": "不足しているAPIキー: {{keys}}",
+    "missingAuth": "認証が不足しています: 設定でサービスアカウント（プロジェクトID + JSON）またはAPIキーのいずれかを設定してください"
+  },
+  "costEstimate": {
+    "heading": "コスト推定",
+    "batchInfo": "{{processors}}プロセッサ × {{files}}ファイル = {{total}}テスト",
+    "exact": "推定コスト: ¥{{cost}}",
+    "range": "推定コスト: ¥{{min}} - ¥{{max}} (コンテンツによって異なります)"
+  },
+  "buttons": {
+    "runTest": "バッチテストを実行",
+    "processing": "処理中..."
+  },
+  "rateLimit": {
+    "title": "APIレート制限に達しました",
+    "message": "{{message}}",
+    "freeTierLimit": "無料枠の制限: {{limit}}リクエスト/分",
+    "question": "どうしますか？",
+    "continueSlower": "低速で続行",
+    "continueSlowerDesc": "並行処理を減らして遅延を追加します。処理は遅くなりますが、完了します。",
+    "skipTest": "このテストをスキップ",
+    "skipTestDesc": "現在のプロセッサ/ファイルの組み合わせをスキップして、他のテストを続行します。",
+    "cancelAll": "すべてのテストをキャンセル",
+    "cancelAllDesc": "すべてのバッチ処理を直ちに停止します。",
+    "suggestedWait": "推奨待機時間: {{seconds}}秒"
+  },
+  "fileError": {
+    "title": "ファイル処理エラー",
+    "message": "'{{fileName}}'の処理中にエラーが発生しました:",
+    "question": "どうしますか？",
+    "skipFile": "このファイルをスキップ",
+    "skipFileDesc": "このファイルをスキップして、バッチ内の残りのファイルの処理を続行します。",
+    "retryFile": "このファイルを再試行",
+    "retryFileDesc": "このファイルの処理を再試行します。ファイルに一時的な問題がある可能性があります。",
+    "cancelAll": "バッチ全体をキャンセル",
+    "cancelAllDesc": "すべてのバッチ処理を直ちに停止します。"
+  },
+  "queueProgress": {
+    "heading": "バッチ処理ステータス",
+    "status": "{{status}}",
+    "details": "完了: {{completed}} / {{total}} | 処理中: {{processing}} | 待機中: {{queued}}"
+  },
+  "errors": {
+    "noFilesToProcess": "処理するファイルがありません。PDF/PNGファイルを含むフォルダを選択し、少なくとも1つのファイルがスキップされていないことを確認してください。",
+    "noProcessorsSelected": "プロセッサが選択されていません。バッチテストを実行するには、少なくとも1つのプロセッサを選択してください。",
+    "missingGroundTruth": "次のファイルにグラウンドトゥルースがありません:\n\n{{files}}\n\nそれでも続行しますか？これらのファイルは処理されますが、精度指標はありません。",
+    "testFailed": "バッチテストが失敗しました:\n{{error}}",
+    "generalError": "エラー: {{message}}"
+  },
+  "success": {
+    "testCompleted": "バッチテストが正常に完了しました！\n\nレポートの保存先:\n{{path}}"
+  },
+  "howItWorks": {
+    "title": "使い方:",
+    "step1": "PDF/PNGファイルを含むフォルダを選択",
+    "step2": "グラウンドトゥルースファイル（.txt拡張子の一致するファイル名）が自動的に検出されます",
+    "step3": "グラウンドトゥルースがないファイルについては、テキストファイルを選択するか、そのファイルをスキップできます",
+    "step4": "すべてのファイルでテストするOCRプロセッサを選択",
+    "step5": "すべてのファイルの結果を含むバッチHTMLレポートを確認"
+  },
+  "progress": {
+    "heading": "バッチ処理中..."
+  }
+}
