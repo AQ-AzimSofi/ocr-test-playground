@@ -4,7 +4,7 @@ import { getProcessorsByCategory, estimateCost, isProcessorAvailable } from '@sh
 import type { ProcessorCategory } from '@shared/types';
 
 export default function ModeA() {
-  const { t } = useTranslation('modeA');
+  const { t, i18n } = useTranslation('modeA');
   const [selectedProcessors, setSelectedProcessors] = useState<Set<string>>(new Set());
   const [pdfFile, setPdfFile] = useState<string | null>(null);
   const [groundTruth, setGroundTruth] = useState('');
@@ -193,6 +193,7 @@ export default function ModeA() {
           },
         ],
         groundTruth,
+        language: i18n.language,
       });
 
       if (result.success && result.reportPath) {
@@ -386,7 +387,15 @@ export default function ModeA() {
             <p className="text-sm text-blue-700">
               {t('costEstimate.processorsSelected', { count: selectedProcessors.size })}
             </p>
-            <p className="text-sm text-blue-700">{t('costEstimate.note', { note: costEstimate.note })}</p>
+            <p className="text-sm text-blue-700">
+              {costEstimate.min === costEstimate.max
+                ? t('costEstimate.exact', { cost: costEstimate.min.toFixed(2) })
+                : t('costEstimate.range', {
+                    min: costEstimate.min.toFixed(2),
+                    max: costEstimate.max.toFixed(2)
+                  })
+              }
+            </p>
           </div>
         )}
 

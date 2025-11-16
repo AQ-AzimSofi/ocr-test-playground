@@ -8,7 +8,7 @@ interface ProcessorInput {
 }
 
 export default function ModeB() {
-  const { t } = useTranslation('modeB');
+  const { t, i18n } = useTranslation('modeB');
   const [groundTruth, setGroundTruth] = useState('');
   const [processorInputs, setProcessorInputs] = useState<ProcessorInput[]>([
     { id: '1', processor: '', text: '' },
@@ -61,6 +61,7 @@ export default function ModeB() {
           text: p.text,
         })),
         groundTruth,
+        language: i18n.language,
       });
 
       if (result.success && result.reportPath) {

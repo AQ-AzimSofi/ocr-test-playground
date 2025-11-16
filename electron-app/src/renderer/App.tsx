@@ -4,8 +4,9 @@ import Settings from './pages/Settings';
 import ModeA from './pages/ModeA';
 import ModeB from './pages/ModeB';
 import FloorPlan from './pages/FloorPlan';
+import BatchTest from './pages/BatchTest';
 
-type Page = 'mode-a' | 'mode-b' | 'floor-plan' | 'settings';
+type Page = 'mode-a' | 'mode-b' | 'batch-test' | 'floor-plan' | 'settings';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('mode-a');
@@ -41,6 +42,16 @@ function App() {
                   } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
                   {t('navigation.textComparison')}
+                </button>
+                <button
+                  onClick={() => setCurrentPage('batch-test')}
+                  className={`${
+                    currentPage === 'batch-test'
+                      ? 'border-indigo-500 text-gray-900'
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                >
+                  {t('navigation.batchTest')}
                 </button>
                 <button
                   onClick={() => setCurrentPage('floor-plan')}
@@ -93,6 +104,7 @@ function App() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {currentPage === 'mode-a' && <ModeA />}
         {currentPage === 'mode-b' && <ModeB />}
+        {currentPage === 'batch-test' && <BatchTest />}
         {currentPage === 'floor-plan' && <FloorPlan />}
         {currentPage === 'settings' && <Settings />}
       </main>
