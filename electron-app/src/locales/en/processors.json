@@ -7,6 +7,76 @@
     "experimental": "Experimental & Advanced",
     "experimentalDesc": "Cutting-edge processors for specialized use cases. Some may have limited availability."
   },
+  "cloud-vision": {
+    "name": "Google Cloud Vision",
+    "cost": "~0.15 yen per image",
+    "description": "Fast, reliable paragraph-level OCR with high accuracy"
+  },
+  "azure-read": {
+    "name": "Azure Read API",
+    "cost": "~0.225 yen per page",
+    "description": "Cost-effective word-level OCR with good accuracy"
+  },
+  "azure-layout": {
+    "name": "Azure Layout API",
+    "cost": "~1.50 yen per page",
+    "description": "Structure-aware OCR with table detection"
+  },
+  "document-ai": {
+    "name": "Document AI",
+    "cost": "~0.225 yen per page",
+    "description": "Advanced word-level OCR with structure analysis"
+  },
+  "cloud-vision-gemini-hybrid": {
+    "name": "Cloud Vision + Gemini Hybrid",
+    "cost": "~0.15-0.30 yen per image",
+    "description": "Region-level fusion with AI correction"
+  },
+  "azure-read-gemini-hybrid": {
+    "name": "Azure Read + Gemini Hybrid",
+    "cost": "~0.225-0.40 yen per image",
+    "description": "Budget-friendly hybrid with word-level precision"
+  },
+  "document-ai-gemini-hybrid": {
+    "name": "Document AI + Gemini Hybrid",
+    "cost": "~0.25-0.50 yen per image",
+    "description": "Advanced hybrid with Document AI validation workflow"
+  },
+  "gemini-self-calibrating": {
+    "name": "Gemini Self-Calibrating",
+    "cost": "~0.25-0.40 yen per image",
+    "description": "AI-powered coordinate calibration using Cloud Vision as reference"
+  },
+  "hybrid": {
+    "name": "Hybrid (Legacy)",
+    "cost": "~0.20 yen per image",
+    "description": "Simple parallel processing (Cloud Vision + Gemini)"
+  },
+  "gemini-coordinates": {
+    "name": "Gemini Coordinates",
+    "cost": "~0.05 yen per image",
+    "description": "Asks Gemini for text + percentage coordinates (EXPERIMENTAL)"
+  },
+  "gemini-bbox-synthesis": {
+    "name": "Gemini Bbox Synthesis",
+    "cost": "~0.20 yen per image",
+    "description": "Matches Gemini text to Cloud Vision bboxes (EXPERIMENTAL)"
+  },
+  "gemini-validation-azure": {
+    "name": "Gemini Validation - Azure Read",
+    "cost": "~0.30-0.50 yen per image",
+    "description": "Uses Gemini as QA reviewer to validate Azure Read results (EXPERIMENTAL)"
+  },
+  "region-classifier": {
+    "name": "Region Classifier",
+    "cost": "~1.50-1.70 yen per image",
+    "description": "Smart routing: Azure for high confidence, Gemini for low (EXPERIMENTAL)"
+  },
+  "gemini-geometric": {
+    "name": "Gemini Geometric",
+    "cost": "~1.50 yen per floor plan",
+    "description": "AI-powered floor plan analysis with wall and room detection"
+  },
   "processors": [
     {
       "id": "cloud-vision",

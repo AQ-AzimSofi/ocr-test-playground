@@ -6,6 +6,73 @@
     "japanese": "日本語 (Japanese)",
     "english": "English"
   },
+  "cloudVision": {
+    "title": "Google Cloud Vision",
+    "chooseMethod": "Choose one authentication method:",
+    "serviceAccount": {
+      "recommended": "Recommended: Service Account",
+      "projectId": "Project ID",
+      "projectIdPlaceholder": "your-project-id",
+      "projectIdHint": "Will be auto-filled from the service account JSON if left empty",
+      "jsonLabel": "Service Account JSON",
+      "jsonHint": "Paste the entire JSON content from your service account key file"
+    },
+    "apiKey": {
+      "alternative": "Alternative: API Key (Simple)",
+      "label": "API Key",
+      "placeholder": "AIza...",
+      "warning": "Less secure, not recommended for production"
+    },
+    "requiredFor": "Required for: Cloud Vision, Cloud Vision + Gemini hybrid processors"
+  },
+  "azure": {
+    "keyLabel": "Azure Cognitive Services Key",
+    "keyPlaceholder": "Enter your Azure key",
+    "endpointLabel": "Azure Endpoint URL",
+    "endpointPlaceholder": "https://your-resource.cognitiveservices.azure.com/",
+    "requiredFor": "Required for: Azure Read API, Azure Layout API, and Azure-based hybrid processors"
+  },
+  "gemini": {
+    "label": "Google Gemini API Key",
+    "placeholder": "AIza...",
+    "requiredFor": "Required for: All Gemini-based processors, hybrid processors, and Floor Plan to Revit conversion"
+  },
+  "documentAi": {
+    "title": "Document AI",
+    "createProcessor": "Create a processor at",
+    "projectId": "Project ID",
+    "projectIdPlaceholder": "your-project-id",
+    "projectIdHint": "Will be auto-filled from the service account JSON if left empty",
+    "processorId": "Processor ID",
+    "processorIdPlaceholder": "1234567890abcdef",
+    "processorIdHint": "Found in the Document AI processor details",
+    "location": "Processor Location",
+    "locations": {
+      "us": "us (United States)",
+      "eu": "eu (Europe)",
+      "tokyo": "asia-northeast1 (Tokyo)",
+      "singapore": "asia-southeast1 (Singapore)"
+    },
+    "locationHint": "Select the location where your processor was created",
+    "serviceAccountJson": "Service Account JSON",
+    "serviceAccountJsonHint": "Paste the entire JSON content from your service account key file"
+  },
+  "saveButton": {
+    "save": "Save API Keys",
+    "saving": "Saving...",
+    "success": "Saved successfully!"
+  },
+  "processors": {
+    "title": "Available Processors",
+    "cloudVision": "Cloud Vision",
+    "azure": "Azure Read & Layout",
+    "documentAi": "Document AI",
+    "geminiBased": "All Gemini-based",
+    "confidentialSafe": "Confidential-safe",
+    "experimental": "Hybrids & Experimental",
+    "available": "Available",
+    "notConfigured": "Not configured"
+  },
   "apiKeys": {
     "title": "API Key Configuration",
     "description": "Configure your API keys for OCR and AI services. Keys are encrypted and stored locally on your machine.",

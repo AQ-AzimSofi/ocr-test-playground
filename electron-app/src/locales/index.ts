@@ -6,6 +6,7 @@ import jaCommon from './ja/common.json';
 import jaSettings from './ja/settings.json';
 import jaModeA from './ja/modeA.json';
 import jaModeB from './ja/modeB.json';
+import jaBatchTest from './ja/batchTest.json';
 import jaFloorPlan from './ja/floorPlan.json';
 import jaProcessors from './ja/processors.json';
 import jaErrors from './ja/errors.json';
@@ -15,6 +16,7 @@ import enCommon from './en/common.json';
 import enSettings from './en/settings.json';
 import enModeA from './en/modeA.json';
 import enModeB from './en/modeB.json';
+import enBatchTest from './en/batchTest.json';
 import enFloorPlan from './en/floorPlan.json';
 import enProcessors from './en/processors.json';
 import enErrors from './en/errors.json';
@@ -36,6 +38,7 @@ i18n
         settings: jaSettings,
         modeA: jaModeA,
         modeB: jaModeB,
+        batchTest: jaBatchTest,
         floorPlan: jaFloorPlan,
         processors: jaProcessors,
         errors: jaErrors,
@@ -45,6 +48,7 @@ i18n
         settings: enSettings,
         modeA: enModeA,
         modeB: enModeB,
+        batchTest: enBatchTest,
         floorPlan: enFloorPlan,
         processors: enProcessors,
         errors: enErrors,
@@ -52,7 +56,7 @@ i18n
     },
     lng: getSavedLanguage(), // Japanese as default
     fallbackLng: 'en', // Fallback to English
-    ns: ['common', 'settings', 'modeA', 'modeB', 'floorPlan', 'processors', 'errors'],
+    ns: ['common', 'settings', 'modeA', 'modeB', 'batchTest', 'floorPlan', 'processors', 'errors'],
     defaultNS: 'common',
     interpolation: {
       escapeValue: false, // React already escapes values

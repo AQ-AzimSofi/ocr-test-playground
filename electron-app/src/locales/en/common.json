@@ -3,6 +3,7 @@
   "navigation": {
     "pdfOcr": "PDF OCR Testing",
     "textComparison": "Text Comparison",
+    "batchTest": "Batch Testing",
     "floorPlan": "Floor Plan → Revit",
     "settings": "Settings"
   },

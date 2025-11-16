@@ -7,6 +7,76 @@
     "experimental": "実験的 & 高度な機能",
     "experimentalDesc": "特殊なユースケース向けの最先端プロセッサ。利用が制限されている場合があります。"
   },
+  "cloud-vision": {
+    "name": "Google Cloud Vision",
+    "cost": "約1画像あたり0.15円",
+    "description": "高速で信頼性の高い段落レベルOCR"
+  },
+  "azure-read": {
+    "name": "Azure Read API",
+    "cost": "約1ページあたり0.225円",
+    "description": "コスト効率的な単語レベルOCR"
+  },
+  "azure-layout": {
+    "name": "Azure Layout API",
+    "cost": "約1ページあたり1.50円",
+    "description": "テーブル検出機能を備えた構造認識OCR"
+  },
+  "document-ai": {
+    "name": "Document AI",
+    "cost": "約1ページあたり0.225円",
+    "description": "構造分析を備えた高度な単語レベルOCR"
+  },
+  "cloud-vision-gemini-hybrid": {
+    "name": "Cloud Vision + Gemini ハイブリッド",
+    "cost": "約1画像あたり0.15-0.30円",
+    "description": "領域レベルの融合とAI修正"
+  },
+  "azure-read-gemini-hybrid": {
+    "name": "Azure Read + Gemini ハイブリッド",
+    "cost": "約1画像あたり0.225-0.40円",
+    "description": "予算に優しいハイブリッド、単語レベルの精度"
+  },
+  "document-ai-gemini-hybrid": {
+    "name": "Document AI + Gemini ハイブリッド",
+    "cost": "約1画像あたり0.25-0.50円",
+    "description": "Document AI検証ワークフロー付き高度なハイブリッド"
+  },
+  "gemini-self-calibrating": {
+    "name": "Gemini 自己キャリブレーション",
+    "cost": "約1画像あたり0.25-0.40円",
+    "description": "Cloud Visionを参照として使用したAI搭載座標キャリブレーション"
+  },
+  "hybrid": {
+    "name": "ハイブリッド（レガシー）",
+    "cost": "約1画像あたり0.20円",
+    "description": "シンプルな並列処理（Cloud Vision + Gemini）"
+  },
+  "gemini-coordinates": {
+    "name": "Gemini 座標",
+    "cost": "約1画像あたり0.05円",
+    "description": "Geminiにテキスト+パーセンテージ座標を要求（実験的）"
+  },
+  "gemini-bbox-synthesis": {
+    "name": "Gemini バウンディングボックス合成",
+    "cost": "約1画像あたり0.20円",
+    "description": "GeminiテキストをCloud Visionバウンディングボックスにマッチング（実験的）"
+  },
+  "gemini-validation-azure": {
+    "name": "Gemini 検証 - Azure Read",
+    "cost": "約1画像あたり0.30-0.50円",
+    "description": "Geminiをの品質管理レビュアーとしてAzure Read結果を検証（実験的）"
+  },
+  "region-classifier": {
+    "name": "領域クラシファイア",
+    "cost": "約1画像あたり1.50-1.70円",
+    "description": "スマートルーティング: 高信頼度はAzure、低信頼度はGemini（実験的）"
+  },
+  "gemini-geometric": {
+    "name": "Gemini 幾何学的",
+    "cost": "約1平面図あたり1.50円",
+    "description": "壁と部屋検出を備えたAI搭載平面図分析"
+  },
   "processors": [
     {
       "id": "cloud-vision",

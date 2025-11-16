@@ -3,6 +3,7 @@
   "navigation": {
     "pdfOcr": "PDF OCR テスト",
     "textComparison": "テキスト比較",
+    "batchTest": "バッチテスト",
     "floorPlan": "平面図 → Revit",
     "settings": "設定"
   },

@@ -6,6 +6,73 @@
     "japanese": "日本語 (Japanese)",
     "english": "English"
   },
+  "cloudVision": {
+    "title": "Google Cloud Vision",
+    "chooseMethod": "認証方法を選択:",
+    "serviceAccount": {
+      "recommended": "推奨: サービスアカウント",
+      "projectId": "プロジェクトID",
+      "projectIdPlaceholder": "your-project-id",
+      "projectIdHint": "サービスアカウントJSONから自動入力されます（空欄可）",
+      "jsonLabel": "サービスアカウントJSON",
+      "jsonHint": "サービスアカウントキーファイルのJSON全体を貼り付けてください"
+    },
+    "apiKey": {
+      "alternative": "代替: APIキー（シンプル）",
+      "label": "APIキー",
+      "placeholder": "AIza...",
+      "warning": "セキュリティが低いため、本番環境には推奨されません"
+    },
+    "requiredFor": "必須対象: Cloud Vision、Cloud Vision + Gemini ハイブリッドプロセッサ"
+  },
+  "azure": {
+    "keyLabel": "Azure Cognitive Services キー",
+    "keyPlaceholder": "Azureキーを入力してください",
+    "endpointLabel": "Azureエンドポイント URL",
+    "endpointPlaceholder": "https://your-resource.cognitiveservices.azure.com/",
+    "requiredFor": "必須対象: Azure Read API、Azure Layout API、Azureベースのハイブリッドプロセッサ"
+  },
+  "gemini": {
+    "label": "Google Gemini APIキー",
+    "placeholder": "AIza...",
+    "requiredFor": "必須対象: Geminiベースのプロセッサ、ハイブリッドプロセッサ、平面図からRevitへの変換"
+  },
+  "documentAi": {
+    "title": "Document AI",
+    "createProcessor": "プロセッサを作成:",
+    "projectId": "プロジェクトID",
+    "projectIdPlaceholder": "your-project-id",
+    "projectIdHint": "サービスアカウントJSONから自動入力されます（空欄可）",
+    "processorId": "プロセッサID",
+    "processorIdPlaceholder": "1234567890abcdef",
+    "processorIdHint": "Document AIプロセッサの詳細に記載されています",
+    "location": "プロセッサの場所",
+    "locations": {
+      "us": "us（アメリカ）",
+      "eu": "eu（ヨーロッパ）",
+      "tokyo": "asia-northeast1（東京）",
+      "singapore": "asia-southeast1（シンガポール）"
+    },
+    "locationHint": "プロセッサを作成した場所を選択してください",
+    "serviceAccountJson": "サービスアカウントJSON",
+    "serviceAccountJsonHint": "サービスアカウントキーファイルのJSON全体を貼り付けてください"
+  },
+  "saveButton": {
+    "save": "APIキーを保存",
+    "saving": "保存中...",
+    "success": "保存しました！"
+  },
+  "processors": {
+    "title": "利用可能なプロセッサ",
+    "cloudVision": "Cloud Vision",
+    "azure": "Azure Read & Layout",
+    "documentAi": "Document AI",
+    "geminiBased": "Geminiベース",
+    "confidentialSafe": "機密情報対応",
+    "experimental": "ハイブリッド & 実験的",
+    "available": "利用可能",
+    "notConfigured": "未設定"
+  },
   "apiKeys": {
     "title": "APIキー設定",
     "description": "OCRおよびAIサービスのAPIキーを設定します。キーは暗号化されてローカルに保存されます。",
