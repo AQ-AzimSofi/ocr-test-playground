@@ -1,10 +1,10 @@
-import { fromPath } from 'pdf2pic';
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
 
 /**
  * PDF to image conversion utility for Electron app
+ * Uses pdf2img-electron which leverages Chromium's built-in PDF viewer
  */
 
 export interface PdfConversionResult {
@@ -14,7 +14,26 @@ export interface PdfConversionResult {
 }
 
 /**
+ * Get page count from a PDF file without converting it
+ * Uses unpdf - a modern, serverless-friendly PDF parser with no dynamic requires
+ * @param pdfPath - Path to PDF file
+ * @returns Number of pages in the PDF
+ */
+export async function getPdfPageCount(pdfPath: string): Promise<number> {
+  try {
+    const { getDocumentProxy } = await import('unpdf');
+    const dataBuffer = await fs.readFile(pdfPath);
+    const pdf = await getDocumentProxy(new Uint8Array(dataBuffer));
+    return pdf.numPages;
+  } catch (error) {
+    console.error(`Failed to get page count for ${pdfPath}:`, error);
+    return 0; // Return 0 if we can't read the PDF
+  }
+}
+
+/**
  * Convert PDF to PNG images (one per page)
+ * Uses pdf2img-electron which leverages Chromium's built-in PDF viewer
  * @param pdfPath - Path to PDF file
  * @returns Array of image paths and temp directory
  */
@@ -25,47 +44,39 @@ export async function convertPdfToImages(
   const tempDir = path.join(os.tmpdir(), `ocr-pdf-${Date.now()}`);
   await fs.mkdir(tempDir, { recursive: true });
 
-  // Configure pdf2pic
-  const options = {
-    density: 300, // DPI
-    saveFilename: 'page',
-    savePath: tempDir,
-    format: 'png',
-    width: 2480, // A4 at 300 DPI
-    height: 3508,
-  };
+  try {
+    // Dynamically import pdf2img-electron (CommonJS module)
+    const { default: pdf } = await import('pdf2img-electron');
 
-  const convert = fromPath(pdfPath, options);
+    // Initialize pdf2img-electron
+    const PDF = pdf(pdfPath);
 
-  // Get page count from PDF
-  const pdfParse = (await import('pdf-parse')).default;
-  const dataBuffer = await fs.readFile(pdfPath);
-  const pdfData = await pdfParse(dataBuffer);
-  const pageCount = pdfData.numpages;
+    // Convert all pages to PNG buffers
+    // Scale of 4.17 ≈ 300 DPI (300/72 = 4.17)
+    const pngBuffers = await PDF.toPNG({
+      scale: 4.17,
+      logging: false
+    });
 
-  // Convert each page
-  const imagePaths: string[] = [];
+    const imagePaths: string[] = [];
 
-  for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
-    try {
-      const result = await convert(pageNum, {
-        responseType: 'image',
-      });
-
-      if (result && result.path) {
-        imagePaths.push(result.path);
-      }
-    } catch (error) {
-      console.error(`Failed to convert PDF page ${pageNum}:`, error);
-      throw new Error(`PDF conversion failed on page ${pageNum}`);
+    // Save each PNG buffer to a file
+    for (let i = 0; i < pngBuffers.length; i++) {
+      const outputPath = path.join(tempDir, `page.${i + 1}.png`);
+      await fs.writeFile(outputPath, pngBuffers[i]);
+      imagePaths.push(outputPath);
     }
-  }
 
-  return {
-    imagePaths,
-    pageCount,
-    tempDir,
-  };
+    return {
+      imagePaths,
+      pageCount: pngBuffers.length,
+      tempDir,
+    };
+  } catch (error) {
+    // Clean up temp directory on error
+    await cleanupTempImages(tempDir);
+    throw error;
+  }
 }
 
 /**
