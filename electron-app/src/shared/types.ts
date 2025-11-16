@@ -23,6 +23,8 @@ export interface ProcessorInfo {
   cost: string;
   requiresApiKeys: string[];
   confidentialSafe: boolean;
+  supportsPdf: boolean; // Whether processor can handle PDF files natively (without conversion)
+  maxPages?: number; // Maximum pages per PDF document (undefined = unlimited)
 }
 
 // OCR Test Results

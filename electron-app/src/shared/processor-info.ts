@@ -15,6 +15,8 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     cost: '~0.15 yen per image',
     requiresApiKeys: ['googleCloudVision'],
     confidentialSafe: true,
+    supportsPdf: true, // Cloud Vision API supports PDF files natively
+    maxPages: undefined, // No hard page limit
   },
   {
     id: 'azure-read',
@@ -24,6 +26,8 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     cost: '~0.225 yen per page',
     requiresApiKeys: ['azureComputerVision', 'azureEndpoint'],
     confidentialSafe: true,
+    supportsPdf: true, // Azure Read supports PDF files natively
+    maxPages: 10, // Reduced to stay under 4MB file size limit (Azure free tier)
   },
   {
     id: 'azure-layout',
@@ -33,6 +37,8 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     cost: '~1.50 yen per page',
     requiresApiKeys: ['azureComputerVision', 'azureEndpoint'],
     confidentialSafe: true,
+    supportsPdf: true, // Azure Layout supports PDF files natively
+    maxPages: 10, // Reduced to stay under 4MB file size limit (Azure free tier)
   },
   {
     id: 'document-ai',
@@ -42,6 +48,8 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     cost: '~0.225 yen per page',
     requiresApiKeys: ['documentAiProjectId', 'documentAiCredentials', 'documentAiProcessorId', 'documentAiLocation'],
     confidentialSafe: true,
+    supportsPdf: true, // Document AI supports PDF files natively
+    maxPages: 30, // Hard API limit enforced by Google Document AI
   },
 
   // ==================== HYBRID PROCESSORS ====================
@@ -53,6 +61,7 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     cost: '~0.15-0.30 yen per image (depends on low-confidence region count)',
     requiresApiKeys: ['googleCloudVision', 'googleGemini'],
     confidentialSafe: false,
+    supportsPdf: false, // Requires images for Gemini cropping
   },
   {
     id: 'azure-read-gemini-hybrid',
@@ -62,6 +71,7 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     cost: '~0.225-0.40 yen per image (depends on low-confidence word count)',
     requiresApiKeys: ['azureComputerVision', 'azureEndpoint', 'googleGemini'],
     confidentialSafe: false,
+    supportsPdf: false, // Requires images for Gemini cropping
   },
   {
     id: 'document-ai-gemini-hybrid',
@@ -71,6 +81,7 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     cost: '~0.25-0.50 yen per image (depends on validation issues)',
     requiresApiKeys: ['documentAiProjectId', 'documentAiCredentials', 'googleGemini'],
     confidentialSafe: false,
+    supportsPdf: false, // Requires images for Gemini cropping
   },
   {
     id: 'gemini-self-calibrating',
@@ -80,6 +91,7 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     cost: '~0.25-0.40 yen per image (depends on Gemini-only text count)',
     requiresApiKeys: ['googleCloudVision', 'googleGemini'],
     confidentialSafe: false,
+    supportsPdf: false, // Requires images for Gemini processing
   },
 
   // ==================== EXPERIMENTAL PROCESSORS ====================
@@ -91,6 +103,7 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     cost: '~0.20 yen per image',
     requiresApiKeys: ['googleCloudVision', 'googleGemini'],
     confidentialSafe: false,
+    supportsPdf: false, // Requires images for Gemini
   },
   {
     id: 'gemini-coordinates',
@@ -100,6 +113,7 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     cost: '~0.05 yen per image',
     requiresApiKeys: ['googleGemini'],
     confidentialSafe: false,
+    supportsPdf: false, // Gemini requires images
   },
   {
     id: 'gemini-bbox-synthesis',
@@ -109,6 +123,7 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     cost: '~0.20 yen per image',
     requiresApiKeys: ['googleCloudVision', 'googleGemini'],
     confidentialSafe: false,
+    supportsPdf: false, // Requires images for Gemini
   },
   {
     id: 'gemini-validation-azure',
@@ -118,6 +133,7 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     cost: '~0.30-0.50 yen per image (depends on issues found)',
     requiresApiKeys: ['azureComputerVision', 'azureEndpoint', 'googleGemini'],
     confidentialSafe: false,
+    supportsPdf: false, // Requires images for Gemini
   },
   {
     id: 'region-classifier',
@@ -127,6 +143,7 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     cost: '~1.50-1.70 yen per image (depends on low-confidence region count)',
     requiresApiKeys: ['azureComputerVision', 'azureEndpoint', 'googleGemini'],
     confidentialSafe: false,
+    supportsPdf: false, // Requires images for Gemini cropping
   },
   {
     id: 'gemini-geometric',
@@ -136,6 +153,7 @@ export const PROCESSOR_INFO: ProcessorInfo[] = [
     cost: '~1.50 yen per floor plan',
     requiresApiKeys: ['googleGemini'],
     confidentialSafe: false,
+    supportsPdf: false, // Floor plan processor, images only
   },
 ];
 
@@ -227,11 +245,13 @@ export function getAllProcessorIds(): string[] {
 
 /**
  * Estimate total cost for a batch of images
+ * Returns min and max cost values in yen (numeric)
+ * UI layer should format these values using i18n
  */
 export function estimateCost(
   processorIds: string[],
   imageCount: number
-): { min: number; max: number; note: string } {
+): { min: number; max: number } {
   let minTotal = 0;
   let maxTotal = 0;
 
@@ -249,10 +269,5 @@ export function estimateCost(
     }
   }
 
-  const note =
-    minTotal === maxTotal
-      ? `Estimated cost: ¥${minTotal.toFixed(2)}`
-      : `Estimated cost: ¥${minTotal.toFixed(2)} - ¥${maxTotal.toFixed(2)} (varies based on content)`;
-
-  return { min: minTotal, max: maxTotal, note };
+  return { min: minTotal, max: maxTotal };
 }
