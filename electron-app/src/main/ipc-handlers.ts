@@ -97,13 +97,13 @@ ipcMain.handle('process-ocr', async (event, params) => {
 
           if (isPdfFile(filePath)) {
             // For PDF files, only use processors that support PDF natively
-            compatibleProcessors = processors.filter(id => {
+            compatibleProcessors = processors.filter((id: string) => {
               const info = getProcessorInfo(id);
               return info?.supportsPdf === true;
             });
 
             // Track which processors were skipped
-            skippedProcessors = processors.filter(id => {
+            skippedProcessors = processors.filter((id: string) => {
               const info = getProcessorInfo(id);
               return info?.supportsPdf === false;
             });
@@ -371,13 +371,13 @@ ipcMain.handle('process-ocr', async (event, params) => {
 
               if (isPdfFile(filePath)) {
                 // For PDF files, only use processors that support PDF natively
-                compatibleProcessors = processors.filter(id => {
+                compatibleProcessors = processors.filter((id: string) => {
                   const info = getProcessorInfo(id);
                   return info?.supportsPdf === true;
                 });
 
                 // Track which processors were skipped
-                skippedProcessors = processors.filter(id => {
+                skippedProcessors = processors.filter((id: string) => {
                   const info = getProcessorInfo(id);
                   return info?.supportsPdf === false;
                 });
@@ -525,6 +525,7 @@ ipcMain.handle('process-ocr', async (event, params) => {
                     pageRange: r.pageRange,
                     error: r.error,
                   })),
+                  error: undefined as string | undefined,
                 };
 
                 if (!allChunksSuccessful) {

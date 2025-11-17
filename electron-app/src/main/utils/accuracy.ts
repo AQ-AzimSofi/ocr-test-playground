@@ -418,17 +418,6 @@ function calculateCharacterFrequencyDifferences(
 }
 
 /**
- * Count character frequency in a string
- */
-function countCharacters(text: string): Record<string, number> {
-  const counts: Record<string, number> = {};
-  for (const char of text) {
-    counts[char] = (counts[char] || 0) + 1;
-  }
-  return counts;
-}
-
-/**
  * Clean AI-generated text by removing common commentary patterns
  */
 export function cleanAICommentary(text: string): {

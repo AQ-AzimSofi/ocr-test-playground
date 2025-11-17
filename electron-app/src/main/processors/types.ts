@@ -10,6 +10,7 @@ export interface BoundingBox {
   bounds: Array<{ x: number; y: number }>;
   confidence: number;
   page: number;
+  metadata?: any;
 }
 
 export interface ProcessorResult {

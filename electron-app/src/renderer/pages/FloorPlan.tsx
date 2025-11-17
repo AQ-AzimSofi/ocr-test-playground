@@ -138,7 +138,6 @@ export default function FloorPlan() {
         if (coords.length === 0) return;
 
         const type = element.type;
-        const confidence = element.confidence || 1;
 
         // Color scheme based on type
         let strokeColor = '#000000';

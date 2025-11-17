@@ -1,6 +1,6 @@
 {
   "name": "ocr-testing-tool",
-  "version": "1.0.0",
+  "version": "1.0.1-alpha.4",
   "description": "Standalone OCR Testing Tool with Floor Plan to Revit Conversion",
   "type": "module",
   "main": "dist-electron/main/index.mjs",
@@ -9,11 +9,11 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && electron-builder",
-    "build:dir": "tsc && vite build && electron-builder --dir",
-    "build:win": "tsc && vite build && electron-builder --win",
-    "build:mac": "tsc && vite build && electron-builder --mac",
-    "build:linux": "tsc && vite build && electron-builder --linux",
+    "build": "cross-env NODE_ENV=production tsc && vite build && electron-builder",
+    "build:dir": "cross-env NODE_ENV=production tsc && vite build && electron-builder --dir",
+    "build:win": "cross-env NODE_ENV=production tsc && vite build && electron-builder --win",
+    "build:mac": "cross-env NODE_ENV=production tsc && vite build && electron-builder --mac",
+    "build:linux": "cross-env NODE_ENV=production tsc && vite build && electron-builder --linux",
     "preview": "vite preview",
     "electron:dev": "vite",
     "typecheck": "tsc --noEmit"
@@ -50,6 +50,7 @@
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.19",
     "concurrently": "^8.2.2",
+    "cross-env": "^10.1.0",
     "electron": "^28.3.3",
     "electron-builder": "^24.13.3",
     "postcss": "^8.4.39",
@@ -79,6 +80,7 @@
       "package.json"
     ],
     "asarUnpack": [
+      "dist-electron/locales/**/*",
       "node_modules/sharp/**/*",
       "node_modules/@img/**/*",
       "node_modules/pdf-parse/**/*",

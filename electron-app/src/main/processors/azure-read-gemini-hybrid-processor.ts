@@ -21,6 +21,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
  */
 
 export interface AzureGeminiHybridResult extends AzureResult {
+  rateLimitWaitTime?: number;
   metadata: AzureResult['metadata'] & {
     strategy: string;
     lowConfidenceWordsCount: number;
@@ -77,7 +78,7 @@ export class AzureReadGeminiHybridProcessor {
    */
   async processImage(
     imagePath: string,
-    pageNumber: number = 1
+    _pageNumber: number = 1
   ): Promise<AzureGeminiHybridResult> {
     if (isDevelopment) console.log(
       `  Processing with Azure Read + Gemini Hybrid (Word-Level Fusion)...`
@@ -132,7 +133,7 @@ export class AzureReadGeminiHybridProcessor {
           page: word.page,
         };
 
-        if (region.confidence < this.lowConfidenceThreshold) {
+        if (region.confidence! < this.lowConfidenceThreshold) {
           lowConfidenceWords.push(region);
         } else {
           highConfidenceWords.push(region);

@@ -194,7 +194,7 @@ export default function ModeA() {
         ],
         groundTruth,
         language: i18n.language,
-      });
+      } as any);
 
       if (result.success && result.reportPath) {
         alert(t('errors.testCompleted', { path: result.reportPath }));

@@ -317,7 +317,7 @@ IMPORTANT:
    * - Spatial reasoning for unmatched texts (with image)
    */
   private estimateGeminiCost(
-    totalTexts: number,
+    _totalTexts: number,
     unmatchedCount: number
   ): number {
     // Initial extraction: ~0.05 yen

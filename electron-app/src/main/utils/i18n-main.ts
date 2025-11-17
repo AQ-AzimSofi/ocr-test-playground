@@ -28,15 +28,36 @@ function loadTranslations(language: string): any {
     // Determine the path to the locales directory
     // In development: electron-app/src/locales
     // In production: resources/app.asar/dist-electron/locales or similar
-    const isDevelopment = process.env.NODE_ENV !== 'production';
+    const isDevelopment = !app.isPackaged;
 
     let localesPath: string;
     if (isDevelopment) {
       // Development: src/locales relative to main process file
       localesPath = join(__dirname, '../../src/locales');
     } else {
-      // Production: locales should be in app resources
-      localesPath = join(app.getAppPath(), 'dist-electron/locales');
+      // Production: Try multiple possible paths in order
+      const pathsToTry = [
+        // 1. Relative to main process file (dist-electron/main/../locales)
+        join(__dirname, '../locales'),
+        // 2. ASAR unpacked path (app.asar.unpacked/dist-electron/locales)
+        join(process.resourcesPath, 'app.asar.unpacked', 'dist-electron', 'locales'),
+        // 3. App path + dist-electron/locales
+        join(app.getAppPath(), 'dist-electron', 'locales')
+      ];
+
+      // Try each path until one works
+      localesPath = pathsToTry[0]; // Default to first path
+      for (const pathToTry of pathsToTry) {
+        try {
+          const testPath = join(pathToTry, language, 'reports.json');
+          readFileSync(testPath, 'utf-8');
+          localesPath = pathToTry;
+          console.log(`[i18n] Using locale path: ${localesPath}`);
+          break;
+        } catch {
+          // Continue to next path
+        }
+      }
     }
 
     const filePath = join(localesPath, language, 'reports.json');
@@ -49,6 +70,12 @@ function loadTranslations(language: string): any {
     return translations;
   } catch (error) {
     console.error(`Failed to load translations for language "${language}":`, error);
+    console.error(`Attempted paths:`, {
+      __dirname,
+      appPath: app.getAppPath(),
+      isPackaged: app.isPackaged,
+      resourcesPath: process.resourcesPath
+    });
 
     // Fallback to English if requested language fails
     if (language !== 'en') {

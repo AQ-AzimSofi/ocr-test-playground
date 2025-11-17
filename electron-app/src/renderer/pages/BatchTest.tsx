@@ -469,7 +469,7 @@ export default function BatchTest() {
       setFolderPath(folderPath);
       // Scan folder for PDF/PNG files (now returns hierarchical structure)
       const scannedItems = await window.electronAPI.scanFolder(folderPath);
-      setItems(scannedItems);
+      setItems(scannedItems as any);
     }
   };
 
@@ -670,7 +670,7 @@ export default function BatchTest() {
           groundTruth: f.groundTruth,
         })),
         language: i18n.language,
-      });
+      } as any);
 
       if (result.success && result.reportPath) {
         alert(t('success.testCompleted', { path: result.reportPath }));
@@ -759,7 +759,7 @@ export default function BatchTest() {
             </div>
 
             <div className="space-y-1 max-h-96 overflow-y-auto border border-gray-200 rounded-lg p-3">
-              {items.map((item, index) => (
+              {items.map((item, _index) => (
                 <TreeItem
                   key={item.path}
                   item={item}

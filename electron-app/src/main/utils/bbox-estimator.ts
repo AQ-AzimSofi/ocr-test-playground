@@ -214,8 +214,6 @@ export function estimateBboxFromNeighbors(
   const width = charDimensions.avgWidth * textLength;
   const height = charDimensions.avgHeight;
 
-  const refCentroid = getBboxCentroid(nearest);
-
   const nearestWidth = Math.abs(nearestBounds[1].x - nearestBounds[0].x);
   const nearestHeight = Math.abs(nearestBounds[2].y - nearestBounds[1].y);
 

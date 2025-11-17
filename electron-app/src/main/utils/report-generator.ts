@@ -1052,11 +1052,6 @@ function generateSummarySection(results: any[], language: string = 'en'): string
           ${results
             .map(
               (r) => {
-                const hasRateLimitWait = r.rateLimitWaitTime && r.rateLimitWaitTime > 0;
-                const actualProcessingTime = hasRateLimitWait
-                  ? (r.processingTime || 0) - r.rateLimitWaitTime
-                  : (r.processingTime || 0);
-
                 // Calculate missing and extra accuracy (inverse of percentage)
                 let missingAccuracy = 'N/A';
                 let extraAccuracy = 'N/A';
@@ -1107,7 +1102,7 @@ function generateSummarySection(results: any[], language: string = 'en'): string
               <td>¥${(r.cost || 0).toFixed(2)}</td>
               <td>
                 ${formatTime(r.processingTime || 0)}
-                ${hasRateLimitWait ? `<br><span style="color: #f59e0b; font-size: 0.85em;" title="${t('metadata.includesWaitTime', language, { time: formatTime(r.rateLimitWaitTime) })}">${t('metadata.includesWaitTimeShort', language)}</span>` : ''}
+                ${(r.rateLimitWaitTime && r.rateLimitWaitTime > 0) ? `<br><span style="color: #f59e0b; font-size: 0.85em;" title="${t('metadata.includesWaitTime', language, { time: formatTime(r.rateLimitWaitTime) })}">${t('metadata.includesWaitTimeShort', language)}</span>` : ''}
               </td>
             </tr>
           `;
@@ -1369,16 +1364,6 @@ function calculateProcessorSummary(
     avgCharCount,
     totalPages
   };
-}
-
-/**
- * Format character count with k suffix for thousands
- */
-function formatCharCount(count: number): string {
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(1)}k`;
-  }
-  return count.toString();
 }
 
 /**
@@ -2232,8 +2217,8 @@ export function generateBatchHTMLReport(
                         <h4>${t(result.boundingBoxes.length === 1 ? 'bbox.detected' : 'bbox.detected_plural', language, { count: result.boundingBoxes.length })}</h4>
                         ${(() => {
                           // Group bounding boxes by page
-                          const pageGroups = {};
-                          result.boundingBoxes.forEach(bbox => {
+                          const pageGroups: Record<number, any[]> = {};
+                          result.boundingBoxes.forEach((bbox: any) => {
                             const page = bbox.page || 1;
                             if (!pageGroups[page]) pageGroups[page] = [];
                             pageGroups[page].push(bbox);
@@ -2360,8 +2345,8 @@ export function generateBatchHTMLReport(
             }
 
             // Group bounding boxes by page
-            const pageGroups = {};
-            result.boundingBoxes.forEach(bbox => {
+            const pageGroups: Record<number, any[]> = {};
+            result.boundingBoxes.forEach((bbox: any) => {
               const page = bbox.page || 1;
               if (!pageGroups[page]) pageGroups[page] = [];
               pageGroups[page].push(bbox);

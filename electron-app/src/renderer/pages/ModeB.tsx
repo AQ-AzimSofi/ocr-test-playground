@@ -62,7 +62,7 @@ export default function ModeB() {
         })),
         groundTruth,
         language: i18n.language,
-      });
+      } as any);
 
       if (result.success && result.reportPath) {
         alert(t('alerts.comparisonSuccess', { reportPath: result.reportPath }));
@@ -188,7 +188,7 @@ export default function ModeB() {
         <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-md">
           <h4 className="font-medium text-gray-900 mb-2">{t('features.title')}</h4>
           <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
-            {t('features.items', { returnObjects: true }).map((item: any, index: number) => (
+            {(t('features.items', { returnObjects: true }) as any[]).map((item: any, index: number) => (
               <li key={index}>
                 <strong>{item.label}</strong> {item.description}
               </li>
@@ -199,7 +199,7 @@ export default function ModeB() {
         <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
           <h4 className="font-medium text-blue-900 mb-2">{t('howItWorks.title')}</h4>
           <ol className="text-sm text-blue-700 list-decimal list-inside space-y-1">
-            {t('howItWorks.steps', { returnObjects: true }).map((step: string, index: number) => (
+            {(t('howItWorks.steps', { returnObjects: true }) as string[]).map((step: string, index: number) => (
               <li key={index}>{step}</li>
             ))}
           </ol>

@@ -23,7 +23,7 @@ export async function getPdfPageCount(filePath: string): Promise<number> {
     return pdfDoc.getPageCount();
   } catch (error) {
     console.error(`Error getting page count for ${filePath}:`, error);
-    throw new Error(`Failed to get page count: ${error.message}`);
+    throw new Error(`Failed to get page count: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -110,7 +110,7 @@ export async function splitPdfIntoChunks(
     return chunks;
   } catch (error) {
     console.error(`Error splitting PDF ${filePath}:`, error);
-    throw new Error(`Failed to split PDF: ${error.message}`);
+    throw new Error(`Failed to split PDF: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 

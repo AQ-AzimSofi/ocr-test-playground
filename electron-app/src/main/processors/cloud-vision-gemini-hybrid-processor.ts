@@ -25,6 +25,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
  */
 
 export interface HybridProcessorResult extends CloudVisionResult {
+  rateLimitWaitTime?: number;
   metadata: CloudVisionResult['metadata'] & {
     strategy: string;
     lowConfidenceRegionsCount: number;
@@ -128,7 +129,7 @@ export class CloudVisionGeminiHybridProcessor {
           page: bbox.page,
         };
 
-        if (region.confidence < this.lowConfidenceThreshold) {
+        if (region.confidence! < this.lowConfidenceThreshold) {
           lowConfidenceRegions.push(region);
         } else {
           highConfidenceRegions.push(region);

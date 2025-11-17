@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { GeminiRequestQueue, QueueConfig, QueueProgress, RateLimitDecision } from '../utils/gemini-queue';
+import { GeminiRequestQueue, QueueConfig, QueueProgress } from '../utils/gemini-queue';
 import { GeminiRateLimitError } from '../utils/gemini-errors';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
